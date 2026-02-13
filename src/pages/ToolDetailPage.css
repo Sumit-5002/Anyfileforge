@@ -1,0 +1,165 @@
+.tool-detail-page {
+    padding: 60px 0;
+    min-height: calc(100vh - 70px);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 50px;
+    transition: var(--transition-smooth);
+}
+
+.back-link:hover {
+    color: var(--text-primary);
+    transform: translateX(-4px);
+}
+
+.tool-header {
+    text-align: center;
+    margin-bottom: 80px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tool-header h1 {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    margin-bottom: 20px;
+    letter-spacing: -2px;
+}
+
+.tool-header p {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.uploader-wrapper {
+    margin-bottom: 120px;
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Premium Gate - High Impact */
+.premium-gate {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-lg);
+    padding: 80px 40px;
+    text-align: center;
+    max-width: 850px;
+    width: 100%;
+    box-shadow: 0 0 50px rgba(255, 77, 77, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.premium-gate-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.premium-gate h2 {
+    font-size: 2.75rem;
+    color: var(--text-primary);
+}
+
+.premium-gate p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    max-width: 550px;
+}
+
+.gate-actions {
+    display: flex;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.gate-benefits {
+    list-style: none;
+    padding: 0;
+    margin-top: 50px;
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.gate-benefits li {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-500);
+}
+
+/* Footers & Info */
+.tool-info-footer {
+    padding-top: 100px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 80px;
+    margin-bottom: 80px;
+}
+
+.info-item h3 {
+    font-size: 1.75rem;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.info-item p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.8;
+}
+
+/* Enterprise Section */
+.enterprise-banner {
+    background: linear-gradient(135deg, var(--bg-surface) 0%, #1e1b4b 100%);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-lg);
+    padding: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 50px;
+}
+
+.enterprise-banner h3 {
+    font-size: 2rem;
+    color: white;
+    margin-bottom: 12px;
+}
+
+.enterprise-banner p {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+    .enterprise-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 50px;
+    }
+}

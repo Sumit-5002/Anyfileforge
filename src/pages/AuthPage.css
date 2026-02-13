@@ -1,0 +1,320 @@
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+.auth-container {
+    max-width: 1000px !important;
+}
+
+.auth-card-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-premium);
+    min-height: 650px;
+}
+
+/* Info Panel Side (Left) */
+.auth-info-panel {
+    background: linear-gradient(135deg, #020617 0%, #1e1b4b 100%);
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    border-right: 1px solid var(--border-subtle);
+}
+
+.auth-info-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle at 0% 0%, rgba(255, 77, 77, 0.1) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.auth-logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.auth-logo h2 {
+    font-size: 1.75rem;
+    letter-spacing: -1px;
+    color: white;
+}
+
+.glow-icon {
+    color: var(--primary-500);
+    filter: drop-shadow(0 0 10px rgba(255, 77, 77, 0.5));
+}
+
+.panel-features {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-top: 50px;
+}
+
+.p-feature {
+    display: flex;
+    gap: 15px;
+}
+
+.p-feature svg {
+    color: var(--primary-500);
+    flex-shrink: 0;
+}
+
+.p-feature h4 {
+    color: white;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.p-feature p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.panel-footer p {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* Form Panel Side (Right) */
+.auth-form-panel {
+    padding: 60px;
+    background: var(--bg-surface);
+    display: flex;
+    flex-direction: column;
+}
+
+.mode-toggle {
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 4px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    border: 1px solid var(--border-subtle);
+}
+
+.mode-btn {
+    padding: 8px 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.mode-btn.active {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.form-header h1 {
+    font-size: 2.25rem;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.form-header p {
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+}
+
+/* Social Login Specialized Grid */
+.social-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 40px;
+}
+
+.social-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 10px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.social-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-bright);
+    transform: translateY(-2px);
+}
+
+.social-btn span {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.divider {
+    text-align: center;
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-subtle);
+    z-index: 1;
+}
+
+.divider span {
+    position: relative;
+    z-index: 2;
+    background: var(--bg-surface);
+    padding: 0 15px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+/* Auth Form Fields */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    position: relative;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 14px 15px 14px 45px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    color: white;
+    font-family: inherit;
+    transition: var(--transition-smooth);
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    background: rgba(255, 77, 77, 0.02);
+}
+
+.input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.btn-glow {
+    box-shadow: 0 0 20px rgba(255, 77, 77, 0.2);
+    margin-top: 10px;
+}
+
+.form-footer {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.role-select {
+    width: 100%;
+    padding: 14px 15px 14px 45px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    color: white;
+    font-family: inherit;
+    transition: var(--transition-smooth);
+    appearance: none;
+    cursor: pointer;
+}
+
+.role-select:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    background: rgba(255, 77, 77, 0.02);
+}
+
+.role-select option {
+    background: var(--bg-surface);
+    color: white;
+    padding: 10px;
+}
+
+.sso-link {
+    background: transparent;
+    border: none;
+    color: var(--accent-neon);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+}
+
+.sso-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+    .auth-card-wrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-info-panel {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .auth-form-panel {
+        padding: 40px 20px;
+    }
+
+    .social-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .social-btn {
+        flex-direction: row;
+        gap: 15px;
+        padding: 12px 20px;
+    }
+}

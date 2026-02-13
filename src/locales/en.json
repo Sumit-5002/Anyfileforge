@@ -1,0 +1,14 @@
+{
+    "common": {
+        "heroTitle": "Every tool you need to work with Files in one place",
+        "heroSubtitle": "Free, open-source, and 100% private. All processing happens in your browser—no data ever leaves your device.",
+        "exploreBtn": "Explore All Tools",
+        "pdfTools": "PDF Tools",
+        "imageTools": "Image Tools",
+        "login": "Login",
+        "signup": "Sign Up",
+        "allTools": "All Tools",
+        "startNow": "Start Now",
+        "upgrade": "Upgrade to Premium"
+    }
+}

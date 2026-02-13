@@ -1,0 +1,14 @@
+{
+    "common": {
+        "heroTitle": "Todas las herramientas que necesitas para trabajar con archivos en un solo lugar",
+        "heroSubtitle": "Gratuito, de código abierto y 100% privado. Todo el procesamiento ocurre en tu navegador; ningún dato sale de tu dispositivo.",
+        "exploreBtn": "Explorar herramientas",
+        "pdfTools": "Herramientas PDF",
+        "imageTools": "Herramientas de imagen",
+        "login": "Iniciar sesión",
+        "signup": "Registrarse",
+        "allTools": "Todas las herramientas",
+        "startNow": "Empezar ahora",
+        "upgrade": "Mejorar a Premium"
+    }
+}

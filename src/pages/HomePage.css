@@ -1,0 +1,184 @@
+.home-page {
+    padding-bottom: 100px;
+}
+
+.hero {
+    padding: clamp(80px, 12vw, 150px) 0;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-title {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    line-height: 1.05;
+    margin-bottom: 24px;
+    letter-spacing: -0.04em;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 40%, var(--primary-500));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    color: var(--text-secondary);
+    max-width: 750px;
+    margin: 0 auto 48px;
+    line-height: 1.6;
+}
+
+.hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* Tool Showcase Section */
+.tools-showcase {
+    padding: 60px 0;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.section-title {
+    font-size: 2.75rem;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.section-subtitle {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Tab Switcher - Glass Style */
+.tab-switcher-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 60px;
+}
+
+.tab-switcher {
+    display: flex;
+    background: var(--bg-surface);
+    padding: 6px;
+    border-radius: 99px;
+    border: 1px solid var(--border-subtle);
+    gap: 4px;
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 28px;
+    background: transparent;
+    border: none;
+    border-radius: 99px;
+    color: var(--text-secondary);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+    background: var(--primary-500);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 77, 77, 0.3);
+}
+
+/* Tool Grid */
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.tool-category-group {
+    margin-bottom: 80px;
+}
+
+.category-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.category-title svg {
+    color: var(--primary-500);
+}
+
+/* Workflow - Futuristic Call to Action */
+.workflow-teaser {
+    margin: 100px 0;
+    padding: 60px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(255, 77, 77, 0.05), rgba(56, 189, 248, 0.05));
+    border: 1px solid var(--border-bright);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.workflow-text h3 {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.workflow-text p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+}
+
+/* Feature Grid */
+.features-section {
+    padding: 100px 0;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+}
+
+@media (max-width: 1024px) {
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .workflow-teaser {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px 20px;
+    }
+}

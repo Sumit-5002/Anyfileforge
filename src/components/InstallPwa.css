@@ -1,0 +1,22 @@
+.install-pwa-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.install-pwa-btn:hover {
+    background: var(--primary-600);
+    color: white;
+    border-color: var(--primary-600);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
