@@ -1,22 +1,59 @@
+# Dependencies
+node_modules/
+
+# Production builds
+Dist/
+dist/
+dist-ssr/
+# Vite build output (when using plugin-pwa or preview)
+dev-dist/
+
+# Vite caches
+.vite/
+node_modules/.vite/
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Environment variables
+.env
+.env.*
+!.env.example
 
-# Editor directories and files
+# Editor/OS files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
+Thumbs.db
+
+# Caches / Misc
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+.pnp.*
+.pnpm-store/
+.turbo/
+coverage/
+
+# Framework-specific (kept generic in case of future tools)
+.next/
+.out/
+
+# Firebase local state
+.firebase/
+
+# Local tooling
+.qodo/
+
+# Others
+*.local
 *.suo
 *.ntvs*
 *.njsproj
