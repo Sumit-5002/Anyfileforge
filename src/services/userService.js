@@ -1,4 +1,4 @@
-import { db, auth } from '../config/firebase';
+import { db } from '../config/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 /**
@@ -65,6 +65,9 @@ const userService = {
 
     /**
      * Upgrades a user to premium (Mock for demo)
+     * ⚠️ SECURITY NOTE: This is insecure as it's called from the client.
+     * In a production app, this should only be done via a secure backend
+     * (e.g., Firebase Cloud Functions) after payment verification.
      * @param {string} uid - User ID
      */
     async upgradeToPremium(uid) {

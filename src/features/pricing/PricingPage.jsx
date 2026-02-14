@@ -7,7 +7,6 @@ import './PricingPage.css';
 
 function PricingPage() {
     const { user, userData } = useAuth();
-    const [upgrading, setUpgrading] = useState(false);
     const [checkoutPlan, setCheckoutPlan] = useState(null);
     const [couponCode, setCouponCode] = useState('');
     const [discountPercent, setDiscountPercent] = useState(0);
@@ -105,6 +104,12 @@ function PricingPage() {
         setPaymentProcessing(true);
         setPaymentMessage('');
         try {
+            /**
+             * ⚠️ SECURITY NOTE: The following call is for demo purposes only.
+             * Updating sensitive user state (like 'tier') from the client is a security risk.
+             * Our Firestore rules now block this update to prevent unauthorized upgrades.
+             * In production, this should trigger a backend function.
+             */
             await userService.upgradeToPremium(user.uid);
             setPaymentMessage('Demo payment complete. Premium activated.');
             window.location.reload();
@@ -188,12 +193,10 @@ function PricingPage() {
 
                                     <button
                                         className={`btn ${plan.highlighted ? 'btn-primary' : 'btn-secondary'} btn-full`}
-                                        disabled={isCurrentPlan || upgrading}
+                                        disabled={isCurrentPlan}
                                         onClick={() => handlePlanSelect(plan.id)}
                                     >
-                                        {upgrading && plan.id === 'premium' ? (
-                                            <Loader className="spinning" size={18} />
-                                        ) : isCurrentPlan ? 'Current Plan' : plan.cta}
+                                        {isCurrentPlan ? 'Current Plan' : plan.cta}
                                     </button>
                                 </div>
                             );
