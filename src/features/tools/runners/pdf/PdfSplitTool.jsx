@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
+import serverProcessingService from '../../../../services/serverProcessingService';
 import { parsePageRange } from '../../../../utils/pageRange';
 import GenericFileTool from '../common/GenericFileTool';
 
@@ -31,6 +32,15 @@ function PdfSplitTool({ tool }) {
                 if (pageNumbers.length === 0) {
                     throw new Error('Please provide a valid page range.');
                 }
+                if (tool.mode === 'server') {
+                    const data = await serverProcessingService.splitPDF(file, range);
+                    return {
+                        type: 'pdf',
+                        data,
+                        name: `split_${range.replace(/\s+/g, '')}.pdf`
+                    };
+                }
+
                 const indices = pageNumbers.map((n) => n - 1);
                 const pages = await pdfService.extractPages(file, indices);
                 return pages.map((data, index) => ({

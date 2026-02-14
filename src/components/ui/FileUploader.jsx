@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Upload, X, File, CheckCircle, AlertCircle, Loader, Download } from 'lucide-react';
 import pdfService from '../../services/pdfService';
 import imageService from '../../services/imageService';
+import serverProcessingService from '../../services/serverProcessingService';
+import CloudSourceOptions from './CloudSourceOptions';
 import './FileUploader.css';
 
 function FileUploader({ tool, customLayout = false }) {
@@ -10,6 +12,7 @@ function FileUploader({ tool, customLayout = false }) {
     const [processing, setProcessing] = useState(false);
     const [processedResults, setProcessedResults] = useState([]);
     const fileInputRef = useRef(null);
+    const isServerMode = tool?.mode === 'server';
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -63,7 +66,9 @@ function FileUploader({ tool, customLayout = false }) {
         try {
             if (tool.id === 'pdf-merge') {
                 const fileList = files.map(f => f.file);
-                const result = await pdfService.mergePDFs(fileList);
+                const result = isServerMode
+                    ? await serverProcessingService.mergePDFs(fileList)
+                    : await pdfService.mergePDFs(fileList);
                 setProcessedResults([result]);
                 setFiles(prev => prev.map(f => ({ ...f, status: 'completed' })));
             }
@@ -77,9 +82,13 @@ function FileUploader({ tool, customLayout = false }) {
                 const results = [];
                 for (let i = 0; i < files.length; i++) {
                     setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'processing' } : f));
-                    const format = tool.id === 'image-convert' ? 'image/png' : 'image/jpeg';
-                    const quality = tool.id === 'image-compress' ? 0.6 : 0.9;
-                    const result = await imageService.convertImage(files[i].file, format, quality);
+                    const format = tool.id === 'image-convert' ? 'png' : 'jpeg';
+                    const quality = tool.id === 'image-compress' ? 60 : 90;
+                    const result = isServerMode
+                        ? (tool.id === 'image-compress'
+                            ? await serverProcessingService.compressImage(files[i].file, { quality, format })
+                            : await serverProcessingService.convertImage(files[i].file, { format }))
+                        : await imageService.convertImage(files[i].file, `image/${format}`, quality / 100);
                     results.push({ blob: result, originalName: files[i].name, format });
                     setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed' } : f));
                 }
@@ -101,7 +110,9 @@ function FileUploader({ tool, customLayout = false }) {
             processedResults.forEach((data, index) => pdfService.downloadPDF(data, `page_${index + 1}.pdf`));
         } else if (tool.id.startsWith('image-')) {
             processedResults.forEach((res) => {
-                const ext = res.format.split('/')[1];
+                const ext = String(res.format || '')
+                    .replace('image/', '')
+                    .trim() || 'png';
                 imageService.downloadBlob(res.blob, `${res.originalName.split('.')[0]}_forge.${ext}`);
             });
         }
@@ -124,17 +135,14 @@ function FileUploader({ tool, customLayout = false }) {
                             Select {tool.name.split(' ')[0]} files
                         </button>
 
-                        <div className="cloud-options-side">
-                            <button className="cloud-btn-circle" title="Google Drive" aria-label="Upload from Google Drive">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="" aria-hidden="true" />
-                            </button>
-                            <button className="cloud-btn-circle" title="Dropbox" aria-label="Upload from Dropbox">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Dropbox_Icon.svg" alt="" aria-hidden="true" />
-                            </button>
-                        </div>
+                        {isServerMode && <CloudSourceOptions layout="side" />}
                     </div>
 
-                    <p className="massive-drop-text">or drop PDFs here</p>
+                    <p className="massive-drop-text">
+                        {isServerMode
+                            ? 'Upload from local system or cloud sources (online mode - paid)'
+                            : 'Upload from your local system only (offline mode - free, serverless)'}
+                    </p>
                     <input type="file" multiple hidden ref={fileInputRef} onChange={handleFileSelect} aria-label={`Select ${tool.name} files`} />
                 </div>
             </div>
@@ -150,21 +158,24 @@ function FileUploader({ tool, customLayout = false }) {
         >
             <input type="file" multiple hidden ref={fileInputRef} onChange={handleFileSelect} aria-label="Upload files" />
             {files.length === 0 ? (
-                <div
-                    className="upload-placeholder"
-                    onClick={() => fileInputRef.current.click()}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            fileInputRef.current.click();
-                        }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                >
-                    <div className="upload-icon"><Upload size={40} aria-hidden="true" /></div>
-                    <h3>Click to upload or drag & drop</h3>
-                    <p>Support for PDF, Images, and Documents</p>
+                <div>
+                    <div
+                        className="upload-placeholder"
+                        onClick={() => fileInputRef.current.click()}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                fileInputRef.current.click();
+                            }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                    >
+                        <div className="upload-icon"><Upload size={40} aria-hidden="true" /></div>
+                        <h3>Click to upload or drag & drop</h3>
+                        <p>{isServerMode ? 'Online mode (paid): local + cloud sources' : 'Offline mode (free): local system upload only'}</p>
+                    </div>
+                    {isServerMode && <CloudSourceOptions layout="inline" />}
                 </div>
             ) : (
                 <div className="file-list-container" aria-live="polite">

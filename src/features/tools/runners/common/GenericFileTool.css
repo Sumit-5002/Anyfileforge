@@ -40,6 +40,18 @@
     color: var(--text-muted);
 }
 
+.tool-cloud-row {
+    display: grid;
+    gap: 10px;
+    justify-items: center;
+}
+
+.tool-cloud-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
 .tool-file-queue {
     display: flex;
     flex-direction: column;

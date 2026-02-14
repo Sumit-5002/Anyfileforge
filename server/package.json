@@ -1,0 +1,32 @@
+{
+    "name": "anyfileforge-server",
+    "version": "1.0.0",
+    "description": "Backend server for AnyFileForge file processing",
+    "main": "server.js",
+    "type": "module",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "keywords": [
+        "file-processing",
+        "pdf",
+        "image",
+        "conversion"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5",
+        "multer": "^1.4.5-lts.1",
+        "pdf-lib": "^1.17.1",
+        "sharp": "^0.33.0",
+        "dotenv": "^16.3.1",
+        "helmet": "^7.1.0",
+        "express-rate-limit": "^7.1.5"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.2"
+    }
+}

@@ -20,7 +20,7 @@ function ToolCard({ tool, isSelected, onClick }) {
                     {modeLabel}
                 </div>
             )}
-            {tool.isPro && (
+            {tool.isPro && tool.mode === 'server' && (
                 <div className="pro-badge-tool" title="Premium Feature">
                     <Crown size={12} fill="currentColor" />
                     <span>PRO</span>

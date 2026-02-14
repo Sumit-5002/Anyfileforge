@@ -8,18 +8,18 @@ function AboutPage() {
     const values = [
         {
             icon: Shield,
-            title: 'Local-Only Processing',
-            description: "Unlike other tools, we don't upload your files. All processing happens in your browser memory. Your privacy is mathematically guaranteed."
+            title: 'Offline-First Processing',
+            description: 'Offline mode is fully serverless and runs in your browser memory. Online server mode is optional for paid heavy workloads.'
         },
         {
             icon: Code,
             title: 'Open Source',
-            description: 'Audit our code on GitHub to verify our "No-Upload" policy. We have nothing to hide.'
+            description: 'Audit our code on GitHub to verify offline-first processing and the boundaries of paid online server features.'
         },
         {
             icon: Lock,
-            title: 'Zero Data Retention',
-            description: 'Since we never receive your files, we have nothing to store or delete. Your data stays on your machine.'
+            title: 'Controlled Data Retention',
+            description: 'Offline mode retains nothing on our servers. Online mode can optionally store results for future work if you choose paid storage.'
         },
         {
             icon: Users,
@@ -30,7 +30,7 @@ function AboutPage() {
 
     const stats = [
         { value: '100%', label: 'Browser-Based' },
-        { value: '0MB', label: 'Uploaded to Server' },
+        { value: '0MB', label: 'Offline Upload' },
         { value: 'Instant', label: 'Processing' },
         { value: 'Privacy', label: 'First' }
     ];
@@ -39,7 +39,7 @@ function AboutPage() {
         <>
             <SeoHead
                 title="About Us - AnyFileForge"
-                description="We are re-inventing file processing. 100% client-side, zero data collection, and open source values."
+                description="We are re-inventing file processing with free offline serverless tools and paid online server tools for large and advanced workloads."
             />
             <div className="about-page bg-mesh">
                 {/* Hero Section */}
@@ -47,8 +47,9 @@ function AboutPage() {
                     <div className="container">
                         <h1 className="page-title">Why AnyFileForge is Different</h1>
                         <p className="page-subtitle">
-                            Most PDF tools on the web upload your private documents to their servers.
-                            <strong> We don't.</strong> Your files never leave your device.
+                            Most tools force cloud upload. We support both modes:
+                            <strong> free offline serverless processing</strong> and
+                            <strong> paid online server processing</strong> for large or advanced jobs.
                         </p>
                     </div>
                 </section>
@@ -74,19 +75,19 @@ function AboutPage() {
                         <div className="comparison-item card">
                             <h3>Standard Cloud Tools</h3>
                             <ul className="comparison-list">
-                                <li>❌ Uploads files to remote servers</li>
+                                <li>❌ Requires cloud upload for all tasks</li>
                                 <li>❌ Limited by internet upload speeds</li>
-                                <li>❌ Files stored for 2+ hours</li>
+                                <li>❌ No true offline fallback</li>
                                 <li>❌ Risk of data breach on server</li>
                             </ul>
                         </div>
                         <div className="comparison-item card highlight">
                             <h3>AnyFileForge (Local)</h3>
                             <ul className="comparison-list">
-                                <li>✅ Processing happens in your RAM</li>
-                                <li>✅ Lightning fast (local disk speeds)</li>
-                                <li>✅ Files never exist on a server</li>
-                                <li>✅ 100% private and secure</li>
+                                <li>✅ Free offline mode for local processing</li>
+                                <li>✅ Paid online mode for large/heavy processing</li>
+                                <li>✅ Cloud uploads (Drive/Dropbox/OneDrive) in online mode</li>
+                                <li>✅ Optional server storage only when requested</li>
                             </ul>
                         </div>
                     </div>
@@ -116,7 +117,7 @@ function AboutPage() {
                     <div className="faq-grid">
                         <div className="faq-item">
                             <h4>Do you keep a copy of my processed files?</h4>
-                            <p>No. In fact, we couldn't if we wanted to. All processing code runs in your browser (JS). We don't even have a backend database for files.</p>
+                            <p>Offline mode: no, files stay local. Online mode: we only retain files if you opt in to paid storage for future reuse.</p>
                         </div>
                         <div className="faq-item">
                             <h4>Is it safe for company documents?</h4>

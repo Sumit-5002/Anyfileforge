@@ -17,36 +17,36 @@ function PricingPage() {
         {
             id: 'free',
             name: 'Free',
-            description: 'Local-first tools for everyday tasks.',
+            description: 'Offline/local tools are free and serverless.',
             price: '$0',
             period: 'month',
             highlighted: false,
             icon: Zap,
-            cta: 'Start Free',
+            cta: 'Start Free (Offline)',
             features: [
-                { text: 'Serverless tools (offline-ready)', included: true },
+                { text: 'Serverless tools (offline/local)', included: true },
                 { text: 'Basic PDF and Image tools', included: true },
                 { text: 'Community support', included: true },
-                { text: 'Server mode tools', included: false },
-                { text: 'Premium processing', included: false }
+                { text: 'Cloud uploads (Drive/Dropbox/OneDrive)', included: false },
+                { text: 'Server-side processing for large files', included: false }
             ]
         },
         {
             id: 'premium',
             name: 'Premium',
-            description: 'Advanced tools for professionals and labs.',
+            description: 'Online/server features for heavy & cloud-based work.',
             price: '$9',
             priceValue: 9,
             period: 'month',
             highlighted: true,
             icon: Crown,
-            cta: 'Upgrade to Premium',
+            cta: 'Upgrade for Online Mode',
             features: [
-                { text: 'Everything in Free', included: true },
-                { text: 'Premium tool access', included: true },
-                { text: 'Priority updates', included: true },
-                { text: 'Server mode tools', included: true },
-                { text: 'Batch processing limits removed', included: true }
+                { text: 'Everything in Free (offline/local)', included: true },
+                { text: 'Cloud uploads (Drive/Dropbox/OneDrive)', included: true },
+                { text: 'Server-side processing for large files', included: true },
+                { text: 'Optional paid server storage for future reuse', included: true },
+                { text: 'Batch/priority processing', included: true }
             ]
         },
         {
@@ -138,8 +138,13 @@ function PricingPage() {
                     <div className="page-header">
                         <h1 className="page-title">Simple, Transparent Pricing</h1>
                         <p className="page-subtitle">
-                            Choose the plan that fits your needs. Current: <strong>{userData?.tier?.toUpperCase() || 'FREE'}</strong>
+                            Offline/local processing is free and serverless. Online/server processing (cloud uploads, large files, background jobs) is paid. Current: <strong>{userData?.tier?.toUpperCase() || 'FREE'}</strong>
                         </p>
+                        <ul className="page-highlights">
+                            <li>Offline Mode (Local): Free forever. Files stay on your device; no server used.</li>
+                            <li>Online Mode (Server): Paid. Required for cloud-source uploads (Drive, Dropbox, OneDrive), very large files, and advanced server-side processing.</li>
+                            <li>Optional Server Storage: If you want us to retain processed data for future work, storage is billed; otherwise, we don't keep your files.</li>
+                        </ul>
                     </div>
 
 
@@ -297,23 +302,27 @@ function PricingPage() {
                     )}
 
                     <div className="pricing-faq container">
-                        <h2 className="faq-title">Privacy & Technical FAQ</h2>
+                        <h2 className="faq-title">Privacy, Modes & Technical FAQ</h2>
                         <div className="faq-grid">
                             <div className="faq-item">
+                                <h3>Offline vs Online — what’s the difference?</h3>
+                                <p><strong>Offline (Local): Free.</strong> Files never leave your device and are processed in your browser. <strong>Online (Server): Paid.</strong> Required for cloud-source uploads (Drive/Dropbox/OneDrive), very large files, or advanced server compute.</p>
+                            </div>
+                            <div className="faq-item">
                                 <h3>Do you keep a copy of my processed files?</h3>
-                                <p><strong>Absolutely not.</strong> Unlike competitors who store files for 2 hours, we never receive them. All processing happens locally in your browser's RAM and CPU. Once you close the tab, the data is gone forever.</p>
+                                <p>By default, <strong>no</strong>. We do not keep server-side copies unless you opt in to <strong>paid server storage</strong> for future reuse. If you don’t opt in, transient server data is discarded after processing.</p>
                             </div>
                             <div className="faq-item">
                                 <h3>Is it safe for HIPAA or GDPR compliance?</h3>
-                                <p>Yes. Because the data never leaves the patient's or professional's device, it is the highest form of data residency compliance possible.</p>
+                                <p>Offline mode is local-only and maximizes data residency. Online mode follows our server security practices; opt-in storage is configurable per project.</p>
                             </div>
                             <div className="faq-item">
                                 <h3>Why is there a file size limit on Free?</h3>
-                                <p>Large files require significant browser RAM. We set limits on the Free plan to ensure stability for most users, while Premium unlocks the full potential of your hardware.</p>
+                                <p>Large files can exceed typical browser memory. Free (offline) tools are tuned for stability; Online mode unlocks server resources for heavy workloads.</p>
                             </div>
                             <div className="faq-item">
                                 <h3>Can I work offline?</h3>
-                                <p>Yes! Once the website is loaded, most of our tools (Merge, Split, Image Convert) will work even if you disconnect from the internet.</p>
+                                <p>Yes. Once the site is loaded, most tools work offline. Online-only features require an active connection.</p>
                             </div>
                         </div>
                     </div>

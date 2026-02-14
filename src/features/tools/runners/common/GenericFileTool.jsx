@@ -3,6 +3,7 @@ import { Upload, X, ArrowUp, ArrowDown, Download, Loader, Plus } from 'lucide-re
 import JSZip from 'jszip';
 import pdfService from '../../../../services/pdfService';
 import imageService from '../../../../services/imageService';
+import CloudSourceOptions from '../../../../components/ui/CloudSourceOptions';
 import { useFileQueue } from './useFileQueue';
 import './GenericFileTool.css';
 
@@ -42,6 +43,7 @@ function GenericFileTool({
     const [results, setResults] = useState([]);
     const [error, setError] = useState('');
     const { files, addFiles, replaceFiles, removeFile, clearFiles, moveFile } = useFileQueue();
+    const isServerMode = tool?.mode === 'server';
 
     const handleFiles = (fileList) => {
         if (multiple) {
@@ -140,7 +142,7 @@ function GenericFileTool({
                 <Upload size={36} aria-hidden="true" />
                 <div>
                     <strong>Drop files here</strong>
-                    <span>or click to browse</span>
+                    <span>{isServerMode ? 'or click to browse (online mode)' : 'or click to browse (offline mode)'}</span>
                 </div>
                 <input
                     ref={inputRef}
@@ -151,6 +153,12 @@ function GenericFileTool({
                     hidden
                 />
             </div>
+            {isServerMode && (
+                <div className="tool-cloud-row">
+                    <span className="tool-cloud-label">Cloud sources (online mode):</span>
+                    <CloudSourceOptions layout="inline" />
+                </div>
+            )}
 
             {files.length > 0 && (
                 <div className="tool-file-queue">

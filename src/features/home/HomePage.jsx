@@ -16,21 +16,31 @@ function HomePage() {
     const navigate = useNavigate();
     const showcaseRef = useRef(null);
     const [activeTab, setActiveTab] = useState('pdf'); // 'pdf' | 'image' | 'engineer' | 'researcher'
-    const [isOnlineMode, setIsOnlineMode] = useState(false);
+    const [isOnlineMode, setIsOnlineMode] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.localStorage.getItem('anyfileforge_mode') === 'online';
+    });
 
 
     const visibleGroups = (TOOLS[activeTab] || [])
         .filter((group) => group.tools.length > 0);
 
+    const handleModeChange = (online) => {
+        setIsOnlineMode(online);
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem('anyfileforge_mode', online ? 'online' : 'offline');
+        }
+    };
+
     const handleToolSelect = (id) => {
-        navigate(`/tools/${id}`);
+        navigate(`/tools/${id}?mode=${isOnlineMode ? 'online' : 'offline'}`);
     };
 
     return (
         <>
             <SeoHead
                 title="AnyFileForge - The Ultimate Free File Processing Platform"
-                description="Merge, split, compress, and edit PDFs and images completely client-side. Fast, secure, and 100% private. No uploads, no waiting."
+                description="Free offline serverless tools for PDFs and images, plus paid online server mode for large files and advanced processing."
             />
             <div className="home-page bg-mesh">
                 {/* Hero Section */}
@@ -56,7 +66,7 @@ function HomePage() {
                                 border: '1px solid var(--border-bright)'
                             }}>
                                 <button
-                                    onClick={() => setIsOnlineMode(false)}
+                                    onClick={() => handleModeChange(false)}
                                     style={{
                                         padding: '8px 20px',
                                         borderRadius: '999px',
@@ -74,7 +84,7 @@ function HomePage() {
                                     Offline Mode
                                 </button>
                                 <button
-                                    onClick={() => setIsOnlineMode(true)}
+                                    onClick={() => handleModeChange(true)}
                                     style={{
                                         padding: '8px 20px',
                                         borderRadius: '999px',
@@ -89,7 +99,7 @@ function HomePage() {
                                     }}
                                 >
                                     <Zap size={16} />
-                                    Online Mode
+                                    Online Mode (Paid)
                                 </button>
                             </div>
                         </div>
@@ -121,7 +131,7 @@ function HomePage() {
                                     borderRadius: '8px'
                                 }}>
                                     <Zap size={18} />
-                                    <span>Cloud Processing Active</span>
+                                    <span>Online server mode is paid</span>
                                 </div>
                             </div>
                         )}

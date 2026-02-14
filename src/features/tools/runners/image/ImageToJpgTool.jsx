@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import imageService from '../../../../services/imageService';
+import serverProcessingService from '../../../../services/serverProcessingService';
 import GenericFileTool from '../common/GenericFileTool';
 
 const getBaseName = (name) => name.replace(/\.[^/.]+$/, '');
@@ -16,11 +17,13 @@ function ImageToJpgTool({ tool }) {
             onProcess={async ({ items }) => {
                 const results = [];
                 for (const item of items) {
-                    const blob = await imageService.convertImage(
-                        item.file,
-                        'image/jpeg',
-                        Math.min(1, Math.max(0.1, Number(quality) || 0.9))
-                    );
+                    const normalizedQuality = Math.min(1, Math.max(0.1, Number(quality) || 0.9));
+                    const blob = tool.mode === 'server'
+                        ? await serverProcessingService.compressImage(item.file, {
+                            quality: Math.round(normalizedQuality * 100),
+                            format: 'jpeg'
+                        })
+                        : await imageService.convertImage(item.file, 'image/jpeg', normalizedQuality);
                     results.push({
                         type: 'image',
                         data: blob,

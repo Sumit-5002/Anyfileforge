@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import imageService from '../../../../services/imageService';
+import serverProcessingService from '../../../../services/serverProcessingService';
 import GenericFileTool from '../common/GenericFileTool';
 
 const getBaseName = (name) => name.replace(/\.[^/.]+$/, '');
@@ -26,15 +27,25 @@ function ImageCropTool({ tool }) {
                 if (!width || !height) {
                     throw new Error('Provide crop width and height.');
                 }
-                const blob = await imageService.cropImage(
-                    item.file,
-                    x,
-                    y,
-                    width,
-                    height,
-                    format,
-                    Math.min(1, Math.max(0.1, Number(quality) || 0.9))
-                );
+                const normalizedQuality = Math.min(1, Math.max(0.1, Number(quality) || 0.9));
+                const blob = tool.mode === 'server'
+                    ? await serverProcessingService.cropImage(item.file, {
+                        x,
+                        y,
+                        width,
+                        height,
+                        format: format.replace('image/', ''),
+                        quality: Math.round(normalizedQuality * 100)
+                    })
+                    : await imageService.cropImage(
+                        item.file,
+                        x,
+                        y,
+                        width,
+                        height,
+                        format,
+                        normalizedQuality
+                    );
                 return {
                     type: 'image',
                     data: blob,

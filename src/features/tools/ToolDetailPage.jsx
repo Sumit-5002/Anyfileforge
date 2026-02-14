@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ShieldCheck, Info, Crown, Building } from 'lucide-react';
 import { TOOLS } from '../../data/toolsData';
@@ -10,7 +10,8 @@ import './ToolDetailPage.css';
 function ToolDetailPage() {
     const { t } = useTranslation();
     const { toolId } = useParams();
-    const { user, userData, loading } = useAuth();
+    const [searchParams] = useSearchParams();
+    const { user, loading } = useAuth();
 
     const tool = useMemo(() => {
         let found = null;
@@ -32,12 +33,15 @@ function ToolDetailPage() {
 
     if (!tool || loading) return null;
 
-    const isServerMode = tool.mode === 'server';
-    const requiresPremium = Boolean(tool.isPro);
+    const queryMode = searchParams.get('mode');
+    const storedOnlineMode = typeof window !== 'undefined' && window.localStorage.getItem('anyfileforge_mode') === 'online';
+    const forceOnlineMode = queryMode === 'online' || (!queryMode && storedOnlineMode);
+    const effectiveTool = forceOnlineMode ? { ...tool, mode: 'server' } : tool;
+
+    const isServerMode = effectiveTool.mode === 'server';
     const isLoggedIn = Boolean(user);
-    const isPremium = userData?.tier === 'premium';
-    const requiresLogin = isServerMode || requiresPremium;
-    const Runner = TOOL_RUNNERS[tool.id];
+    const requiresLogin = isServerMode;
+    const Runner = TOOL_RUNNERS[effectiveTool.id];
 
     return (
         <div className="tool-detail-page bg-mesh">
@@ -52,8 +56,8 @@ function ToolDetailPage() {
                     <div className={`tool-mode-pill ${isServerMode ? 'server' : 'serverless'}`}>
                         {isServerMode ? 'Server Mode (Online)' : 'Serverless (Offline-Ready)'}
                     </div>
-                    <h1 className="tool-title">{tool.name}</h1>
-                    <p className="tool-description">{tool.description}</p>
+                    <h1 className="tool-title">{effectiveTool.name}</h1>
+                    <p className="tool-description">{effectiveTool.description}</p>
                 </div>
 
                 <div className="uploader-wrapper fade-in">
@@ -64,8 +68,8 @@ function ToolDetailPage() {
                                 <h2>Login Required</h2>
                                 <p>
                                     {isServerMode
-                                        ? 'Server mode tools require an account to run cloud processing.'
-                                        : 'Premium tools require an account before you can continue.'}
+                                        ? 'Online server-mode tools require an account and an active paid plan.'
+                                        : 'This tool requires an account before you can continue.'}
                                 </p>
                                 <div className="server-mode-actions">
                                     <Link to="/login" className="btn btn-primary">Login</Link>
@@ -73,6 +77,8 @@ function ToolDetailPage() {
                                 </div>
                             </div>
                         </div>
+                    ) : Runner ? (
+                        <Runner tool={effectiveTool} />
                     ) : isServerMode ? (
                         <div className="server-mode-card">
                             <div className="server-mode-content">
@@ -80,17 +86,15 @@ function ToolDetailPage() {
                                 <h2>Server Mode Required</h2>
                                 <p>
                                     This tool needs backend compute and cannot run fully offline.
-                                    Enable Server Mode to use cloud processing, advanced conversions, or heavy AI workloads.
+                                    Online server mode is a paid feature for large files, cloud-source uploads, advanced conversions, or heavy AI workloads.
                                 </p>
-                                {requiresPremium && (
-                                    <div className="server-mode-premium">
-                                        <Crown size={18} color="var(--accent-yellow)" />
-                                        <span>Premium required for server execution</span>
-                                    </div>
-                                )}
+                                <div className="server-mode-premium">
+                                    <Crown size={18} color="var(--accent-yellow)" />
+                                    <span>Paid online plan required for server execution</span>
+                                </div>
                                 <div className="server-mode-actions">
                                     <button className="btn btn-primary" disabled>
-                                        Connect to Server (Coming Soon)
+                                        Connect to Online Mode (Coming Soon)
                                     </button>
                                     <Link to="/pricing" className="btn btn-secondary">
                                         View Plans
@@ -98,25 +102,6 @@ function ToolDetailPage() {
                                 </div>
                             </div>
                         </div>
-                    ) : requiresPremium && !isPremium ? (
-                        <div className="premium-gate">
-                            <div className="premium-gate-content">
-                                <Crown size={48} color="var(--accent-yellow)" />
-                                <h2>{t('common.premiumRequired', 'Premium Access Required')}</h2>
-                                <p>{t('common.premiumText', 'This professional tool is available exclusively for AnyFileForge Premium members.')}</p>
-                                <div className="gate-actions">
-                                    <Link to="/pricing" className="btn btn-primary">{t('common.upgradeBtn', 'Upgrade to Premium')}</Link>
-                                    <Link to="/pricing" className="btn btn-secondary">{t('common.learnMore', 'Learn More')}</Link>
-                                </div>
-                                <ul className="gate-benefits">
-                                    <li>✓ {t('common.benefit1', '100% Client-side processing')}</li>
-                                    <li>✓ {t('common.benefit2', 'Batch processing unlocked')}</li>
-                                    <li>✓ {t('common.benefit3', 'Support development of local-first tools')}</li>
-                                </ul>
-                            </div>
-                        </div>
-                    ) : Runner ? (
-                        <Runner tool={tool} />
                     ) : (
                         <div className="server-mode-card">
                             <div className="server-mode-content">
@@ -143,9 +128,13 @@ function ToolDetailPage() {
                         <div className="info-item">
                             <div className="info-icon-title">
                                 <Info size={20} color="var(--primary-500)" />
-                                <h3>About {tool.name}</h3>
+                                <h3>About {effectiveTool.name}</h3>
                             </div>
-                            <p>{t('common.toolAboutText', 'This professional tool allows you to process files directly in your browser. No files are uploaded to any server, making it the most secure choice for your sensitive data.')}</p>
+                            <p>
+                                {isServerMode
+                                    ? 'This is an online server-mode tool intended for heavy processing. Paid mode can support large files and cloud-source imports, while optional server storage can keep results for future work.'
+                                    : t('common.toolAboutText', 'This professional tool allows you to process files directly in your browser. No files are uploaded to any server, making it the most secure choice for your sensitive data.')}
+                            </p>
                         </div>
                         <div className="info-item">
                             <div className="info-icon-title">

@@ -1,5 +1,6 @@
 import React from 'react';
 import pdfService from '../../../../services/pdfService';
+import serverProcessingService from '../../../../services/serverProcessingService';
 import GenericFileTool from '../common/GenericFileTool';
 
 function PdfCompressTool({ tool }) {
@@ -12,7 +13,9 @@ function PdfCompressTool({ tool }) {
             onProcess={async ({ files }) => {
                 const file = files[0];
                 if (!file) throw new Error('Please upload a PDF file.');
-                const data = await pdfService.rewritePDF(file);
+                const data = tool.mode === 'server'
+                    ? await serverProcessingService.compressPDF(file)
+                    : await pdfService.rewritePDF(file);
                 return { type: 'pdf', data, name: 'compressed_anyfileforge.pdf' };
             }}
         >

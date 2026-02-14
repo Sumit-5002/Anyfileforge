@@ -5,16 +5,16 @@ import SeoHead from '../../components/meta/SeoHead';
 export function PrivacyPage() {
     const content = [
         {
-            heading: 'Zero File Collection',
-            text: 'AnyFileForge is built on a "Privacy-First" architecture. Unlike traditional online PDF tools, we do not upload your files to our servers. Every byte of data stays on your machine.'
+            heading: 'Mode-Based Processing',
+            text: 'AnyFileForge supports two modes. Offline mode is serverless and processes files locally on your machine. Online mode uses server processing for large files and advanced workloads when you choose paid server features.'
         },
         {
-            heading: 'Local-Only Processing',
-            text: 'All processing (Merging, Splitting, Converting) is handled by your browser using WebAssembly. Your data residency never leaves your physical device.',
+            heading: 'Offline Privacy by Default',
+            text: 'In Offline mode, processing (merging, splitting, converting) is handled in your browser using WebAssembly. Your file data stays on your physical device.',
             list: [
-                'No server-side storage exists.',
-                'No data retention policies apply.',
-                'Mathematical privacy guarantee.'
+                'Offline mode: local-only and serverless.',
+                'Online mode: server-side processing is available on paid plans.',
+                'Server storage is optional and only used when you opt in.'
             ]
         },
         {
@@ -42,7 +42,7 @@ export function TermsPage() {
         },
         {
             heading: 'Fair Use',
-            text: 'AnyFileForge is free for personal and professional use. However, automated scraping or abuse of our client-side infrastructure is prohibited.'
+            text: 'Offline serverless tools are free for personal and professional use. Online/server processing and optional storage are paid features. Automated scraping or abuse of infrastructure is prohibited.'
         },
         {
             heading: 'Disclaimer',

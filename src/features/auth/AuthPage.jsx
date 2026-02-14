@@ -244,7 +244,7 @@ function AuthPage({ initialMode = 'login' }) {
                                 <li>Optional profile fields (institution, field, language)</li>
                             </ul>
                             <p className="data-note">
-                                We never upload your files. Account data is only used for access control and personalization.
+                                Offline mode is local and serverless. Online mode (paid) may upload files for server processing and optional storage if enabled.
                             </p>
                         </div>
 
