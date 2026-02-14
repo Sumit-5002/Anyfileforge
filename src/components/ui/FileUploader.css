@@ -18,6 +18,13 @@
     background: rgba(var(--primary-rgb), 0.08);
 }
 
+.upload-placeholder:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+    border-color: var(--primary-500);
+    background: rgba(var(--primary-rgb), 0.08);
+}
+
 .upload-icon {
     color: var(--primary-500);
     margin-bottom: 20px;
