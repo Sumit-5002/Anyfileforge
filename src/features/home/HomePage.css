@@ -1,0 +1,219 @@
+.home-page {
+    padding-bottom: 70px;
+}
+
+.hero {
+    padding: clamp(60px, 10vw, 120px) 0;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-title {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    line-height: 1.05;
+    margin-bottom: 24px;
+    letter-spacing: -0.04em;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 40%, var(--primary-500));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    color: var(--text-secondary);
+    max-width: 750px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+}
+
+.hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* Tool Showcase Section */
+.tools-showcase {
+    padding: 40px 0;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.section-title {
+    font-size: 2.75rem;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.section-subtitle {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Tab Switcher - Glass Style */
+.tab-switcher-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 60px;
+}
+
+.tab-switcher {
+    display: flex;
+    background: var(--bg-surface);
+    padding: 6px;
+    border-radius: 99px;
+    border: 1px solid var(--border-subtle);
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.mode-toggle {
+    margin: 18px auto 30px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mode-btn {
+    border: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.mode-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--border-bright);
+}
+
+.mode-btn.active {
+    background: var(--primary-500);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.25);
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 28px;
+    background: transparent;
+    border: none;
+    border-radius: 99px;
+    color: var(--text-secondary);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+    background: var(--primary-500);
+    color: white;
+    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);
+}
+
+/* Tool Grid */
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: clamp(1.2rem, 3vw, 2rem);
+}
+
+.tool-category-group {
+    margin-bottom: 50px;
+}
+
+.category-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.category-title svg {
+    color: var(--primary-500);
+}
+
+/* Workflow - Futuristic Call to Action */
+.workflow-teaser {
+    margin: 70px 0;
+    padding: clamp(24px, 5vw, 60px);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.08), rgba(var(--accent-rgb), 0.08));
+    border: 1px solid var(--border-bright);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.workflow-text h3 {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.workflow-text p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+}
+
+/* Feature Grid */
+.features-section {
+    padding: 70px 0;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 28px;
+}
+
+@media (max-width: 1024px) {
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .workflow-teaser {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px 20px;
+    }
+}

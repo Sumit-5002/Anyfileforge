@@ -1,4 +1,4 @@
-import { db, auth } from '../firebase';
+import { db, auth } from '../config/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 /**
@@ -55,6 +55,8 @@ const userService = {
             photoURL: user.photoURL || '',
             role: additionalData.role || 'user',
             institution: additionalData.institution || '',
+            fieldOfStudy: additionalData.fieldOfStudy || '',
+            primaryLanguage: additionalData.primaryLanguage || '',
             tier: 'free',
             createdAt: new Date().toISOString(),
             lastLogin: new Date().toISOString()

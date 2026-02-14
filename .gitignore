@@ -1,6 +1,6 @@
 # Dependencies
 node_modules/
-
+.vscode
 # Production builds
 Dist/
 dist/
@@ -59,3 +59,4 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+.env

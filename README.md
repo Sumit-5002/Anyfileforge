@@ -1,118 +1,74 @@
 # 🔨 AnyFileForge
 
-> **A Free, Open-Source Cross-Platform File Sharing & Processing System**
+> **The Ultimate Secure File Processing Platform for Engineers & Researchers**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![React](https://img.shields.io/badge/React-18.2-blue.svg)](https://reactjs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-10.7-orange.svg)](https://firebase.google.com/)
+[![Status](https://img.shields.io/badge/Status-Active_Development-green.svg)]()
 
-AnyFileForge is a privacy-first file processing platform built specifically for engineers and researchers. Convert, compress, merge, and process files with professional-grade tools—all while maintaining complete control over your data.
+AnyFileForge is an open-source, privacy-first web application designed to handle complex file operations entirely in the browser. Whether you are an engineer needing to format JSON, a researcher compiling LaTeX, or just someone who needs to merge PDFs, AnyFileForge has you covered.
 
-## ✨ Features
+## 🌟 Why AnyFileForge?
 
-### 🔐 Privacy & Security
-- **Client-Side Encryption**: Files are encrypted in your browser before upload
-- **Auto-Delete**: All files automatically delete after 30 minutes
-- **Zero Data Retention**: We never store or track your files
-- **No Registration Required**: Use core features without creating an account
+- **🔒 Privacy First**: All processing happens client-side (in your browser). Your files are never uploaded to our servers unless you explicitly choose to save them.
+- **⚡ Blazing Fast**: Powered by WebAssembly and modern browser APIs.
+- **🛠️ Specialized Tools**: Custom-built utilities for Software Engineers and Academic Researchers.
+- **📱 Responsive**: Works perfectly on Desktop, Tablet, and Mobile.
 
-### 🛠️ File Processing Tools
+---
 
-#### PDF Tools
-- Merge multiple PDFs into one
-- Split PDFs by page range
-- Compress PDFs to reduce file size
-- Convert PDF ↔ Word/Excel/PowerPoint/Images
+## 🔥 Features by Role
 
-#### Image Tools
-- Convert between formats (JPG, PNG, WebP, TIFF)
-- Compress images with quality control
-- Resize and crop images
-- Batch processing support
+### 👨‍💻 For Developers
+- **Code Utilities**: JSON Formatter, Minifiers (JS/CSS/HTML), Regex Tester
+- **Conversion**: JSON ↔ CSV, Base64 Encoder/Decoder, Markdown Preview
+- **API Ready**: Future support for programmatic file processing
 
-#### Document Tools
-- Convert DOCX, XLSX, PPTX files
-- Office documents ↔ PDF conversion
-- Preserve formatting and metadata
+### 🔬 For Researchers
+- **Data Analysis**: CSV Plotting, creating instant charts
+- **Academic Writing**: LaTeX Editor, BibTeX Manager
+- **Format Support**: HDF5, Parquet, NetCDF (Planned)
 
-#### Data Tools (For Researchers)
-- JSON/YAML/XML conversion
-- CSV/Excel data processing
-- Support for HDF5, Parquet, NetCDF
-- LaTeX, BibTeX, Jupyter notebook tools
+### 📄 For Everyone (Office / General)
+- **PDF Suite**: Merge, Split, Compress, Convert (Word/Excel/PPT), Sign, Watermark
+- **Image Studio**: Resize, Crop, Compress, Convert (WebP/JPG/PNG)
+- **Document Hub**: Office formats conversion
 
-### 🌐 Cross-Platform
-- **Web**: Works on any modern browser
-- **Desktop**: Windows, macOS, Linux
-- **Mobile**: iOS and Android (Progressive Web App)
+---
 
-## 🚀 Quick Start
+## 🏗️ Technology Stack
 
-### Prerequisites
-- Node.js 16+ and npm
-- Firebase account (free tier)
+- **Frontend**: React 18, Vite
+- **Styling**: Vanilla CSS (Modern Variables & Grid), Lucide Icons
+- **Backend (Optional)**: Firebase (Auth, Firestore, Storage) for user profiles and cloud saves
+- **Core Libs**: `pdf-lib`, `jszip`, `framer-motion` (animations)
 
-### Installation
+---
 
+## 🚀 Quick Start Guide
+
+### 1. Clone & Install
 ```bash
-# Clone the repository
 git clone https://github.com/yourusername/anyfileforge.git
 cd anyfileforge
-
-# Install dependencies
 npm install
+```
 
-# Create environment file
+### 2. Configure Environment
+Create a `.env` file in the root directory:
+```bash
 cp .env.example .env
+```
+Update the keys with your Firebase credentials (optional for local tools, required for Auth).
 
-# Add your Firebase credentials to .env
-# VITE_FIREBASE_API_KEY=your_api_key
-# VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-# ... etc
-
-# Start development server
+### 3. Run Locally
+```bash
 npm run dev
 ```
+Visit `http://localhost:5173` to see the app in action!
 
-The app will be available at `http://localhost:3000`
-
-### Build for Production
-
-```bash
-npm run build
-npm run preview
-```
-
-## 📁 Project Structure
-
-```
-anyfileforge/
-├── src/
-│   ├── components/          # Reusable UI components
-│   │   ├── Header.jsx
-│   │   ├── Footer.jsx
-│   │   ├── FileUploader.jsx
-│   │   └── ToolCard.jsx
-│   ├── pages/              # Page components
-│   │   ├── HomePage.jsx
-│   │   ├── ToolsPage.jsx
-│   │   ├── PricingPage.jsx
-│   │   └── AboutPage.jsx
-│   ├── utils/              # Utility functions (to be added)
-│   ├── services/           # API services (to be added)
-│   ├── firebase.js         # Firebase configuration
-│   ├── App.jsx             # Main app component
-│   ├── main.jsx            # Entry point
-│   └── index.css           # Global styles
-├── public/                 # Static assets
-├── .env.example            # Environment variables template
-├── package.json
-├── vite.config.js
-├── LICENSE                 # MIT License
-└── README.md
-```
-
-## 🔧 Configuration
+---
 
 ### Firebase Setup
 

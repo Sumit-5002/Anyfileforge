@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;700&display=swap');
+
+:root {
+  /* Blue + Yellow Brand Palette */
+  --primary-50: #eff6ff;
+  --primary-500: #2563eb;
+  --primary-600: #1d4ed8;
+  --primary-700: #1e40af;
+  --primary-rgb: 37, 99, 235;
+
+  --accent-yellow: #facc15;
+  --accent-rgb: 250, 204, 21;
+
+  --bg-deep: #020617;
+  --bg-surface: #0f172a;
+  --bg-hover: #1e293b;
+
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Neutral scale (used by legacy styles) */
+  --gray-900: #f8fafc;
+  --gray-700: #cbd5f5;
+  --gray-600: var(--text-secondary);
+  --gray-400: var(--text-muted);
+  --gray-200: rgba(255, 255, 255, 0.08);
+  --gray-100: rgba(255, 255, 255, 0.04);
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-bright: rgba(255, 255, 255, 0.15);
+
+  --accent-neon: var(--accent-yellow);
+
+  /* Glassmorphism & Depth */
+  --shadow-premium: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(20px);
+
+  --radius-md: 12px;
+  --radius-lg: 24px;
+
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --alert-500: #f59e0b;
+  --alert-bg: rgba(245, 158, 11, 0.12);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+  color-scheme: dark;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.container {
+  width: min(100% - 3rem, 1400px);
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .container {
+    width: min(100% - 2rem, 1400px);
+  }
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+/* Animations that WORK */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px rgba(var(--primary-rgb), 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.4);
+  }
+
+  100% {
+    box-shadow: 0 0 5px rgba(var(--primary-rgb), 0.2);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Cards & Buttons */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-premium);
+  transition: var(--transition-smooth);
+}
+
+.card:hover {
+  border-color: var(--border-bright);
+  transform: translateY(-4px);
+  background: var(--bg-hover);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  font-weight: 700;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  border: none;
+  font-family: var(--font-heading);
+}
+
+.btn-primary {
+  background: var(--primary-500);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-600);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.4);
+}
+
+.btn-large {
+  padding: 16px 36px;
+  font-size: 1.1rem;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid var(--border-bright);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Background Systems */
+.bg-grid {
+  background-image:
+    linear-gradient(var(--border-subtle) 1.5px, transparent 1.5px),
+    linear-gradient(90deg, var(--border-subtle) 1.5px, transparent 1.5px);
+  background-size: 50px 50px;
+}
+
+.bg-mesh {
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(var(--primary-rgb), 0.18) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(var(--accent-rgb), 0.18) 0%, transparent 40%);
+}

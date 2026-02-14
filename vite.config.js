@@ -11,7 +11,7 @@ export default defineConfig({
             devOptions: {
                 enabled: true
             },
-            includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'forge-icon.svg'],
+            includeAssets: ['favicon.png', 'logo.png', 'icon-192.png', 'icon-512.png'],
             manifest: {
                 name: 'AnyFileForge',
                 short_name: 'AnyFile',
@@ -21,19 +21,19 @@ export default defineConfig({
                 display: 'standalone',
                 icons: [
                     {
-                        src: 'forge-icon.svg',
+                        src: 'icon-192.png',
                         sizes: '192x192',
-                        type: 'image/svg+xml'
+                        type: 'image/png'
                     },
                     {
-                        src: 'forge-icon.svg',
+                        src: 'icon-512.png',
                         sizes: '512x512',
-                        type: 'image/svg+xml'
+                        type: 'image/png'
                     },
                     {
-                        src: 'forge-icon.svg',
+                        src: 'icon-512.png',
                         sizes: '512x512',
-                        type: 'image/svg+xml',
+                        type: 'image/png',
                         purpose: 'any maskable'
                     }
                 ]

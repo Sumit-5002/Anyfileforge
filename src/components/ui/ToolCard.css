@@ -1,0 +1,110 @@
+.tool-card {
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    padding-top: clamp(2.8rem, 4vw, 3.25rem);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    height: 100%;
+    cursor: pointer;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition-smooth);
+}
+
+.tool-card:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-bright);
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-premium);
+}
+
+.tool-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.75rem;
+    transition: var(--transition-smooth);
+    flex-shrink: 0;
+}
+
+.tool-card:hover .tool-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.tool-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.tool-description {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+.pro-badge-tool {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: rgba(255, 215, 0, 0.1);
+    color: var(--accent-yellow);
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
+    backdrop-filter: blur(4px);
+}
+
+.mode-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+    text-transform: uppercase;
+}
+
+.mode-serverless {
+    background: rgba(var(--primary-rgb), 0.12);
+    color: var(--primary-500);
+    border-color: rgba(var(--primary-rgb), 0.35);
+}
+
+.mode-server {
+    background: rgba(var(--accent-rgb), 0.18);
+    color: var(--accent-yellow);
+    border-color: rgba(var(--accent-rgb), 0.45);
+}
+
+/* Accent Glow on Hover */
+.tool-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.03), transparent 70%);
+    pointer-events: none;
+}
