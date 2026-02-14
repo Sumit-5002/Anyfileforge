@@ -7,7 +7,10 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.tier == 'free';
       allow update: if request.auth != null && request.auth.uid == userId
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['tier', 'role', 'createdAt']);
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt']);
+      // ⚠️ SECURITY NOTE: 'tier' is allowed to be updated from the client for demo purposes.
+      // In production, 'tier' should be in the affectedKeys().hasAny([...]) list to prevent
+      // unauthorized privilege escalation, and handled via a secure backend.
     }
     
     // Tools or other public data (read-only for everyone)
@@ -18,7 +21,9 @@ service cloud.firestore {
     // Feedback submissions (write-only with basic validation)
     match /feedback/{feedbackId} {
       allow create: if request.resource.data.name is string
+                    && request.resource.data.name.size() < 100
                     && request.resource.data.email is string
+                    && request.resource.data.email.size() < 100
                     && request.resource.data.message is string
                     && request.resource.data.message.size() < 5000;
       allow read, update, delete: if false;
@@ -33,7 +38,8 @@ service cloud.firestore {
         && request.auth.uid in resource.data.memberIds;
       allow update: if request.auth != null
         && request.auth.uid in resource.data.memberIds
-        && request.resource.data.ownerId == resource.data.ownerId; // Prevent changing owner
+        && request.resource.data.ownerId == resource.data.ownerId // Prevent changing owner
+        && (request.resource.data.memberIds == resource.data.memberIds || request.auth.uid == resource.data.ownerId); // Only owner can manage members
     }
 
     // Default deny

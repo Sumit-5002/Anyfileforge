@@ -7,7 +7,6 @@ import './PricingPage.css';
 
 function PricingPage() {
     const { user, userData } = useAuth();
-    const [upgrading] = useState(false);
     const [checkoutPlan, setCheckoutPlan] = useState(null);
     const [couponCode, setCouponCode] = useState('');
     const [discountPercent, setDiscountPercent] = useState(0);
@@ -194,12 +193,10 @@ function PricingPage() {
 
                                     <button
                                         className={`btn ${plan.highlighted ? 'btn-primary' : 'btn-secondary'} btn-full`}
-                                        disabled={isCurrentPlan || upgrading}
+                                        disabled={isCurrentPlan}
                                         onClick={() => handlePlanSelect(plan.id)}
                                     >
-                                        {upgrading && plan.id === 'premium' ? (
-                                            <Loader className="spinning" size={18} />
-                                        ) : isCurrentPlan ? 'Current Plan' : plan.cta}
+                                        {isCurrentPlan ? 'Current Plan' : plan.cta}
                                     </button>
                                 </div>
                             );
