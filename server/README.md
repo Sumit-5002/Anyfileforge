@@ -41,6 +41,8 @@ CLIENT_URL=http://localhost:5173
 MAX_FILE_SIZE=52428800
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
+FILE_RETENTION_MINUTES=30
+CLEANUP_INTERVAL_MS=300000
 ```
 
 In the frontend root `.env`, set:
@@ -106,6 +108,7 @@ npm run dev
 - Rate limiting (100 requests per 15 minutes)
 - File size limits (50MB max)
 - File type validation
+- Automatic upload cleanup (default retention: 30 minutes)
 
 ## License
 

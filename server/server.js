@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
-import fs from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
@@ -25,9 +25,49 @@ const UPLOAD_DIR = path.resolve(__dirname, process.env.UPLOAD_DIR || './uploads'
 const MAX_FILE_SIZE = Number(process.env.MAX_FILE_SIZE) || 50 * 1024 * 1024;
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 100;
+const FILE_RETENTION_MINUTES = Number(process.env.FILE_RETENTION_MINUTES) || 30;
+const FILE_RETENTION_MS = FILE_RETENTION_MINUTES * 60 * 1000;
+const CLEANUP_INTERVAL_MS = Number(process.env.CLEANUP_INTERVAL_MS) || 5 * 60 * 1000;
 
 if (!fs.existsSync(UPLOAD_DIR)) {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+const cleanupExpiredUploads = async () => {
+    try {
+        const entries = await fsPromises.readdir(UPLOAD_DIR, { withFileTypes: true });
+        const now = Date.now();
+        let removedCount = 0;
+
+        for (const entry of entries) {
+            if (!entry.isFile()) continue;
+            const filePath = path.join(UPLOAD_DIR, entry.name);
+            try {
+                const stats = await fsPromises.stat(filePath);
+                const ageMs = now - stats.mtimeMs;
+                if (ageMs >= FILE_RETENTION_MS) {
+                    await fsPromises.unlink(filePath);
+                    removedCount += 1;
+                }
+            } catch (error) {
+                if (error?.code !== 'ENOENT') {
+                    console.error('Cleanup file error:', error.message);
+                }
+            }
+        }
+
+        if (removedCount > 0) {
+            console.log(`Cleanup removed ${removedCount} expired upload file(s).`);
+        }
+    } catch (error) {
+        console.error('Cleanup scan error:', error.message);
+    }
+};
+
+cleanupExpiredUploads();
+const cleanupTimer = setInterval(cleanupExpiredUploads, CLEANUP_INTERVAL_MS);
+if (typeof cleanupTimer.unref === 'function') {
+    cleanupTimer.unref();
 }
 
 // Security middleware
@@ -93,6 +133,20 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Root and simple health aliases (useful for platform checks and manual testing)
+app.get('/', (req, res) => {
+    res.json({
+        status: 'ok',
+        message: 'AnyFileForge API is running',
+        health: '/api/health',
+        endpoints: ['/api/pdf/*', '/api/image/*', '/api/engineer/*', '/api/researcher/*']
+    });
+});
+
+app.get('/health', (req, res) => {
+    res.redirect(302, '/api/health');
+});
+
 // API Routes
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/image', imageRoutes);
@@ -131,6 +185,7 @@ app.listen(PORT, () => {
     console.log(`🚀 AnyFileForge Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🌐 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
+    console.log(`Upload retention: ${FILE_RETENTION_MINUTES} minute(s), cleanup every ${Math.round(CLEANUP_INTERVAL_MS / 60000)} minute(s)`);
 });
 
 export default app;
