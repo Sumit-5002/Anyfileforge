@@ -161,14 +161,13 @@ function FileUploader({ tool, customLayout = false }) {
                     }}
                     role="button"
                     tabIndex={0}
-                    aria-label="Click to upload or drag and drop files"
                 >
                     <div className="upload-icon"><Upload size={40} aria-hidden="true" /></div>
                     <h3>Click to upload or drag & drop</h3>
                     <p>Support for PDF, Images, and Documents</p>
                 </div>
             ) : (
-                <div className="file-list-container">
+                <div className="file-list-container" aria-live="polite">
                     <div className="file-list">
                         {files.map((file) => (
                             <div key={file.id} className="file-item">
@@ -190,9 +189,24 @@ function FileUploader({ tool, customLayout = false }) {
                                             <X size={18} aria-hidden="true" />
                                         </button>
                                     )}
-                                    {file.status === 'processing' && <Loader className="spinning" size={18} aria-hidden="true" />}
-                                    {file.status === 'completed' && <CheckCircle className="success-icon" size={18} aria-hidden="true" />}
-                                    {file.status === 'error' && <AlertCircle className="error-icon" size={18} aria-hidden="true" />}
+                                    {file.status === 'processing' && (
+                                        <>
+                                            <Loader className="spinning" size={18} aria-hidden="true" />
+                                            <span className="sr-only">Processing</span>
+                                        </>
+                                    )}
+                                    {file.status === 'completed' && (
+                                        <>
+                                            <CheckCircle className="success-icon" size={18} aria-hidden="true" />
+                                            <span className="sr-only">Completed</span>
+                                        </>
+                                    )}
+                                    {file.status === 'error' && (
+                                        <>
+                                            <AlertCircle className="error-icon" size={18} aria-hidden="true" />
+                                            <span className="sr-only">Error</span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))}
