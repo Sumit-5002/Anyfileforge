@@ -125,17 +125,17 @@ function FileUploader({ tool, customLayout = false }) {
                         </button>
 
                         <div className="cloud-options-side">
-                            <button className="cloud-btn-circle" title="Google Drive">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="Drive" />
+                            <button className="cloud-btn-circle" title="Google Drive" aria-label="Upload from Google Drive">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="" aria-hidden="true" />
                             </button>
-                            <button className="cloud-btn-circle" title="Dropbox">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Dropbox_Icon.svg" alt="Dropbox" />
+                            <button className="cloud-btn-circle" title="Dropbox" aria-label="Upload from Dropbox">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Dropbox_Icon.svg" alt="" aria-hidden="true" />
                             </button>
                         </div>
                     </div>
 
                     <p className="massive-drop-text">or drop PDFs here</p>
-                    <input type="file" multiple hidden ref={fileInputRef} onChange={handleFileSelect} />
+                    <input type="file" multiple hidden ref={fileInputRef} onChange={handleFileSelect} aria-label={`Select ${tool.name} files`} />
                 </div>
             </div>
         );
@@ -148,30 +148,65 @@ function FileUploader({ tool, customLayout = false }) {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
-            <input type="file" multiple hidden ref={fileInputRef} onChange={handleFileSelect} />
+            <input type="file" multiple hidden ref={fileInputRef} onChange={handleFileSelect} aria-label="Upload files" />
             {files.length === 0 ? (
-                <div className="upload-placeholder" onClick={() => fileInputRef.current.click()}>
-                    <div className="upload-icon"><Upload size={40} /></div>
+                <div
+                    className="upload-placeholder"
+                    onClick={() => fileInputRef.current.click()}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            fileInputRef.current.click();
+                        }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                >
+                    <div className="upload-icon"><Upload size={40} aria-hidden="true" /></div>
                     <h3>Click to upload or drag & drop</h3>
                     <p>Support for PDF, Images, and Documents</p>
                 </div>
             ) : (
-                <div className="file-list-container">
+                <div className="file-list-container" aria-live="polite">
                     <div className="file-list">
                         {files.map((file) => (
                             <div key={file.id} className="file-item">
                                 <div className="file-info">
-                                    <File className="file-icon" size={24} />
+                                    <File className="file-icon" size={24} aria-hidden="true" />
                                     <div className="file-details">
                                         <span className="file-name">{file.name}</span>
                                         <span className="file-size">{file.size}</span>
                                     </div>
                                 </div>
                                 <div className="file-status">
-                                    {file.status === 'ready' && <button className="remove-btn" onClick={() => removeFile(file.id)}><X size={18} /></button>}
-                                    {file.status === 'processing' && <Loader className="spinning" size={18} />}
-                                    {file.status === 'completed' && <CheckCircle className="success-icon" size={18} />}
-                                    {file.status === 'error' && <AlertCircle className="error-icon" size={18} />}
+                                    {file.status === 'ready' && (
+                                        <button
+                                            className="remove-btn"
+                                            onClick={() => removeFile(file.id)}
+                                            aria-label={`Remove ${file.name}`}
+                                            title={`Remove ${file.name}`}
+                                        >
+                                            <X size={18} aria-hidden="true" />
+                                        </button>
+                                    )}
+                                    {file.status === 'processing' && (
+                                        <>
+                                            <Loader className="spinning" size={18} aria-hidden="true" />
+                                            <span className="sr-only">Processing</span>
+                                        </>
+                                    )}
+                                    {file.status === 'completed' && (
+                                        <>
+                                            <CheckCircle className="success-icon" size={18} aria-hidden="true" />
+                                            <span className="sr-only">Completed</span>
+                                        </>
+                                    )}
+                                    {file.status === 'error' && (
+                                        <>
+                                            <AlertCircle className="error-icon" size={18} aria-hidden="true" />
+                                            <span className="sr-only">Error</span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -183,8 +218,8 @@ function FileUploader({ tool, customLayout = false }) {
                                 <button className="btn btn-primary" onClick={processFiles}>{tool.name} Now</button>
                             </div>
                         )}
-                        {processing && <button className="btn btn-primary" disabled><Loader className="spinning" size={18} /> Processing...</button>}
-                        {processedResults.length > 0 && <button className="btn btn-primary btn-success btn-full" onClick={handleDownload}><Download size={18} /> Download All</button>}
+                        {processing && <button className="btn btn-primary" disabled aria-busy="true"><Loader className="spinning" size={18} aria-hidden="true" /> Processing...</button>}
+                        {processedResults.length > 0 && <button className="btn btn-primary btn-success btn-full" onClick={handleDownload}><Download size={18} aria-hidden="true" /> Download All</button>}
                     </div>
                 </div>
             )}
