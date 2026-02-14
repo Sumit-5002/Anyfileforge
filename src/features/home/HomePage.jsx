@@ -16,13 +16,10 @@ function HomePage() {
     const navigate = useNavigate();
     const showcaseRef = useRef(null);
     const [activeTab, setActiveTab] = useState('pdf'); // 'pdf' | 'image' | 'engineer' | 'researcher'
-    const [modeFilter, setModeFilter] = useState('all'); // 'all' | 'serverless' | 'server'
+    const [isOnlineMode, setIsOnlineMode] = useState(false);
+
 
     const visibleGroups = (TOOLS[activeTab] || [])
-        .map((group) => ({
-            ...group,
-            tools: group.tools.filter((tool) => modeFilter === 'all' || tool.mode === modeFilter)
-        }))
         .filter((group) => group.tools.length > 0);
 
     const handleToolSelect = (id) => {
@@ -49,19 +46,85 @@ function HomePage() {
                         <p className="hero-subtitle">
                             {t('common.heroSubtitle')}
                         </p>
-                        <div className="hero-actions">
-                            <button
-                                className="btn btn-primary btn-large"
-                                onClick={() => showcaseRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                            >
-                                {t('common.exploreBtn')}
-                                <ArrowRight size={20} />
-                            </button>
-                            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-large">
-                                <Github size={20} />
-                                Source Code
-                            </a>
+                        {/* Mode Toggle */}
+                        <div className="hero-toggle-wrapper" style={{ marginBottom: '30px' }}>
+                            <div className="mode-toggle-pill" style={{
+                                display: 'inline-flex',
+                                background: 'var(--bg-surface-secondary)',
+                                padding: '4px',
+                                borderRadius: '999px',
+                                border: '1px solid var(--border-bright)'
+                            }}>
+                                <button
+                                    onClick={() => setIsOnlineMode(false)}
+                                    style={{
+                                        padding: '8px 20px',
+                                        borderRadius: '999px',
+                                        border: 'none',
+                                        background: !isOnlineMode ? 'var(--primary-500)' : 'transparent',
+                                        color: !isOnlineMode ? 'white' : 'var(--text-secondary)',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    <Shield size={16} />
+                                    Offline Mode
+                                </button>
+                                <button
+                                    onClick={() => setIsOnlineMode(true)}
+                                    style={{
+                                        padding: '8px 20px',
+                                        borderRadius: '999px',
+                                        border: 'none',
+                                        background: isOnlineMode ? 'var(--accent-yellow)' : 'transparent',
+                                        color: isOnlineMode ? '#482e05' : 'var(--text-secondary)',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    <Zap size={16} />
+                                    Online Mode
+                                </button>
+                            </div>
                         </div>
+
+                        {!isOnlineMode ? (
+                            <div className="hero-actions">
+                                <button
+                                    className="btn btn-primary btn-large"
+                                    onClick={() => showcaseRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                                >
+                                    {t('common.exploreBtn')}
+                                    <ArrowRight size={20} />
+                                </button>
+                                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-large">
+                                    <Github size={20} />
+                                    Source Code
+                                </a>
+                            </div>
+                        ) : (
+                            <div className="hero-actions">
+                                <div className="online-badge" style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    color: 'var(--accent-yellow)',
+                                    fontWeight: '600',
+                                    background: 'rgba(250, 204, 21, 0.1)',
+                                    padding: '8px 16px',
+                                    borderRadius: '8px'
+                                }}>
+                                    <Zap size={18} />
+                                    <span>Cloud Processing Active</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -99,26 +162,7 @@ function HomePage() {
                                     Researcher
                                 </button>
                             </div>
-                            <div className="mode-toggle">
-                                <button
-                                    className={`mode-btn ${modeFilter === 'all' ? 'active' : ''}`}
-                                    onClick={() => setModeFilter('all')}
-                                >
-                                    All Modes
-                                </button>
-                                <button
-                                    className={`mode-btn ${modeFilter === 'serverless' ? 'active' : ''}`}
-                                    onClick={() => setModeFilter('serverless')}
-                                >
-                                    Serverless
-                                </button>
-                                <button
-                                    className={`mode-btn ${modeFilter === 'server' ? 'active' : ''}`}
-                                    onClick={() => setModeFilter('server')}
-                                >
-                                    Server Mode
-                                </button>
-                            </div>
+
                             <h2 className="section-title text-center">
                                 {activeTab === 'pdf' && 'The Ultimate PDF Toolkit'}
                                 {activeTab === 'image' && 'Your Professional Photo Editor'}
@@ -142,7 +186,10 @@ function HomePage() {
                                     {catGroup.tools.map((tool) => (
                                         <ToolCard
                                             key={tool.id}
-                                            tool={tool}
+                                            tool={{
+                                                ...tool,
+                                                mode: isOnlineMode ? 'server' : tool.mode
+                                            }}
                                             onClick={() => handleToolSelect(tool.id)}
                                         />
                                     ))}

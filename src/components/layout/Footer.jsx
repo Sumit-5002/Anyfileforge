@@ -6,7 +6,7 @@ import feedbackService from '../../services/feedbackService';
 import './Footer.css';
 
 function Footer() {
-    const { t, i18n } = useTranslation();
+    const { i18n } = useTranslation();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -104,9 +104,9 @@ function Footer() {
                         <h4 className="footer-heading">AnyFileForge</h4>
                         <p className="footer-text">The ultimate local-first file utility for engineers and researchers. Privacy guaranteed by mathematics.</p>
                         <div className="social-links">
-                            <a href="https://github.com" className="social-link"><Github size={20} /></a>
-                            <a href="https://twitter.com" className="social-link"><Twitter size={20} /></a>
-                            <a href="mailto:contact@anyfileforge.com" className="social-link"><Mail size={20} /></a>
+                            <a href="https://github.com/Sumit-5002" target="_blank" rel="noopener noreferrer" className="social-link"><Github size={20} /></a>
+                            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-link"><Twitter size={20} /></a>
+                            <a href="mailto:sumitboy2005@gmail.com" className="social-link"><Mail size={20} /></a>
                         </div>
                     </div>
 
@@ -116,7 +116,8 @@ function Footer() {
                             <li><Link to="/tools">PDF Suite</Link></li>
                             <li><Link to="/tools">Image Engine</Link></li>
                             <li><Link to="/tools">Data Converter</Link></li>
-                            <li><Link to="/about">About AnyFile</Link></li>
+                            <li><Link to="/about">About AnyFileForge</Link></li>
+                            <li><Link to="/developer">About the Developer</Link></li>
                         </ul>
                     </div>
 
@@ -149,7 +150,7 @@ function Footer() {
                 </div>
 
                 <div className="footer-bottom">
-                    <p>© {new Date().getFullYear()} AnyFileForge. Built with <Heart size={14} fill="var(--primary-500)" color="var(--primary-500)" /> for researchers.</p>
+                    <p>© {new Date().getFullYear()} AnyFileForge. Built by <span style={{ color: 'var(--primary-500)', fontWeight: 'bold' }}>Group 35</span> with <Heart size={14} fill="var(--primary-500)" color="var(--primary-500)" /> for the research community.</p>
                 </div>
             </div>
         </footer>

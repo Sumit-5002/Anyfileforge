@@ -15,13 +15,13 @@ const SERVER_MODE_TOOL_IDS = new Set([
     'excel-to-pdf',
     'pp-to-pdf',
     'pdf-ocr',
-    'pdf-repair',
     'pdf-to-word',
     'pdf-to-excel',
     'pdf-to-pp',
-    'image-upscale',
-    'image-remove-bg',
-    'image-blur-face'
+    'pdf-to-jpg',
+    'pdf-edit',
+    'pdf-protect',
+    'pdf-pdfa',
 ]);
 
 const applyMode = (groups) => groups.map((group) => ({

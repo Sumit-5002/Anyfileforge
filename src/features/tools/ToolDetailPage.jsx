@@ -1,20 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ShieldCheck, Info, Crown, Building } from 'lucide-react';
-import FileUploader from '../../components/ui/FileUploader';
 import { TOOLS } from '../../data/toolsData';
+import TOOL_RUNNERS from './runners';
 import { useAuth } from '../../contexts/AuthContext';
 import './ToolDetailPage.css';
 
 function ToolDetailPage() {
     const { t } = useTranslation();
     const { toolId } = useParams();
-    const [tool, setTool] = useState(null);
     const { user, userData, loading } = useAuth();
 
-    useEffect(() => {
-        // Find tool in any category of any suite (pdf or image)
+    const tool = useMemo(() => {
         let found = null;
         Object.values(TOOLS).forEach(suite => {
             suite.forEach(group => {
@@ -25,13 +23,11 @@ function ToolDetailPage() {
             });
         });
 
-        // Fallback for safety
         if (!found && TOOLS.pdf && TOOLS.pdf[0]) {
             found = TOOLS.pdf[0].tools[0];
             found.type = TOOLS.pdf[0].category;
         }
-
-        setTool(found);
+        return found;
     }, [toolId]);
 
     if (!tool || loading) return null;
@@ -41,6 +37,7 @@ function ToolDetailPage() {
     const isLoggedIn = Boolean(user);
     const isPremium = userData?.tier === 'premium';
     const requiresLogin = isServerMode || requiresPremium;
+    const Runner = TOOL_RUNNERS[tool.id];
 
     return (
         <div className="tool-detail-page bg-mesh">
@@ -87,7 +84,7 @@ function ToolDetailPage() {
                                 </p>
                                 {requiresPremium && (
                                     <div className="server-mode-premium">
-                                <Crown size={18} color="var(--accent-yellow)" />
+                                        <Crown size={18} color="var(--accent-yellow)" />
                                         <span>Premium required for server execution</span>
                                     </div>
                                 )}
@@ -118,8 +115,26 @@ function ToolDetailPage() {
                                 </ul>
                             </div>
                         </div>
+                    ) : Runner ? (
+                        <Runner tool={tool} />
                     ) : (
-                        <FileUploader tool={tool} customLayout={true} />
+                        <div className="server-mode-card">
+                            <div className="server-mode-content">
+                                <Info size={48} color="var(--primary-500)" />
+                                <h2>Tool Coming Soon</h2>
+                                <p>
+                                    This tool is on the roadmap. We are prioritizing the most requested offline features first.
+                                </p>
+                                <div className="server-mode-actions">
+                                    <Link to="/pricing" className="btn btn-secondary">
+                                        View Plans
+                                    </Link>
+                                    <Link to="/tools" className="btn btn-primary">
+                                        Back to Tools
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
 

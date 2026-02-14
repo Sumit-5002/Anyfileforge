@@ -207,74 +207,90 @@ function PricingPage() {
                         <div className="checkout-panel">
                             <div className="checkout-header">
                                 <div>
-                                    <h2>Checkout</h2>
-                                    <p>Secure demo checkout for {checkoutPlan.name}.</p>
+                                    <h2>Secure Checkout</h2>
+                                    <p>Finalizing your {checkoutPlan.name} membership.</p>
                                 </div>
-                                <button className="btn btn-secondary" onClick={() => setCheckoutPlan(null)}>Close</button>
+                                <button className="btn-close-panel" onClick={() => setCheckoutPlan(null)}>
+                                    <X size={24} />
+                                </button>
                             </div>
 
                             <div className="checkout-grid">
                                 <div className="checkout-box">
                                     <h3>Order Summary</h3>
-                                    <div className="summary-row">
-                                        <span>Plan</span>
-                                        <span>{checkoutPlan.name}</span>
+                                    <div className="order-summary-card">
+                                        <div className="summary-row">
+                                            <span>Selected Plan</span>
+                                            <span>{checkoutPlan.name}</span>
+                                        </div>
+                                        <div className="summary-row">
+                                            <span>Price</span>
+                                            <span>{checkoutPlan.price} / {checkoutPlan.period}</span>
+                                        </div>
+                                        <div className="summary-row">
+                                            <span>Applied Discount</span>
+                                            <span style={{ color: 'var(--primary-500)' }}>-{discountPercent}%</span>
+                                        </div>
+                                        <div className="summary-total">
+                                            <span>Total Amount</span>
+                                            <span>{formatTotal(checkoutTotal)}</span>
+                                        </div>
                                     </div>
-                                    <div className="summary-row">
-                                        <span>Price</span>
-                                        <span>{checkoutPlan.price} / {checkoutPlan.period}</span>
-                                    </div>
-                                    <div className="summary-row">
-                                        <span>Discount</span>
-                                        <span>{discountPercent}%</span>
-                                    </div>
-                                    <div className="summary-total">
-                                        <span>Total</span>
-                                        <span>{formatTotal(checkoutTotal)}</span>
+
+                                    <div className="coupon-section">
+                                        <h3>Coupon Code</h3>
+                                        <div className="coupon-row">
+                                            <input
+                                                type="text"
+                                                value={couponCode}
+                                                onChange={(e) => setCouponCode(e.target.value)}
+                                                placeholder="Enter code (e.g. DEMO100)"
+                                            />
+                                            <button className="btn btn-secondary" onClick={applyCoupon}>
+                                                Apply
+                                            </button>
+                                        </div>
+                                        <p className="hint">Try <b>DEMO100</b> for a free trial checkout.</p>
                                     </div>
                                 </div>
 
                                 <div className="checkout-box">
-                                    <h3>Coupon Code</h3>
-                                    <div className="coupon-row">
-                                        <input
-                                            type="text"
-                                            value={couponCode}
-                                            onChange={(e) => setCouponCode(e.target.value)}
-                                            placeholder="DEMO100"
-                                        />
-                                        <button className="btn btn-secondary" onClick={applyCoupon}>
-                                            <BadgePercent size={16} />
-                                            Apply
+                                    <h3>Payment Details</h3>
+                                    <div className="payment-gateway-card">
+                                        <div className="gateway-info">
+                                            <CreditCard size={24} color="var(--primary-500)" />
+                                            <div>
+                                                <strong>Secure Payment via DemoPay</strong>
+                                                <p>This is a sandbox environment. No real funds are moved.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="payment-fields">
+                                            <input type="text" placeholder="Card number: 4242 4242 4242 4242" />
+                                            <div className="payment-row">
+                                                <input type="text" placeholder="MM / YY" />
+                                                <input type="text" placeholder="CVC" />
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            className="btn btn-primary btn-full btn-large"
+                                            onClick={handleDemoPayment}
+                                            disabled={paymentProcessing}
+                                        >
+                                            {paymentProcessing ? (
+                                                <><Loader size={18} className="spin" /> Processing...</>
+                                            ) : (
+                                                <>Authorize {formatTotal(checkoutTotal)} Payment</>
+                                            )}
                                         </button>
-                                    </div>
-                                    <p className="hint">Try DEMO100 for free demo checkout.</p>
-                                </div>
 
-                                <div className="checkout-box">
-                                    <h3>Payment Gateway</h3>
-                                    <div className="payment-gateway">
-                                        <CreditCard size={18} />
-                                        <div>
-                                            <strong>DemoPay (Sandbox)</strong>
-                                            <p>No real charges. Demo only.</p>
-                                        </div>
+                                        {paymentMessage && (
+                                            <div className="payment-message animated fadeIn">
+                                                {paymentMessage}
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="payment-fields">
-                                        <input type="text" placeholder="Card number (demo)" />
-                                        <div className="payment-row">
-                                            <input type="text" placeholder="MM/YY" />
-                                            <input type="text" placeholder="CVC" />
-                                        </div>
-                                    </div>
-                                    <button
-                                        className="btn btn-primary btn-full"
-                                        onClick={handleDemoPayment}
-                                        disabled={paymentProcessing}
-                                    >
-                                        {paymentProcessing ? 'Processing...' : 'Complete Demo Payment'}
-                                    </button>
-                                    {paymentMessage && <p className="payment-message">{paymentMessage}</p>}
                                 </div>
                             </div>
                         </div>

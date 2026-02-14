@@ -37,7 +37,7 @@ function ProjectsPage() {
             setDescription('');
             const data = await projectService.listProjectsForUser(user.uid);
             setProjects(data);
-        } catch (err) {
+        } catch {
             setError('Could not create project. Please try again.');
         } finally {
             setSaving(false);

@@ -226,7 +226,7 @@
 
 .input-group input {
     width: 100%;
-    padding: 14px 15px 14px 45px;
+    padding: 14px 15px 14px 60px !important;
     background: var(--bg-deep);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
@@ -234,6 +234,8 @@
     font-family: inherit;
     transition: var(--transition-smooth);
 }
+
+
 
 .input-group input:focus {
     outline: none;
@@ -243,11 +245,36 @@
 
 .input-icon {
     position: absolute;
-    left: 15px;
+    left: 18px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
+    z-index: 5;
+    pointer-events: none;
 }
+
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    transition: var(--transition-smooth);
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    color: var(--text-primary);
+}
+
 
 .btn-glow {
     box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.2);
@@ -290,7 +317,7 @@
 
 .role-select {
     width: 100%;
-    padding: 14px 15px 14px 45px;
+    padding: 14px 15px 14px 60px !important;
     background: var(--bg-deep);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
@@ -300,6 +327,8 @@
     appearance: none;
     cursor: pointer;
 }
+
+
 
 .role-select:focus {
     outline: none;

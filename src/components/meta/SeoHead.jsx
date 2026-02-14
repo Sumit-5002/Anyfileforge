@@ -9,7 +9,7 @@ const SeoHead = ({
 }) => {
     const location = useLocation();
     const currentPath = path || location.pathname;
-    const url = `https://anyfileforge.com${currentPath}`;
+    const url = `https://anyfileforge.web.app${currentPath}`;
 
     useEffect(() => {
         if (typeof document === 'undefined') return;
@@ -45,13 +45,13 @@ const SeoHead = ({
         setMeta('meta[property="og:url"]', { property: 'og:url', content: url });
         setMeta('meta[property="og:title"]', { property: 'og:title', content: title });
         setMeta('meta[property="og:description"]', { property: 'og:description', content: description });
-        setMeta('meta[property="og:image"]', { property: 'og:image', content: 'https://anyfileforge.com/og-image.jpg' });
+        setMeta('meta[property="og:image"]', { property: 'og:image', content: 'https://anyfileforge.web.app/og-image.jpg' });
 
         setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
         setMeta('meta[name="twitter:url"]', { name: 'twitter:url', content: url });
         setMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: title });
         setMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: description });
-        setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: 'https://anyfileforge.com/og-image.jpg' });
+        setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: 'https://anyfileforge.web.app/og-image.jpg' });
     }, [title, description, url, type]);
 
     return null;

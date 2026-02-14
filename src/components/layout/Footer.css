@@ -209,14 +209,24 @@
 @media (max-width: 1024px) {
     .feedback-card {
         grid-template-columns: 1fr;
-        padding: 40px;
-        gap: 40px;
+        padding: 32px 24px;
+        gap: 30px;
     }
 }
 
 @media (max-width: 768px) {
+    .footer {
+        padding: 40px 0 20px;
+        margin-top: 40px;
+    }
+
     .footer-content {
         grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    .feedback-info h2 {
+        font-size: 2rem;
     }
 }
 
@@ -227,5 +237,14 @@
 
     .form-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .feedback-card {
+        padding: 24px 16px;
+    }
+
+    .feedback-info h2 {
+        font-size: 1.75rem;
     }
 }

@@ -32,34 +32,34 @@ function ProfilePage() {
                 <div className="profile-card">
                     <div className="profile-header">
                         <div className="profile-avatar">
-                            <User size={24} />
+                            <User size={40} />
                         </div>
                         <div>
                             <h1>{userData?.displayName || user.displayName || 'Forge Member'}</h1>
-                            <p className="profile-subtitle">Manage your account and access settings.</p>
+                            <p className="profile-subtitle">Research & Engineering Member</p>
                         </div>
                     </div>
 
                     <div className="profile-grid">
                         <div className="profile-item">
-                            <Mail size={18} />
+                            <Mail size={24} />
                             <div>
-                                <span className="label">Email</span>
-                                <span className="value">{user.email || '—'}</span>
+                                <span className="label">Account Email</span>
+                                <span className="value text-glow">{user.email || '—'}</span>
                             </div>
                         </div>
                         <div className="profile-item">
-                            <ShieldCheck size={18} />
+                            <ShieldCheck size={24} />
                             <div>
-                                <span className="label">Role</span>
+                                <span className="label">Access Role</span>
                                 <span className="value">{userData?.role || 'Member'}</span>
                             </div>
                         </div>
                         <div className="profile-item">
-                            <Crown size={18} />
+                            <Crown size={24} />
                             <div>
-                                <span className="label">Plan</span>
-                                <span className="value">{userData?.tier || 'free'}</span>
+                                <span className="label">Current Tier</span>
+                                <span className="value" style={{ textTransform: 'uppercase' }}>{userData?.tier || 'free'}</span>
                             </div>
                         </div>
                     </div>

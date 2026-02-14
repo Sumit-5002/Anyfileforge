@@ -5,6 +5,7 @@ import ToolsPage from '../features/tools/ToolsPage';
 import ToolDetailPage from '../features/tools/ToolDetailPage';
 import PricingPage from '../features/pricing/PricingPage';
 import AboutPage from '../features/about/AboutPage';
+import DeveloperPage from '../features/about/DeveloperPage';
 import AuthPage from '../features/auth/AuthPage';
 import { PrivacyPage, TermsPage, LicensePage } from '../features/legal/LegalPages';
 import ProfilePage from '../features/profile/ProfilePage';
@@ -27,6 +28,7 @@ function App() {
             <Route path="/tools/:toolId" element={<ToolDetailPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/developer" element={<DeveloperPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/license" element={<LicensePage />} />

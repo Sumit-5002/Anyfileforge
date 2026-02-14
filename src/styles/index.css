@@ -56,14 +56,18 @@
   box-sizing: border-box;
 }
 
+html,
 body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
   font-family: var(--font-body);
   background-color: var(--bg-deep);
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-  overflow-x: hidden;
   color-scheme: dark;
 }
 
@@ -79,13 +83,14 @@ h6 {
 }
 
 .container {
-  width: min(100% - 3rem, 1400px);
+  width: min(100% - 2rem, 1200px);
   margin: 0 auto;
 }
 
 @media (max-width: 640px) {
   .container {
-    width: min(100% - 2rem, 1400px);
+    width: min(100% - 1.5rem, 1400px);
+    padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
   }
 }
 
@@ -174,7 +179,7 @@ textarea {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 28px;
+  padding: 10px 24px;
   font-weight: 700;
   border-radius: 99px;
   cursor: pointer;
@@ -195,8 +200,8 @@ textarea {
 }
 
 .btn-large {
-  padding: 16px 36px;
-  font-size: 1.1rem;
+  padding: 14px 28px;
+  font-size: 1rem;
 }
 
 .btn-full {
