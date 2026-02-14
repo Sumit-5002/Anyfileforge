@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from '../features/home/HomePage';
 import ToolsPage from '../features/tools/ToolsPage';
@@ -10,12 +10,56 @@ import AuthPage from '../features/auth/AuthPage';
 import { PrivacyPage, TermsPage, LicensePage } from '../features/legal/LegalPages';
 import ProfilePage from '../features/profile/ProfilePage';
 import ProjectsPage from '../features/projects/ProjectsPage';
+import { useAuth } from '../contexts/AuthContext';
+import serverProcessingService from '../services/serverProcessingService';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import ScrollToTop from './ScrollToTop';
 import './App.css';
 
+const PREMIUM_KEEP_ALIVE_MS = Number(import.meta.env.VITE_PREMIUM_KEEP_ALIVE_MS) || 8 * 60 * 1000;
+
 function App() {
+  const { userData } = useAuth();
+
+  useEffect(() => {
+    if (userData?.tier !== 'premium') return undefined;
+
+    const pingServer = async () => {
+      try {
+        const onlineMode = window.localStorage.getItem('anyfileforge_mode') === 'online';
+        if (!onlineMode) return;
+        await serverProcessingService.keepAlive();
+      } catch {
+        // Keep-alive should not block the UI on transient network failures.
+      }
+    };
+
+    pingServer();
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        pingServer();
+      }
+    }, PREMIUM_KEEP_ALIVE_MS);
+
+    const onFocus = () => {
+      pingServer();
+    };
+
+    const onModeChange = () => {
+      pingServer();
+    };
+
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('anyfileforge-mode-changed', onModeChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('anyfileforge-mode-changed', onModeChange);
+    };
+  }, [userData?.tier]);
+
   return (
     <Router>
       <ScrollToTop />

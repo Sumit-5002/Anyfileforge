@@ -33,6 +33,16 @@ const serverProcessingService = {
         return response.json();
     },
 
+    async keepAlive() {
+        const url = buildUrl(`/api/health?ts=${Date.now()}`);
+        const response = await fetch(url, {
+            method: 'GET',
+            cache: 'no-store'
+        });
+        if (!response.ok) throw new Error('Server keep-alive failed.');
+        return response.json();
+    },
+
     async mergePDFs(files = []) {
         const formData = new FormData();
         files.forEach((file) => formData.append('files', file));

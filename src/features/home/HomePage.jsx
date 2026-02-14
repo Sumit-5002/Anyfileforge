@@ -29,6 +29,7 @@ function HomePage() {
         setIsOnlineMode(online);
         if (typeof window !== 'undefined') {
             window.localStorage.setItem('anyfileforge_mode', online ? 'online' : 'offline');
+            window.dispatchEvent(new Event('anyfileforge-mode-changed'));
         }
     };
 

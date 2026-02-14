@@ -47,7 +47,10 @@ In the frontend root `.env`, set:
 
 ```env
 VITE_SERVER_URL=http://localhost:5000
+VITE_PREMIUM_KEEP_ALIVE_MS=480000
 ```
+
+`VITE_PREMIUM_KEEP_ALIVE_MS` keeps premium online mode warm-up pings active (default 8 minutes) to reduce cold starts on platforms that sleep inactive services.
 
 ## Running the Server
 
