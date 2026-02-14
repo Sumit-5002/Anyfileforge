@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ShieldCheck, Info, Crown, Building } from 'lucide-react';
@@ -10,10 +10,10 @@ import './ToolDetailPage.css';
 function ToolDetailPage() {
     const { t } = useTranslation();
     const { toolId } = useParams();
-    const [tool, setTool] = useState(null);
     const { user, userData, loading } = useAuth();
 
-    useEffect(() => {
+    // Memoize tool lookup to avoid cascading renders from useEffect + setState
+    const tool = React.useMemo(() => {
         // Find tool in any category of any suite (pdf or image)
         let found = null;
         Object.values(TOOLS).forEach(suite => {
@@ -27,11 +27,11 @@ function ToolDetailPage() {
 
         // Fallback for safety
         if (!found && TOOLS.pdf && TOOLS.pdf[0]) {
-            found = TOOLS.pdf[0].tools[0];
-            found.type = TOOLS.pdf[0].category;
+            const defaultGroup = TOOLS.pdf[0];
+            found = { ...defaultGroup.tools[0], type: defaultGroup.category };
         }
 
-        setTool(found);
+        return found;
     }, [toolId]);
 
     if (!tool || loading) return null;
