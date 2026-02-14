@@ -18,12 +18,15 @@ function HomePage() {
     const [activeTab, setActiveTab] = useState('pdf'); // 'pdf' | 'image' | 'engineer' | 'researcher'
     const [modeFilter, setModeFilter] = useState('all'); // 'all' | 'serverless' | 'server'
 
-    const visibleGroups = (TOOLS[activeTab] || [])
-        .map((group) => ({
-            ...group,
-            tools: group.tools.filter((tool) => modeFilter === 'all' || tool.mode === modeFilter)
-        }))
-        .filter((group) => group.tools.length > 0);
+    // Memoize the filtering and mapping logic to avoid unnecessary re-computations on every render
+    const visibleGroups = React.useMemo(() => {
+        return (TOOLS[activeTab] || [])
+            .map((group) => ({
+                ...group,
+                tools: group.tools.filter((tool) => modeFilter === 'all' || tool.mode === modeFilter)
+            }))
+            .filter((group) => group.tools.length > 0);
+    }, [activeTab, modeFilter]);
 
     const handleToolSelect = (id) => {
         navigate(`/tools/${id}`);
