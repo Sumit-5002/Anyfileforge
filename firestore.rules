@@ -5,7 +5,9 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null && request.auth.uid == userId
-                    && request.resource.data.tier == 'free';
+                    && request.resource.data.tier == 'free'
+                    && (!('role' in request.resource.data) || request.resource.data.role == 'user')
+                    && !('premiumSince' in request.resource.data);
       allow update: if request.auth != null && request.auth.uid == userId
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt', 'tier', 'premiumSince']);
     }
