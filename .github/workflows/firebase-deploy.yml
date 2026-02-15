@@ -23,6 +23,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          VITE_SERVER_URL: ${{ secrets.VITE_SERVER_URL }}
+          VITE_PREMIUM_KEEP_ALIVE_MS: ${{ secrets.VITE_PREMIUM_KEEP_ALIVE_MS }}
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
