@@ -1,21 +1,28 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HomePage from '../features/home/HomePage';
-import ToolsPage from '../features/tools/ToolsPage';
-import ToolDetailPage from '../features/tools/ToolDetailPage';
-import PricingPage from '../features/pricing/PricingPage';
-import AboutPage from '../features/about/AboutPage';
-import DeveloperPage from '../features/about/DeveloperPage';
-import AuthPage from '../features/auth/AuthPage';
-import { PrivacyPage, TermsPage, LicensePage } from '../features/legal/LegalPages';
-import ProfilePage from '../features/profile/ProfilePage';
-import ProjectsPage from '../features/projects/ProjectsPage';
 import { useAuth } from '../contexts/AuthContext';
 import serverProcessingService from '../services/serverProcessingService';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ScrollToTop from './ScrollToTop';
 import './App.css';
+
+// Lazy load components for performance optimization (Bolt ⚡)
+const HomePage = lazy(() => import('../features/home/HomePage'));
+const ToolsPage = lazy(() => import('../features/tools/ToolsPage'));
+const ToolDetailPage = lazy(() => import('../features/tools/ToolDetailPage'));
+const PricingPage = lazy(() => import('../features/pricing/PricingPage'));
+const AboutPage = lazy(() => import('../features/about/AboutPage'));
+const DeveloperPage = lazy(() => import('../features/about/DeveloperPage'));
+const AuthPage = lazy(() => import('../features/auth/AuthPage'));
+const ProfilePage = lazy(() => import('../features/profile/ProfilePage'));
+const ProjectsPage = lazy(() => import('../features/projects/ProjectsPage'));
+
+// Lazy load named exports
+const PrivacyPage = lazy(() => import('../features/legal/LegalPages').then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('../features/legal/LegalPages').then(m => ({ default: m.TermsPage })));
+const LicensePage = lazy(() => import('../features/legal/LegalPages').then(m => ({ default: m.LicensePage })));
 
 const PREMIUM_KEEP_ALIVE_MS = Number(import.meta.env.VITE_PREMIUM_KEEP_ALIVE_MS) || 8 * 60 * 1000;
 
@@ -66,21 +73,23 @@ function App() {
       <div className="app-container">
         <Header />
         <main className="main-content">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/tools" element={<ToolsPage />} />
-            <Route path="/tools/:toolId" element={<ToolDetailPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/developer" element={<DeveloperPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/license" element={<LicensePage />} />
-            <Route path="/login" element={<AuthPage initialMode="login" />} />
-            <Route path="/signup" element={<AuthPage initialMode="signup" />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-          </Routes>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/tools" element={<ToolsPage />} />
+              <Route path="/tools/:toolId" element={<ToolDetailPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/developer" element={<DeveloperPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/license" element={<LicensePage />} />
+              <Route path="/login" element={<AuthPage initialMode="login" />} />
+              <Route path="/signup" element={<AuthPage initialMode="signup" />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/projects" element={<ProjectsPage />} />
+            </Routes>
+          </Suspense>
         </main>
         <Footer />
       </div>
