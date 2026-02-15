@@ -7,10 +7,7 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.tier == 'free';
       allow update: if request.auth != null && request.auth.uid == userId
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt']);
-      // ⚠️ SECURITY NOTE: 'tier' is allowed to be updated from the client for demo purposes.
-      // In production, 'tier' should be in the affectedKeys().hasAny([...]) list to prevent
-      // unauthorized privilege escalation, and handled via a secure backend.
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt', 'tier', 'premiumSince']);
     }
     
     // Tools or other public data (read-only for everyone)
