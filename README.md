@@ -1,4 +1,4 @@
-# 🔨 AnyFileForge
+# ![Alt text](public/logo.png) AnyFileForge
 
 > **The Ultimate Secure File Processing Platform for Engineers & Researchers**
 
