@@ -35,34 +35,55 @@ function FileUploader({ tool, customLayout = false }) {
     /* ---------------- FILE HANDLING ---------------- */
 
     const addFiles = (newFiles) => {
-        const valid = [];
-        const invalid = [];
+    const valid = [];
+    const invalid = [];
+    const duplicates = [];
 
-        newFiles.forEach((file) => {
-            if (validateFileForTool(file)) {
-                valid.push({
-                    id: Math.random().toString(36).substr(2, 9),
-                    file,
-                    name: file.name,
-                    size: formatFileSize(file.size),
-                    status: 'ready'
-                });
-            } else {
-                invalid.push(file.name);
-            }
-        });
+    newFiles.forEach((file) => {
 
-        if (invalid.length > 0) {
-            setErrorMessage(`Invalid file type for ${tool.name}: ${invalid.join(', ')}`);
+        // 🔍 Check if file already exists
+        const alreadyExists = files.some(
+            (f) =>
+                f.file.name === file.name &&
+                f.file.size === file.size &&
+                f.file.lastModified === file.lastModified
+        );
+
+        if (alreadyExists) {
+            duplicates.push(file.name);
+            return;
+        }
+
+        if (validateFileForTool(file)) {
+            valid.push({
+                id: Math.random().toString(36).substr(2, 9),
+                file,
+                name: file.name,
+                size: formatFileSize(file.size),
+                status: 'ready'
+            });
         } else {
-            setErrorMessage('');
+            invalid.push(file.name);
         }
+    });
 
-        if (valid.length > 0) {
-            setFiles((prev) => [...prev, ...valid]);
-            setProcessedResults([]);
-        }
-    };
+    // Show proper messages
+    if (duplicates.length > 0) {
+        setErrorMessage(`Duplicate file ignored: ${duplicates.join(', ')}`);
+    }
+    else if (invalid.length > 0) {
+        setErrorMessage(`Invalid file type for ${tool.name}: ${invalid.join(', ')}`);
+    }
+    else {
+        setErrorMessage('');
+    }
+
+    if (valid.length > 0) {
+        setFiles((prev) => [...prev, ...valid]);
+        setProcessedResults([]);
+    }
+};
+
 
     const removeFile = (id) => {
         setFiles((prev) => prev.filter((f) => f.id !== id));
