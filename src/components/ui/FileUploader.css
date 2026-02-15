@@ -209,3 +209,15 @@
         margin-bottom: 20px;
     }
 }
+.upload-error {
+    margin-bottom: 12px;
+    padding: 10px;
+    border-radius: 6px;
+    background: #ffe6e6;
+    color: #b30000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+

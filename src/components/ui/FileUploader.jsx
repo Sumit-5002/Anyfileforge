@@ -5,11 +5,72 @@ import imageService from '../../services/imageService';
 import './FileUploader.css';
 
 function FileUploader({ tool, customLayout = false }) {
+    const [errorMessage, setErrorMessage] = useState('');
     const [files, setFiles] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [processedResults, setProcessedResults] = useState([]);
     const fileInputRef = useRef(null);
+
+    /* ---------------- FILE SIZE FORMATTER (Moved Up — must exist before use) ---------------- */
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    };
+
+    /* ---------------- VALIDATION ---------------- */
+
+    const isValidPDF = (file) => file.type === 'application/pdf';
+    const isValidImage = (file) => file.type.startsWith('image/');
+
+    const validateFileForTool = (file) => {
+        if (tool.id.startsWith('pdf')) return isValidPDF(file);
+        if (tool.id.startsWith('image')) return isValidImage(file);
+        return true;
+    };
+
+    /* ---------------- FILE HANDLING ---------------- */
+
+    const addFiles = (newFiles) => {
+        const valid = [];
+        const invalid = [];
+
+        newFiles.forEach((file) => {
+            if (validateFileForTool(file)) {
+                valid.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    file,
+                    name: file.name,
+                    size: formatFileSize(file.size),
+                    status: 'ready'
+                });
+            } else {
+                invalid.push(file.name);
+            }
+        });
+
+        if (invalid.length > 0) {
+            setErrorMessage(`Invalid file type for ${tool.name}: ${invalid.join(', ')}`);
+        } else {
+            setErrorMessage('');
+        }
+
+        if (valid.length > 0) {
+            setFiles((prev) => [...prev, ...valid]);
+            setProcessedResults([]);
+        }
+    };
+
+    const removeFile = (id) => {
+        setFiles((prev) => prev.filter((f) => f.id !== id));
+        setProcessedResults([]);
+        setErrorMessage('');
+    };
+
+    /* ---------------- DRAG EVENTS ---------------- */
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -24,39 +85,14 @@ function FileUploader({ tool, customLayout = false }) {
     const handleDrop = (e) => {
         e.preventDefault();
         setIsDragging(false);
-        const droppedFiles = Array.from(e.dataTransfer.files);
-        addFiles(droppedFiles);
+        addFiles(Array.from(e.dataTransfer.files));
     };
 
     const handleFileSelect = (e) => {
-        const selectedFiles = Array.from(e.target.files);
-        addFiles(selectedFiles);
+        addFiles(Array.from(e.target.files));
     };
 
-    const addFiles = (newFiles) => {
-        const fileObjects = newFiles.map((file) => ({
-            id: Math.random().toString(36).substr(2, 9),
-            file,
-            name: file.name,
-            size: formatFileSize(file.size),
-            status: 'ready'
-        }));
-        setFiles((prev) => [...prev, ...fileObjects]);
-        setProcessedResults([]);
-    };
-
-    const removeFile = (id) => {
-        setFiles((prev) => prev.filter((f) => f.id !== id));
-        setProcessedResults([]);
-    };
-
-    const formatFileSize = (bytes) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-    };
+    /* ---------------- PROCESSING ---------------- */
 
     const processFiles = async () => {
         setProcessing(true);
@@ -67,39 +103,61 @@ function FileUploader({ tool, customLayout = false }) {
                 setProcessedResults([result]);
                 setFiles(prev => prev.map(f => ({ ...f, status: 'completed' })));
             }
+
             else if (tool.id === 'pdf-split') {
                 const file = files[0].file;
                 const results = await pdfService.splitPDF(file);
                 setProcessedResults(results);
                 setFiles(prev => prev.map(f => ({ ...f, status: 'completed' })));
             }
-            else if (tool.id === 'image-convert' || tool.id === 'image-compress') {
+
+            else if (tool.id.startsWith('image')) {
                 const results = [];
+
                 for (let i = 0; i < files.length; i++) {
-                    setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'processing' } : f));
+                    setFiles(prev => prev.map((f, idx) =>
+                        idx === i ? { ...f, status: 'processing' } : f
+                    ));
+
                     const format = tool.id === 'image-convert' ? 'image/png' : 'image/jpeg';
                     const quality = tool.id === 'image-compress' ? 0.6 : 0.9;
+
                     const result = await imageService.convertImage(files[i].file, format, quality);
+
                     results.push({ blob: result, originalName: files[i].name, format });
-                    setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed' } : f));
+
+                    setFiles(prev => prev.map((f, idx) =>
+                        idx === i ? { ...f, status: 'completed' } : f
+                    ));
                 }
+
                 setProcessedResults(results);
             }
         } catch (error) {
             console.error('Processing error:', error);
             setFiles(prev => prev.map(f => ({ ...f, status: 'error' })));
+            setErrorMessage('Processing failed. Please try again.');
         } finally {
             setProcessing(false);
         }
     };
 
+    /* ---------------- DOWNLOAD ---------------- */
+
     const handleDownload = () => {
         if (processedResults.length === 0) return;
+
         if (tool.id === 'pdf-merge') {
             pdfService.downloadPDF(processedResults[0], 'merged_anyfileforge.pdf');
-        } else if (tool.id === 'pdf-split') {
-            processedResults.forEach((data, index) => pdfService.downloadPDF(data, `page_${index + 1}.pdf`));
-        } else if (tool.id.startsWith('image-')) {
+        }
+
+        else if (tool.id === 'pdf-split') {
+            processedResults.forEach((data, index) =>
+                pdfService.downloadPDF(data, `page_${index + 1}.pdf`)
+            );
+        }
+
+        else if (tool.id.startsWith('image')) {
             processedResults.forEach((res) => {
                 const ext = res.format.split('/')[1];
                 imageService.downloadBlob(res.blob, `${res.originalName.split('.')[0]}_forge.${ext}`);
@@ -107,39 +165,7 @@ function FileUploader({ tool, customLayout = false }) {
         }
     };
 
-    if (files.length === 0 && customLayout) {
-        return (
-            <div
-                className={`massive-uploader ${isDragging ? 'dragging' : ''}`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-            >
-                <div className="massive-uploader-inner">
-                    <div className="massive-button-group">
-                        <button
-                            className="btn btn-primary massive-select-btn"
-                            onClick={() => fileInputRef.current.click()}
-                        >
-                            Select {tool.name.split(' ')[0]} files
-                        </button>
-
-                        <div className="cloud-options-side">
-                            <button className="cloud-btn-circle" title="Google Drive">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="Drive" />
-                            </button>
-                            <button className="cloud-btn-circle" title="Dropbox">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Dropbox_Icon.svg" alt="Dropbox" />
-                            </button>
-                        </div>
-                    </div>
-
-                    <p className="massive-drop-text">or drop PDFs here</p>
-                    <input type="file" multiple hidden ref={fileInputRef} onChange={handleFileSelect} />
-                </div>
-            </div>
-        );
-    }
+    /* ---------------- RENDER ---------------- */
 
     return (
         <div
@@ -149,44 +175,46 @@ function FileUploader({ tool, customLayout = false }) {
             onDrop={handleDrop}
         >
             <input type="file" multiple hidden ref={fileInputRef} onChange={handleFileSelect} />
+
+            {errorMessage && (
+                <div className="upload-error">
+                    <AlertCircle size={18} />
+                    {errorMessage}
+                </div>
+            )}
+
             {files.length === 0 ? (
                 <div className="upload-placeholder" onClick={() => fileInputRef.current.click()}>
-                    <div className="upload-icon"><Upload size={40} /></div>
+                    <Upload size={40} />
                     <h3>Click to upload or drag & drop</h3>
-                    <p>Support for PDF, Images, and Documents</p>
                 </div>
             ) : (
-                <div className="file-list-container">
+                <>
                     <div className="file-list">
                         {files.map((file) => (
                             <div key={file.id} className="file-item">
-                                <div className="file-info">
-                                    <File className="file-icon" size={24} />
-                                    <div className="file-details">
-                                        <span className="file-name">{file.name}</span>
-                                        <span className="file-size">{file.size}</span>
-                                    </div>
-                                </div>
-                                <div className="file-status">
-                                    {file.status === 'ready' && <button className="remove-btn" onClick={() => removeFile(file.id)}><X size={18} /></button>}
-                                    {file.status === 'processing' && <Loader className="spinning" size={18} />}
-                                    {file.status === 'completed' && <CheckCircle className="success-icon" size={18} />}
-                                    {file.status === 'error' && <AlertCircle className="error-icon" size={18} />}
-                                </div>
+                                <span>{file.name}</span>
+                                <button onClick={() => removeFile(file.id)}>
+                                    <X size={18} />
+                                </button>
                             </div>
                         ))}
                     </div>
-                    <div className="uploader-actions">
-                        {!processing && processedResults.length === 0 && (
-                            <div className="action-row">
-                                <button className="btn btn-secondary" onClick={() => setFiles([])}>Clear All</button>
-                                <button className="btn btn-primary" onClick={processFiles}>{tool.name} Now</button>
-                            </div>
-                        )}
-                        {processing && <button className="btn btn-primary" disabled><Loader className="spinning" size={18} /> Processing...</button>}
-                        {processedResults.length > 0 && <button className="btn btn-primary btn-success btn-full" onClick={handleDownload}><Download size={18} /> Download All</button>}
-                    </div>
-                </div>
+
+                    <button
+                        className="btn btn-primary"
+                        onClick={processFiles}
+                        disabled={files.length === 0 || processing}
+                    >
+                        {processing ? 'Processing...' : `${tool.name} Now`}
+                    </button>
+
+                    {processedResults.length > 0 && (
+                        <button className="btn btn-success" onClick={handleDownload}>
+                            <Download size={18} /> Download
+                        </button>
+                    )}
+                </>
             )}
         </div>
     );
