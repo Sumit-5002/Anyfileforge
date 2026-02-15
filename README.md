@@ -1,4 +1,4 @@
-# ![Alt text](public/logo.png) AnyFileForge
+# <img src="public/logo.png" alt="Logo" width="50" height="50"> AnyFileForge
 
 > **The Ultimate Secure File Processing Platform for Engineers & Researchers**
 
