@@ -124,10 +124,14 @@ function GenericFileTool({
             <button
                 type="button"
                 className={`tool-dropzone ${isDragging ? 'dragging' : ''}`}
-                onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
+                onDragOver={(event) => {
+                    event.preventDefault();
+                    setIsDragging(true);
+                }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => inputRef.current?.click()}
+                aria-label="Upload files"
             >
                 <Upload size={36} aria-hidden="true" />
                 <span>
@@ -135,8 +139,15 @@ function GenericFileTool({
                     <span className="tool-dropzone-subtitle">{isServerMode ? 'or click to browse (online mode)' : 'or click to browse (offline mode)'}</span>
                 </span>
             </button>
-            <input ref={inputRef} type="file" multiple={multiple} accept={accept}
-                onChange={(event) => handleFiles(event.target.files)} style={{ display: 'none' }} aria-label="Upload files" />
+            <input
+                ref={inputRef}
+                type="file"
+                multiple={multiple}
+                accept={accept}
+                onChange={(event) => handleFiles(event.target.files)}
+                style={{ display: 'none' }}
+                aria-hidden="true"
+            />
             {isServerMode && (
                 <div className="tool-cloud-row">
                     <span className="tool-cloud-label">Cloud sources (online mode):</span>

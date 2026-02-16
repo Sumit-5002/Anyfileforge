@@ -15,8 +15,6 @@
     align-items: center;
     justify-content: space-between;
     height: 100%;
-    width: 100%;
-    padding: 0 40px;
 }
 
 .logo-container {
@@ -148,11 +146,11 @@
     left: 50%;
     transform: translateX(-50%);
     background: var(--bg-surface);
-    width: min(850px, 95vw);
+    width: min(900px, 95vw);
     box-shadow: var(--shadow-premium);
     border: 1px solid var(--border-bright);
     border-radius: var(--radius-lg);
-    padding: 16px;
+    padding: 24px;
     z-index: 1000;
     display: block;
 }
@@ -160,7 +158,7 @@
 .mega-menu-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 24px;
 }
 
 .mega-col {
@@ -324,10 +322,6 @@
 }
 
 @media (max-width: 1024px) {
-    .header-container {
-        padding: 0 16px;
-    }
-
     .header {
         background: #020617 !important;
         backdrop-filter: none !important;

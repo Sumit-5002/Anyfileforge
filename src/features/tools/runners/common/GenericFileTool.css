@@ -35,13 +35,18 @@
 
 .tool-dropzone:focus-visible { outline: 2px solid var(--primary-500); outline-offset: 4px; }
 
+.tool-dropzone-subtitle { display: block; color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+
 .tool-dropzone.dragging,
 .tool-dropzone:hover {
     border-color: var(--primary-500);
     background: rgba(var(--primary-rgb), 0.1);
 }
 
-.tool-dropzone-subtitle { display: block; color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+.tool-dropzone span {
+    display: block;
+    color: var(--text-muted);
+}
 
 .tool-cloud-row {
     display: grid;
