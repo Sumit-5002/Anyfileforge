@@ -15,7 +15,7 @@ const downloadBlob = (blob, filename) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
 const downloadText = (text, filename) => {
@@ -121,7 +121,8 @@ function GenericFileTool({
                 <p>{tool.description}</p>
             </div>
 
-            <div
+            <button
+                type="button"
                 className={`tool-dropzone ${isDragging ? 'dragging' : ''}`}
                 onDragOver={(event) => {
                     event.preventDefault();
@@ -130,29 +131,23 @@ function GenericFileTool({
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => inputRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        inputRef.current?.click();
-                    }
-                }}
+                aria-label={`Upload files for ${tool.name}`}
             >
                 <Upload size={36} aria-hidden="true" />
-                <div>
+                <span>
                     <strong>Drop files here</strong>
-                    <span>{isServerMode ? 'or click to browse (online mode)' : 'or click to browse (offline mode)'}</span>
-                </div>
-                <input
-                    ref={inputRef}
-                    type="file"
-                    multiple={multiple}
-                    accept={accept}
-                    onChange={(event) => handleFiles(event.target.files)}
-                    hidden
-                />
-            </div>
+                    <span className="tool-dropzone-subtitle">{isServerMode ? 'or click to browse (online mode)' : 'or click to browse (offline mode)'}</span>
+                </span>
+            </button>
+            <input
+                ref={inputRef}
+                type="file"
+                multiple={multiple}
+                accept={accept}
+                onChange={(event) => handleFiles(event.target.files)}
+                style={{ display: 'none' }}
+                aria-hidden="true"
+            />
             {isServerMode && (
                 <div className="tool-cloud-row">
                     <span className="tool-cloud-label">Cloud sources (online mode):</span>
