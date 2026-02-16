@@ -121,38 +121,22 @@ function GenericFileTool({
                 <p>{tool.description}</p>
             </div>
 
-            <div
+            <button
+                type="button"
                 className={`tool-dropzone ${isDragging ? 'dragging' : ''}`}
-                onDragOver={(event) => {
-                    event.preventDefault();
-                    setIsDragging(true);
-                }}
+                onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => inputRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        inputRef.current?.click();
-                    }
-                }}
             >
                 <Upload size={36} aria-hidden="true" />
-                <div>
+                <span>
                     <strong>Drop files here</strong>
-                    <span>{isServerMode ? 'or click to browse (online mode)' : 'or click to browse (offline mode)'}</span>
-                </div>
-                <input
-                    ref={inputRef}
-                    type="file"
-                    multiple={multiple}
-                    accept={accept}
-                    onChange={(event) => handleFiles(event.target.files)}
-                    hidden
-                />
-            </div>
+                    <span className="tool-dropzone-subtitle">{isServerMode ? 'or click to browse (online mode)' : 'or click to browse (offline mode)'}</span>
+                </span>
+            </button>
+            <input ref={inputRef} type="file" multiple={multiple} accept={accept}
+                onChange={(event) => handleFiles(event.target.files)} style={{ display: 'none' }} aria-label="Upload files" />
             {isServerMode && (
                 <div className="tool-cloud-row">
                     <span className="tool-cloud-label">Cloud sources (online mode):</span>

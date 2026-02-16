@@ -27,7 +27,13 @@
     cursor: pointer;
     transition: var(--transition-smooth);
     background: rgba(255, 255, 255, 0.02);
+    width: 100%;
+    appearance: none;
+    font-family: inherit;
+    color: inherit;
 }
+
+.tool-dropzone:focus-visible { outline: 2px solid var(--primary-500); outline-offset: 4px; }
 
 .tool-dropzone.dragging,
 .tool-dropzone:hover {
@@ -35,10 +41,7 @@
     background: rgba(var(--primary-rgb), 0.1);
 }
 
-.tool-dropzone span {
-    display: block;
-    color: var(--text-muted);
-}
+.tool-dropzone-subtitle { display: block; color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
 
 .tool-cloud-row {
     display: grid;

@@ -9,3 +9,7 @@
 ## 2025-01-24 - [Semantic Buttons for ToolCards]
 **Learning:** Using semantic `<button>` elements for interactive cards is superior to `div` with `role="button"` because it provides native Enter/Space support and simpler focus management. However, it requires resetting default button styles (appearance, font, alignment) and ensuring inner content uses `span` instead of `div` for valid HTML.
 **Action:** Prefer `<button>` for card-like interactive elements and use `<span>` for its internal layout structure.
+
+## 2025-01-24 - [Semantic File Dropzones]
+**Learning:** Converting file dropzones from `div` to `<button>` significantly improves accessibility but requires careful handling of nested `<input>` elements. Since `<button>` cannot contain other interactive elements like `<input>`, the file input must be a sibling, not a child.
+**Action:** Always move `<input type="file">` to be a sibling of the trigger `<button>` to maintain valid HTML while improving keyboard accessibility.

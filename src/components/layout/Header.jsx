@@ -58,7 +58,7 @@ function Header() {
 
     return (
         <header className="header" onMouseLeave={() => !isMobile && setActiveDropdown(null)}>
-            <div className="container header-container">
+            <div className="header-container">
                 {/* Desktop Logo */}
                 <div className="desktop-only">
                     <Logo onClick={handleLogoClick} />
