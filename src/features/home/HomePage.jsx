@@ -9,10 +9,12 @@ import {
 import ToolCard from '../../components/ui/ToolCard';
 import { TOOLS } from '../../data/toolsData';
 import SeoHead from '../../components/meta/SeoHead';
+import { useAuth } from '../../contexts/AuthContext';
 import './HomePage.css';
 
 function HomePage() {
     const { t } = useTranslation();
+    const { userData } = useAuth();
     const navigate = useNavigate();
     const showcaseRef = useRef(null);
     const [activeTab, setActiveTab] = useState('pdf'); // 'pdf' | 'image' | 'engineer' | 'researcher'
@@ -46,8 +48,8 @@ function HomePage() {
             <div className="home-page bg-mesh">
                 {/* Hero Section */}
                 <section className="hero bg-grid">
-                    <div className="container hero-content fade-in">
-                        <div className="hero-badge">
+                    <div className="container hero-content reveal">
+                        <div className="hero-badge float">
                             <Star size={14} fill="currentColor" />
                             <span>The Engineer's Choice for Any File</span>
                         </div>
@@ -100,7 +102,7 @@ function HomePage() {
                                     }}
                                 >
                                     <Zap size={16} />
-                                    Online Mode (Paid)
+                                    {userData?.tier === 'premium' ? 'Online Mode (Premium)' : 'Online Mode (Paid)'}
                                 </button>
                             </div>
                         </div>
@@ -143,6 +145,21 @@ function HomePage() {
                 {/* Tools Showcase */}
                 <section ref={showcaseRef} className="tools-showcase bg-grid">
                     <div className="container">
+                        <div className="development-banner" style={{
+                            background: 'rgba(var(--primary-rgb), 0.1)',
+                            border: '1px solid rgba(var(--primary-rgb), 0.2)',
+                            borderRadius: '12px',
+                            padding: '12px 20px',
+                            marginBottom: '30px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            fontSize: '0.9rem',
+                            color: 'var(--text-secondary)'
+                        }}>
+                            <FlaskConical size={18} color="var(--primary-500)" />
+                            <span><strong>Development Note:</strong> We are actively migrating all tools to a 100% Local-First architecture. Some advanced server-side features are being rewritten for browser-native execution.</span>
+                        </div>
                         <div className="showcase-header">
                             <div className="tab-switcher">
                                 <button
@@ -209,7 +226,7 @@ function HomePage() {
                             </div>
                         ))}
 
-                        <div className="workflow-teaser card fade-in">
+                        <div className="workflow-teaser card card-sweep fade-in">
                             <div className="workflow-content">
                                 <Layers size={32} color="var(--primary-500)" />
                                 <div className="workflow-text">
@@ -229,7 +246,7 @@ function HomePage() {
                 <section className="features-section">
                     <div className="container">
                         <div className="features-grid">
-                            <div className="feature-card card slide-up" style={{ animationDelay: '0.1s' }}>
+                            <div className="feature-card card card-sweep slide-up" style={{ animationDelay: '0.1s' }}>
                                 <div className="feature-icon-wrapper">
                                     <Shield size={24} />
                                 </div>
@@ -238,7 +255,7 @@ function HomePage() {
                                     Zero data retention. Your files are processed locally using modern client-side technologies.
                                 </p>
                             </div>
-                            <div className="feature-card card slide-up" style={{ animationDelay: '0.2s' }}>
+                            <div className="feature-card card card-sweep slide-up" style={{ animationDelay: '0.2s' }}>
                                 <div className="feature-icon-wrapper">
                                     <Zap size={24} />
                                 </div>
@@ -247,7 +264,7 @@ function HomePage() {
                                     No waiting in queues. Direct processing for immediate productivity spikes in your workflow.
                                 </p>
                             </div>
-                            <div className="feature-card card slide-up" style={{ animationDelay: '0.3s' }}>
+                            <div className="feature-card card card-sweep slide-up" style={{ animationDelay: '0.3s' }}>
                                 <div className="feature-icon-wrapper">
                                     <Lock size={24} />
                                 </div>

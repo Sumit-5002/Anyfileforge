@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { Type, Opacity, RotateCw, Type as FontSizeIcon } from 'lucide-react';
+import { Type, Sun, RotateCw } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
 function PdfWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
@@ -58,7 +58,7 @@ function PdfWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     </div>
 
                     <div className="tool-field">
-                        <label><FontSizeIcon size={14} /> Font Size ({size}px)</label>
+                        <label><Type size={14} /> Font Size ({size}px)</label>
                         <input
                             type="range"
                             min="12"
@@ -70,7 +70,7 @@ function PdfWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
 
                     <div className="tool-inline">
                         <div className="tool-field">
-                            <label><Opacity size={14} /> Opacity</label>
+                            <label><Sun size={14} /> Opacity</label>
                             <input
                                 type="number"
                                 step="0.05"

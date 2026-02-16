@@ -204,10 +204,17 @@ function Header() {
                                 <div className="menu-comp__section border-top">
                                     <h4 className="nav__title">OTHER PRODUCTS</h4>
                                     <div className="navbar__item">
-                                        <div className="navbar__item__icon" style={{ backgroundColor: '#f5f5f5' }}><Zap size={20} color="#666" /></div>
+                                        <div className="navbar__item__icon"><Cpu size={20} /></div>
                                         <div className="navbar__item__content">
-                                            <div className="navbar__item__title">Coming Soon</div>
-                                            <div className="navbar__item__description">More powerful tools are on the way!</div>
+                                            <div className="navbar__item__title">AnyForge AI</div>
+                                            <div className="navbar__item__description">Smart document analysis & automation (Coming Soon)</div>
+                                        </div>
+                                    </div>
+                                    <div className="navbar__item">
+                                        <div className="navbar__item__icon"><Code size={20} /></div>
+                                        <div className="navbar__item__content">
+                                            <div className="navbar__item__title">AnyForge API</div>
+                                            <div className="navbar__item__description">Developer SDK for local file processing (Coming Soon)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -215,35 +222,32 @@ function Header() {
                                 {/* Solutions Section */}
                                 <div className="menu-comp__section border-top">
                                     <h4 className="nav__title">SOLUTIONS</h4>
-                                    <Link to="/pricing" className="navbar__item" onClick={() => setIsMenuOpen(false)}>
-                                        <div className="navbar__item__icon" style={{ backgroundColor: '#1e293b' }}><Briefcase size={20} color="white" /></div>
+                                    <div className="navbar__item">
+                                        <div className="navbar__item__icon"><Briefcase size={20} /></div>
                                         <div className="navbar__item__content">
-                                            <div className="navbar__item__title">Business</div>
-                                            <div className="navbar__item__description">Streamlined PDF editing and workflows for business teams</div>
+                                            <div className="navbar__item__title">AnyForge Business</div>
+                                            <div className="navbar__item__description">Streamlined PDF editing and workflows for teams (Coming Soon)</div>
                                         </div>
-                                        <div className="navbar__item__go"><ChevronRight size={16} /></div>
-                                    </Link>
+                                    </div>
                                 </div>
 
                                 {/* Applications */}
                                 <div className="menu-comp__section border-top">
                                     <h4 className="nav__title">APPLICATIONS</h4>
-                                    <Link to="/about" className="navbar__item" onClick={() => setIsMenuOpen(false)}>
-                                        <div className="navbar__item__icon" style={{ backgroundColor: '#f1f5f9' }}><Monitor size={20} color="#475569" /></div>
+                                    <div className="navbar__item">
+                                        <div className="navbar__item__icon"><Monitor size={20} /></div>
                                         <div className="navbar__item__content">
                                             <div className="navbar__item__title">Desktop App</div>
-                                            <div className="navbar__item__description">Available for Mac and Windows</div>
+                                            <div className="navbar__item__description">Native Windows & Mac experience (Coming Soon)</div>
                                         </div>
-                                        <div className="navbar__item__go"><ChevronRight size={16} /></div>
-                                    </Link>
-                                    <Link to="/about" className="navbar__item" onClick={() => setIsMenuOpen(false)}>
-                                        <div className="navbar__item__icon" style={{ backgroundColor: '#f1f5f9' }}><Smartphone size={20} color="#475569" /></div>
+                                    </div>
+                                    <div className="navbar__item">
+                                        <div className="navbar__item__icon"><Smartphone size={20} /></div>
                                         <div className="navbar__item__content">
                                             <div className="navbar__item__title">Mobile App</div>
-                                            <div className="navbar__item__description">Available for iOS and Android</div>
+                                            <div className="navbar__item__description">Forge files on iOS & Android (Coming Soon)</div>
                                         </div>
-                                        <div className="navbar__item__go"><ChevronRight size={16} /></div>
-                                    </Link>
+                                    </div>
                                 </div>
 
                                 {/* General Links */}

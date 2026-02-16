@@ -198,14 +198,17 @@
     transform: translateX(5px);
 }
 
-.mega-ico.navbar__item__icon {
+.navbar__item__icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     flex-shrink: 0;
+    transition: var(--transition-smooth);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 
@@ -605,17 +608,29 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 12px 16px;
-    margin: 0 -16px;
+    padding: 14px 18px;
+    margin: 4px 0;
     text-decoration: none;
     color: var(--text-secondary);
     border-radius: 12px;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    border: 1px solid transparent;
 }
 
 .navbar__item:hover {
-    background: #f8fafc;
+    background: var(--bg-hover);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.navbar__item:hover .navbar__item__title {
+    color: var(--primary-500);
+}
+
+.navbar__item:hover .navbar__item__icon {
+    border-color: var(--primary-500);
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary-500);
 }
 
 button.navbar__item {
@@ -706,7 +721,7 @@ button.navbar__item {
 .navbar__item__title {
     font-size: 0.95rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #ffffff;
 }
 
 .navbar__item__description {

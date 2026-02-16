@@ -11,19 +11,20 @@
     text-align: left;
     height: 100%;
     cursor: pointer;
-    background: var(--bg-surface);
+    background: #0d1221;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     position: relative;
     overflow: hidden;
     transition: var(--transition-smooth);
+    z-index: 1;
 }
 
 .tool-card:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-bright);
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-premium);
+    background: #151c33;
+    border-color: rgba(var(--primary-rgb), 0.4);
+    transform: translateY(-8px);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
 }
 
 .tool-card:focus-visible {
@@ -47,7 +48,8 @@
 }
 
 .tool-card:hover .tool-icon {
-    transform: scale(1.1) rotate(5deg);
+    transform: scale(1.15) rotate(8deg);
+    filter: drop-shadow(0 0 10px rgba(var(--primary-rgb), 0.3));
 }
 
 .tool-name {
@@ -109,7 +111,25 @@
     border-color: rgba(var(--accent-rgb), 0.45);
 }
 
-/* Accent Glow on Hover */
+/* Accent Glow on Hover - Spotlight effect */
+.tool-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(800px circle at 100% 0%, rgba(var(--primary-rgb), 0.08), transparent 40%);
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.tool-card:hover::before {
+    opacity: 1;
+}
+
 .tool-card::after {
     content: '';
     position: absolute;
@@ -117,6 +137,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.03), transparent 70%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, transparent 50%, rgba(255, 255, 255, 0.01) 100%);
     pointer-events: none;
+    z-index: -1;
 }

@@ -178,7 +178,7 @@
 .divider {
     text-align: center;
     position: relative;
-    margin-bottom: 32px;
+    margin: 10px 0 24px;
 }
 
 .divider::before {
@@ -188,7 +188,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: var(--border-subtle);
+    background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
     z-index: 1;
 }
 
@@ -196,11 +196,12 @@
     position: relative;
     z-index: 2;
     background: var(--bg-surface);
-    padding: 0 15px;
-    font-size: 0.7rem;
-    font-weight: 800;
+    padding: 0 16px;
+    font-size: 0.65rem;
+    font-weight: 900;
     color: var(--text-muted);
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .auth-error {

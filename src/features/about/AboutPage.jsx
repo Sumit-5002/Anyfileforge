@@ -51,6 +51,20 @@ function AboutPage() {
                             <strong> free offline serverless processing</strong> and
                             <strong> paid online server processing</strong> for large or advanced jobs.
                         </p>
+                        <div className="dev-notice-box" style={{
+                            marginTop: '24px',
+                            padding: '16px',
+                            background: 'rgba(250, 204, 21, 0.05)',
+                            border: '1px solid rgba(250, 204, 21, 0.2)',
+                            borderRadius: '8px',
+                            fontSize: '0.9rem',
+                            color: 'var(--accent-yellow)',
+                            maxWidth: '600px',
+                            marginInline: 'auto',
+                            textAlign: 'center'
+                        }}>
+                            <strong>Beta Phase:</strong> Our mission is 100% Local-First. Currently, 70% of tools run entirely in-browser. We are engineering the remaining 30% to move from server-side to client-side WebAssembly.
+                        </div>
                     </div>
                 </section>
 

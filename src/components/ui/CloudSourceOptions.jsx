@@ -24,7 +24,32 @@ const CLOUD_SOURCES = [
     }
 ];
 
-function CloudSourceOptions({ layout = 'side' }) {
+import cloudService from '../../services/cloudService';
+
+function CloudSourceOptions({ layout = 'side', onFilesSelected }) {
+    const handleCloudPick = async (key) => {
+        try {
+            let files = [];
+            if (key === 'gdrive') {
+                files = await cloudService.pickFromGoogleDrive();
+            } else if (key === 'dropbox') {
+                files = await cloudService.pickFromDropbox();
+            } else {
+                alert('Integration coming soon!');
+                return;
+            }
+
+            if (files && files.length > 0) {
+                onFilesSelected(files);
+            }
+        } catch (error) {
+            console.error('Cloud selection error:', error);
+            if (error.message !== 'Picker cancelled' && error.message !== 'Dropbox cancelled') {
+                alert(`Error: ${error.message}`);
+            }
+        }
+    };
+
     return (
         <div className={`cloud-options ${layout === 'inline' ? 'inline' : 'side'}`}>
             {CLOUD_SOURCES.map((source) => (
@@ -34,7 +59,7 @@ function CloudSourceOptions({ layout = 'side' }) {
                     className={`cloud-btn-circle ${source.text ? 'cloud-btn-circle--text' : ''}`}
                     title={`${source.name} (Online mode - Paid)`}
                     aria-label={`Upload from ${source.name} (Online mode - Paid)`}
-                    onClick={() => alert(`${source.name} integration is coming soon for Premium users!`)}
+                    onClick={() => handleCloudPick(source.key)}
                 >
                     {source.icon ? (
                         <img src={source.icon} alt="" aria-hidden="true" />

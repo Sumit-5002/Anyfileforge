@@ -51,7 +51,7 @@ function FileUploader({
                         Select {tool?.name || 'File'}
                     </button>
 
-                    {isServerMode && <CloudSourceOptions layout="side" />}
+                    {isServerMode && <CloudSourceOptions layout="side" onFilesSelected={handleFiles} />}
                 </div>
 
                 <p className="massive-drop-text">

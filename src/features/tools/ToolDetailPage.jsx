@@ -14,7 +14,7 @@ function ToolDetailPage() {
     const { t } = useTranslation();
     const { toolId } = useParams();
     const [searchParams] = useSearchParams();
-    const { user, loading } = useAuth();
+    const { user, userData, loading } = useAuth();
 
     const tool = useMemo(() => {
         let found = null;
@@ -138,13 +138,18 @@ function ToolDetailPage() {
                                         >
                                             Try Online Mode
                                         </button>
-                                    ) : (
-                                        <button
-                                            className="btn btn-primary"
-                                            onClick={() => window.location.href = '/login'}
-                                        >
+                                    ) : !isLoggedIn ? (
+                                        <Link to="/login" className="btn btn-primary">
                                             Connect to Server
-                                        </button>
+                                        </Link>
+                                    ) : userData?.tier !== 'premium' ? (
+                                        <Link to="/pricing" className="btn btn-primary">
+                                            Upgrade to Premium
+                                        </Link>
+                                    ) : (
+                                        <div className="btn btn-primary disabled" style={{ cursor: 'default', opacity: 0.8 }}>
+                                            Server Active
+                                        </div>
                                     )}
                                     <Link to="/pricing" className="btn btn-secondary">
                                         View Plans
