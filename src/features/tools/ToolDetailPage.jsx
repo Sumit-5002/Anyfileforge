@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, Suspense } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ShieldCheck, Info, Crown, Building } from 'lucide-react';
 import { TOOLS } from '../../data/toolsData';
 import TOOL_RUNNERS from './runners';
 import { useAuth } from '../../contexts/AuthContext';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import './ToolDetailPage.css';
 
 function ToolDetailPage() {
@@ -78,7 +80,11 @@ function ToolDetailPage() {
                             </div>
                         </div>
                     ) : Runner ? (
-                        <Runner tool={effectiveTool} />
+                        <ErrorBoundary>
+                            <Suspense fallback={<LoadingSpinner />}>
+                                <Runner tool={effectiveTool} />
+                            </Suspense>
+                        </ErrorBoundary>
                     ) : isServerMode ? (
                         <div className="server-mode-card">
                             <div className="server-mode-content">
