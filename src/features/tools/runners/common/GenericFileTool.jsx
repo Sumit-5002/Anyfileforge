@@ -15,7 +15,7 @@ const downloadBlob = (blob, filename) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
 const downloadText = (text, filename) => {
@@ -131,7 +131,7 @@ function GenericFileTool({
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => inputRef.current?.click()}
-                aria-label="Upload files"
+                aria-label={`Upload files for ${tool.name}`}
             >
                 <Upload size={36} aria-hidden="true" />
                 <span>
