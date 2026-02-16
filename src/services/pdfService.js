@@ -18,9 +18,13 @@ const pdfService = {
     async mergePDFs(files) {
         const mergedPdf = await PDFDocument.create();
 
-        for (const file of files) {
+        // Load all PDFs in parallel for better performance (Bolt ⚡)
+        const loadedPdfs = await Promise.all(files.map(async (file) => {
             const arrayBuffer = await file.arrayBuffer();
-            const pdf = await PDFDocument.load(arrayBuffer);
+            return await PDFDocument.load(arrayBuffer);
+        }));
+
+        for (const pdf of loadedPdfs) {
             const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
             copiedPages.forEach((page) => mergedPdf.addPage(page));
         }
@@ -253,14 +257,16 @@ const pdfService = {
     async imagesToPDF(files) {
         const pdf = await PDFDocument.create();
 
-        for (const file of files) {
+        // Embed all images in parallel for better performance (Bolt ⚡)
+        const embeddedImages = await Promise.all(files.map(async (file) => {
             const arrayBuffer = await file.arrayBuffer();
-            let image;
             if (file.type === 'image/png') {
-                image = await pdf.embedPng(arrayBuffer);
-            } else {
-                image = await pdf.embedJpg(arrayBuffer);
+                return await pdf.embedPng(arrayBuffer);
             }
+            return await pdf.embedJpg(arrayBuffer);
+        }));
+
+        for (const image of embeddedImages) {
             const { width, height } = image.size();
             const page = pdf.addPage([width, height]);
             page.drawImage(image, { x: 0, y: 0, width, height });

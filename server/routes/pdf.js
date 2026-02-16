@@ -21,14 +21,19 @@ router.post('/merge', async (req, res) => {
 
             const mergedPdf = await PDFDocument.create();
 
-            for (const file of req.files) {
+            // Load all PDFs in parallel for better performance (Bolt ⚡)
+            const loadedPdfs = await Promise.all(req.files.map(async (file) => {
                 const pdfBytes = await fs.readFile(file.path);
                 const pdf = await PDFDocument.load(pdfBytes);
+                return { pdf, path: file.path };
+            }));
+
+            for (const { pdf, path } of loadedPdfs) {
                 const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
 
                 // Clean up uploaded file
-                await fs.unlink(file.path);
+                await fs.unlink(path);
             }
 
             const mergedPdfBytes = await mergedPdf.save();
