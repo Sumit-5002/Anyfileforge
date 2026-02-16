@@ -110,7 +110,8 @@ function FileUploader({ tool, customLayout = false }) {
     };
 
     const handleFileSelect = (e) => {
-        addFiles(Array.from(e.target.files));
+        const selectedFiles = Array.from(e.target.files);
+        addFiles(selectedFiles);
     };
 
     /* ---------------- PROCESSING ---------------- */
@@ -167,21 +168,21 @@ function FileUploader({ tool, customLayout = false }) {
 
     const handleDownload = () => {
         if (processedResults.length === 0) return;
-
         if (tool.id === 'pdf-merge') {
             pdfService.downloadPDF(processedResults[0], 'merged_anyfileforge.pdf');
-        }
-
-        else if (tool.id === 'pdf-split') {
-            processedResults.forEach((data, index) =>
-                pdfService.downloadPDF(data, `page_${index + 1}.pdf`)
-            );
-        }
-
-        else if (tool.id.startsWith('image')) {
+        } else if (tool.id === 'pdf-split') {
+            processedResults.forEach((data, index) => pdfService.downloadPDF(data, `page_${index + 1}.pdf`));
+        } else if (tool.id.startsWith('image-')) {
             processedResults.forEach((res) => {
-                const ext = res.format.split('/')[1];
-                imageService.downloadBlob(res.blob, `${res.originalName.split('.')[0]}_forge.${ext}`);
+                const ext = String(res.format || '')
+                    .replace('image/', '')
+                    .trim() || 'png';
+                const lastDotIndex = res.originalName.lastIndexOf('.');
+                const baseName =
+                lastDotIndex !== -1
+                ? res.originalName.substring(0, lastDotIndex)
+                : res.originalName;
+                imageService.downloadBlob(res.blob, `${baseName}_forge.${ext}`);
             });
         }
     };
