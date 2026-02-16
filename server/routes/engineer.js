@@ -73,6 +73,14 @@ router.post('/regex-test', (req, res) => {
             return res.status(400).json({ error: 'Pattern and test string are required and must be strings' });
         }
 
+        if (pattern.length > 1024) {
+            return res.status(400).json({ error: 'Pattern is too long (max 1024 characters)' });
+        }
+
+        if (testString.length > 10240) {
+            return res.status(400).json({ error: 'Test string is too long (max 10240 characters)' });
+        }
+
         if (flags && typeof flags !== 'string') {
             return res.status(400).json({ error: 'Flags must be a string' });
         }
@@ -82,10 +90,9 @@ router.post('/regex-test', (req, res) => {
         const script = `
             const regex = new RegExp(pattern, flags || '');
             const matches = testString.match(regex);
-            const testResult = regex.test(testString);
             result = {
                 matches: matches || [],
-                test: testResult,
+                test: matches !== null,
                 matchCount: matches ? matches.length : 0
             };
         `;
@@ -102,7 +109,8 @@ router.post('/regex-test', (req, res) => {
             ...context.result
         });
     } catch (error) {
-        const isTimeout = error.message && error.message.includes('timed out');
+        const isTimeout = error.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' ||
+            (error.message && error.message.includes('timed out'));
         res.status(isTimeout ? 408 : 400).json({
             success: false,
             error: isTimeout ? 'Regex operation timed out' : 'Invalid regex pattern',
