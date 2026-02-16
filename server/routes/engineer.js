@@ -1,5 +1,6 @@
 import express from 'express';
 import { createHash } from 'crypto';
+import vm from 'vm';
 
 const router = express.Router();
 
@@ -68,24 +69,43 @@ router.post('/regex-test', (req, res) => {
     try {
         const { pattern, flags, testString } = req.body;
 
-        if (!pattern || !testString) {
-            return res.status(400).json({ error: 'Pattern and test string are required' });
+        if (typeof pattern !== 'string' || typeof testString !== 'string') {
+            return res.status(400).json({ error: 'Pattern and test string are required and must be strings' });
         }
 
-        const regex = new RegExp(pattern, flags || '');
-        const matches = testString.match(regex);
-        const test = regex.test(testString);
+        if (flags && typeof flags !== 'string') {
+            return res.status(400).json({ error: 'Flags must be a string' });
+        }
+
+        // Use vm module to run regex with a timeout to prevent ReDoS (Regular Expression Denial of Service)
+        // This ensures that even catastrophic backtracking doesn't hang the event loop
+        const script = `
+            const regex = new RegExp(pattern, flags || '');
+            const matches = testString.match(regex);
+            const testResult = regex.test(testString);
+            result = {
+                matches: matches || [],
+                test: testResult,
+                matchCount: matches ? matches.length : 0
+            };
+        `;
+
+        const context = { pattern, flags, testString, result: null };
+        vm.runInNewContext(script, context, { timeout: 2000 }); // 2 second timeout
+
+        if (!context.result) {
+            throw new Error('Regex execution failed to produce a result');
+        }
 
         res.json({
             success: true,
-            matches: matches || [],
-            test,
-            matchCount: matches ? matches.length : 0
+            ...context.result
         });
     } catch (error) {
-        res.status(400).json({
+        const isTimeout = error.message && error.message.includes('timed out');
+        res.status(isTimeout ? 408 : 400).json({
             success: false,
-            error: 'Invalid regex pattern',
+            error: isTimeout ? 'Regex operation timed out' : 'Invalid regex pattern',
             message: error.message
         });
     }
