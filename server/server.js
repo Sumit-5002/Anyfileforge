@@ -119,18 +119,29 @@ const storage = multer.diskStorage({
     }
 });
 
+const ALLOWED_EXTENSIONS = new Set(['.jpeg', '.jpg', '.png', '.gif', '.webp', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv']);
+const ALLOWED_MIME_TYPES = new Set([
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/csv',
+    'text/plain'
+]);
+
 const upload = multer({
     storage: storage,
     limits: {
         fileSize: MAX_FILE_SIZE
     },
     fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|csv/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
+        const extension = path.extname(file.originalname).toLowerCase();
+        const mimetype = file.mimetype.toLowerCase();
 
-        if (mimetype && extname) {
-            return cb(null, true);
+        if (ALLOWED_EXTENSIONS.has(extension) && ALLOWED_MIME_TYPES.has(mimetype)) {
+            cb(null, true);
         } else {
             cb(new Error('Invalid file type. Only images, PDFs, and office documents are allowed.'));
         }

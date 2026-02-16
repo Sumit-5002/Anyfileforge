@@ -7,3 +7,8 @@
 **Vulnerability:** The `/api/engineer/regex-test` endpoint allowed users to provide arbitrary regular expressions and test strings. A malicious user could provide a catastrophic backtracking regex (e.g., `(a+)+$`) that would hang the Node.js event loop, causing a Denial of Service.
 **Learning:** In Node.js, regular expression operations are synchronous and can block the event loop. User-provided regex patterns are inherently dangerous.
 **Prevention:** Always run user-provided regular expressions in a separate context with a strict timeout using the `vm` module or Worker Threads. Additionally, validate that all inputs are strings to prevent type-confusion or context-escape attacks.
+
+## 2026-02-16 - [File Type Validation Bypass via Unanchored Regex]
+**Vulnerability:** The file upload filter used an unanchored regular expression (`/jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|csv/`) to validate file extensions and mimetypes. This allowed attackers to bypass restrictions by using filenames like `test.csv.exe` or mimetypes like `text/csv-malicious`, as the regex would match the "csv" portion anywhere in the string.
+**Learning:** Using regex `.test()` on file extensions or mimetypes without anchors (`^` and `$`) is a common security pitfall that leads to validation bypasses.
+**Prevention:** Always use strict equality checks or a whitelist (e.g., `Set.has()`) against the full extension and mimetype strings. Ensure extensions are extracted correctly using `path.extname()` and both are converted to lowercase before comparison.
