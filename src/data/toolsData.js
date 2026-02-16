@@ -24,10 +24,11 @@ const SERVER_MODE_TOOL_IDS = new Set([
     'pdf-pdfa',
 ]);
 
-const applyMode = (groups) => groups.map((group) => ({
+const applyMode = (groups, defaultAccept = '*/*') => groups.map((group) => ({
     ...group,
     tools: group.tools.map((tool) => ({
         ...tool,
+        accept: tool.accept || defaultAccept,
         mode: SERVER_MODE_TOOL_IDS.has(tool.id) ? 'server' : 'serverless'
     }))
 }));
@@ -91,7 +92,7 @@ export const TOOLS = {
                 { id: 'pdf-crop', name: 'Crop PDF', description: 'Trim margins or selected areas.', icon: Crop, color: '#f59e0b', isPro: true }
             ]
         }
-    ]),
+    ], 'application/pdf'),
     image: applyMode([
         {
             category: 'Optimize & Convert',
@@ -125,7 +126,7 @@ export const TOOLS = {
                 { id: 'image-meme', name: 'Meme Generator', description: 'Create custom memes with ease.', icon: Smile, color: '#ec4899' }
             ]
         }
-    ]),
+    ], 'image/*'),
     engineer: applyMode(ENGINEER_TOOLS),
     researcher: applyMode(RESEARCHER_TOOLS)
 };

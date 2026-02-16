@@ -23,16 +23,12 @@ function PdfRotateTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         }));
     };
 
-    const rotateAll = () => {
-        // Find a way to rotate all pages easily
-        // This is a common feature request
-    };
 
     const handleProcess = async () => {
         setProcessing(true);
         try {
             // Find modified pages
-            const changed = Object.entries(rotations).filter(([_, deg]) => deg !== 0);
+            const changed = Object.entries(rotations).filter(([, deg]) => deg !== 0);
             if (changed.length === 0) {
                 alert('No pages rotated.');
                 return;
@@ -40,7 +36,7 @@ function PdfRotateTool({ tool, onFilesAdded: parentOnFilesAdded }) {
 
             // For now, if all angles are the same or we just rotate what's selected
             const firstAngle = changed[0][1];
-            const indices = changed.map(([num, _]) => Number(num) - 1);
+            const indices = changed.map(([num]) => Number(num) - 1);
 
             const data = await pdfService.rotatePages(file, indices, firstAngle);
             pdfService.downloadPDF(data, 'rotated_document.pdf');

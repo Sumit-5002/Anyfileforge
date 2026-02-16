@@ -16,6 +16,9 @@ function ToolDetailPage() {
     const [searchParams] = useSearchParams();
     const { user, userData, loading } = useAuth();
 
+    const [hasFiles, setHasFiles] = React.useState(false);
+    const [serverAvailable, setServerAvailable] = React.useState(true);
+
     const tool = useMemo(() => {
         let found = null;
         Object.values(TOOLS).forEach(suite => {
@@ -34,26 +37,18 @@ function ToolDetailPage() {
         return found;
     }, [toolId]);
 
-    if (!tool || loading) return null;
-
-    const queryMode = searchParams.get('mode');
-    const storedOnlineMode = typeof window !== 'undefined' && window.localStorage.getItem('anyfileforge_mode') === 'online';
+    const queryMode = useMemo(() => searchParams.get('mode'), [searchParams]);
+    const storedOnlineMode = useMemo(() => typeof window !== 'undefined' && window.localStorage.getItem('anyfileforge_mode') === 'online', []);
     const forceOnlineMode = queryMode === 'online' || (!queryMode && storedOnlineMode);
-    const effectiveTool = forceOnlineMode ? { ...tool, mode: 'server' } : tool;
-
-    const isServerMode = effectiveTool.mode === 'server';
-    const isLoggedIn = Boolean(user);
-    const requiresLogin = isServerMode;
-    const [hasFiles, setHasFiles] = React.useState(false);
-    const [serverAvailable, setServerAvailable] = React.useState(true);
-    const Runner = TOOL_RUNNERS[effectiveTool.id];
+    const effectiveTool = useMemo(() => forceOnlineMode ? { ...tool, mode: 'server' } : tool, [forceOnlineMode, tool]);
+    const isServerMode = effectiveTool?.mode === 'server';
 
     React.useEffect(() => {
         const checkHealth = async () => {
             try {
                 const res = await serverProcessingService.health();
                 if (res) setServerAvailable(true);
-            } catch (e) {
+            } catch {
                 setServerAvailable(false);
             }
         };
@@ -66,6 +61,11 @@ function ToolDetailPage() {
             window.dispatchEvent(new CustomEvent('anyfileforge-workspace-active', { detail: { active: false } }));
         };
     }, [hasFiles]);
+
+    if (!tool || loading) return null;
+
+    const isLoggedIn = Boolean(user);
+    const Runner = TOOL_RUNNERS[effectiveTool.id];
 
     const handleFilesAdded = (files) => {
         if (files && files.length > 0) setHasFiles(true);

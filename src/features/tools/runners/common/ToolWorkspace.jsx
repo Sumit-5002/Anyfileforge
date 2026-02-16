@@ -19,7 +19,11 @@ function ToolWorkspace({
 }) {
     const handleAddMore = (e) => {
         const newFiles = Array.from(e.target.files);
-        if (newFiles.length > 0) onFilesSelected(newFiles);
+        if (newFiles.length > 0 && onFilesSelected) {
+            onFilesSelected(newFiles);
+        }
+        // Clear value so the same file can be selected again
+        e.target.value = '';
     };
 
     return (
@@ -33,10 +37,18 @@ function ToolWorkspace({
                     </span>
                 </div>
                 <div className="workspace-header-actions">
-                    <label className="btn-add-more">
-                        + Add More
-                        <input type="file" multiple hidden onChange={handleAddMore} />
-                    </label>
+                    {onFilesSelected && (
+                        <label className="btn-add-more">
+                            + Add More
+                            <input
+                                type="file"
+                                multiple
+                                hidden
+                                accept={tool.accept || '*/*'}
+                                onChange={handleAddMore}
+                            />
+                        </label>
+                    )}
                     <button className="btn-reset-workspace" onClick={onReset}>
                         <X size={16} /> Reset
                     </button>

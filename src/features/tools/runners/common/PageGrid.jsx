@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Loader, Check } from 'lucide-react';
 import './ToolWorkspace.css';
 
@@ -13,21 +13,22 @@ function PageGrid({
     rotations = {}, // pageNumber -> angle
     onRotatePage,
     onDeletePage,
+    onReorder,
     order = null // Optional custom order [3, 1, 2]
 }) {
     const [pageData, setPageData] = useState([]); // Array of { pageNumber, thumbnail }
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (!file) return;
-        loadPages();
-    }, [file]);
 
-    const loadPages = async () => {
+    const loadPages = useCallback(async () => {
+        if (!file) return;
         setLoading(true);
         try {
-            const pdfjsLib = window['pdfjs-dist/build/pdf'];
-            if (!pdfjsLib) return;
+            const pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
+            if (!pdfjsLib) {
+                console.error('PDF.js library not found on window object.');
+                return;
+            }
 
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -54,6 +55,34 @@ function PageGrid({
         } finally {
             setLoading(false);
         }
+    }, [file]);
+
+    useEffect(() => {
+        loadPages();
+    }, [loadPages]);
+
+    const [draggedItem, setDraggedItem] = useState(null);
+
+    // Native Drag and Drop Handlers
+    const handleDragStart = (e, pageNum) => {
+        setDraggedItem(pageNum);
+        e.dataTransfer.effectAllowed = 'move';
+        // Add a ghost image or simple styling if needed
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleDrop = (e, targetPageNum) => {
+        e.preventDefault();
+        if (draggedItem === null || draggedItem === targetPageNum) return;
+
+        if (onReorder) {
+            onReorder(draggedItem, targetPageNum);
+        }
+        setDraggedItem(null);
     };
 
     if (loading) return (
@@ -75,6 +104,10 @@ function PageGrid({
                     key={page.pageNumber}
                     className={`page-item-card ${selectedPages?.has(page.pageNumber) ? 'selected' : ''}`}
                     onClick={() => onTogglePage && onTogglePage(page.pageNumber)}
+                    draggable={!!onReorder}
+                    onDragStart={(e) => handleDragStart(e, page.pageNumber)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, page.pageNumber)}
                 >
                     <div className="page-item-preview" style={{ transform: `rotate(${rotations[page.pageNumber] || 0}deg)` }}>
                         {page.thumbnail ? <img src={page.thumbnail} alt="" /> : <div className="page-skeleton" />}

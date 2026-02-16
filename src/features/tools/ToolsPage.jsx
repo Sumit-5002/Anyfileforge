@@ -7,7 +7,6 @@ import './ToolsPage.css';
 function ToolsPage() {
     const navigate = useNavigate();
     const [modeFilter, setModeFilter] = useState('all');
-    const isGlobalOnline = typeof window !== 'undefined' && window.localStorage.getItem('anyfileforge_mode') === 'online';
 
     // Flatten the TOOLS object into a renderable list of sections
     const sections = useMemo(() => {

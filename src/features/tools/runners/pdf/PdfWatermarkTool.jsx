@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { Type, Sun, RotateCw } from 'lucide-react';
+import { Type, Sun, RotateCw, LayoutGrid } from 'lucide-react';
+import PageGrid from '../common/PageGrid';
 import '../common/ToolWorkspace.css';
 
 function PdfWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
@@ -41,14 +42,16 @@ function PdfWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         <ToolWorkspace
             tool={tool}
             files={[file]}
+            onFilesSelected={handleFilesSelected}
             onReset={() => setFile(null)}
             processing={processing}
             onProcess={handleProcess}
             actionLabel="Add Watermark"
             sidebar={
-                <div className="sidebar-settings">
+                <div className="levels-vertical">
+                    <div className="sidebar-label">WATERMARK SETTINGS</div>
                     <div className="tool-field">
-                        <label><Type size={14} /> Watermark Text</label>
+                        <label><Type size={14} /> Text Content</label>
                         <input
                             type="text"
                             value={text}
@@ -89,15 +92,19 @@ function PdfWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             />
                         </div>
                     </div>
+
+                    <div className="divider mt-4"></div>
+                    <div className="sidebar-label">DOCUMENT INFO</div>
+                    <div className="order-summary">
+                        <div className="summary-row">
+                            <span>Filename:</span>
+                            <span className="file-item-name" style={{ maxWidth: '140px' }}>{file.name}</span>
+                        </div>
+                    </div>
                 </div>
             }
         >
-            <div className="file-item-horizontal">
-                <div className="file-item-info">
-                    <div className="file-item-name">{file.name}</div>
-                    <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
-                </div>
-            </div>
+            <PageGrid file={file} />
         </ToolWorkspace>
     );
 }

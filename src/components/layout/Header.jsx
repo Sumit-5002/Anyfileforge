@@ -26,21 +26,8 @@ function Header() {
     const [activeDropdown, setActiveDropdown] = useState(null);
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-    const [isOnlineMode, setIsOnlineMode] = useState(() => {
-        if (typeof window === 'undefined') return false;
-        return window.localStorage.getItem('anyfileforge_mode') === 'online';
-    });
-
 
     // Body overflow management for mobile menus
-    useEffect(() => {
-        const handleModeChange = () => {
-            setIsOnlineMode(window.localStorage.getItem('anyfileforge_mode') === 'online');
-        };
-        window.addEventListener('anyfileforge-mode-changed', handleModeChange);
-        return () => window.removeEventListener('anyfileforge-mode-changed', handleModeChange);
-    }, []);
-
     useEffect(() => {
         if ((isMenuOpen || isGridOpen) && isMobile) {
             document.body.style.overflow = 'hidden';

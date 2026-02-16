@@ -9,10 +9,21 @@ import '../common/ToolWorkspace.css';
 function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [files, setFiles] = useState([]);
     const [processing, setProcessing] = useState(false);
+    const [draggedIdx, setDraggedIdx] = useState(null);
 
     const handleFilesSelected = (newFiles) => {
         setFiles(prev => [...prev, ...newFiles]);
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
+    };
+
+    const handleReorder = (dragIdx, targetIdx) => {
+        if (dragIdx === targetIdx) return;
+        setFiles(prev => {
+            const newFiles = [...prev];
+            const [moved] = newFiles.splice(dragIdx, 1);
+            newFiles.splice(targetIdx, 0, moved);
+            return newFiles;
+        });
     };
 
     const handleMerge = async () => {
@@ -66,7 +77,17 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         >
             <div className="files-list-view">
                 {files.map((file, i) => (
-                    <div key={i} className="file-item-horizontal">
+                    <div
+                        key={`${file.name}-${i}`}
+                        className="file-item-horizontal draggable"
+                        draggable
+                        onDragStart={() => setDraggedIdx(i)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={() => {
+                            handleReorder(draggedIdx, i);
+                            setDraggedIdx(null);
+                        }}
+                    >
                         <span className="file-index">{i + 1}</span>
                         <FileText size={24} className="text-danger" />
                         <div className="file-item-info">

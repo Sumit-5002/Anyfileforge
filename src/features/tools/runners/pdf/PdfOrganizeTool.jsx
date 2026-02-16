@@ -22,6 +22,18 @@ function PdfOrganizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         setOrder(prev => prev.filter(n => n !== pageNum));
     };
 
+    const handleReorder = (draggedNum, targetNum) => {
+        setOrder(prev => {
+            const newOrder = [...prev];
+            const draggedIdx = newOrder.indexOf(draggedNum);
+            const targetIdx = newOrder.indexOf(targetNum);
+
+            newOrder.splice(draggedIdx, 1);
+            newOrder.splice(targetIdx, 0, draggedNum);
+            return newOrder;
+        });
+    };
+
     const handleProcess = async () => {
         if (order.length === 0) {
             alert('No pages left to organize.');
@@ -45,6 +57,7 @@ function PdfOrganizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         <ToolWorkspace
             tool={tool}
             files={[file]}
+            onFilesSelected={handleFilesSelected}
             onReset={() => setFile(null)}
             processing={processing}
             onProcess={handleProcess}
@@ -52,7 +65,7 @@ function PdfOrganizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             sidebar={
                 <div className="sidebar-info">
                     <p className="hint-text">
-                        Click the <strong>×</strong> on any page to remove it. Reordering by drag-and-drop coming soon.
+                        Drag pages to reorder them. Click <strong>×</strong> to remove a page.
                     </p>
                     <div className="order-summary mt-3">
                         <LayoutGrid size={16} className="text-primary" />
@@ -65,6 +78,7 @@ function PdfOrganizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 file={file}
                 order={order}
                 onDeletePage={handleDeletePage}
+                onReorder={handleReorder}
             />
         </ToolWorkspace>
     );

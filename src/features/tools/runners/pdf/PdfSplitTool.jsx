@@ -7,7 +7,8 @@ import PageGrid from '../common/PageGrid';
 function PdfSplitTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [file, setFile] = useState(null);
     const [selectedPages, setSelectedPages] = useState(new Set());
-    const [extractMode, setExtractMode] = useState('selected');
+    const [extractMode, setExtractMode] = useState('selected'); // 'selected' | 'all' | 'range'
+    const [rangeText, setRangeText] = useState('');
     const [processing, setProcessing] = useState(false);
     const [pageCount, setPageCount] = useState(0);
 
@@ -30,6 +31,22 @@ function PdfSplitTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             if (extractMode === 'all') {
                 results = await pdfService.splitPDF(file);
                 pNums = Array.from({ length: pageCount }, (_, i) => i + 1);
+            } else if (extractMode === 'range') {
+                const ranges = rangeText.split(',').map(r => r.trim());
+                for (const range of ranges) {
+                    if (range.includes('-')) {
+                        const [start, end] = range.split('-').map(n => parseInt(n));
+                        if (!isNaN(start) && !isNaN(end)) {
+                            for (let i = start; i <= end; i++) pNums.push(i);
+                        }
+                    } else {
+                        const n = parseInt(range);
+                        if (!isNaN(n)) pNums.push(n);
+                    }
+                }
+                const uniquePNums = [...new Set(pNums)].filter(n => n >= 1 && n <= pageCount).sort((a, b) => a - b);
+                results = await pdfService.extractPages(file, uniquePNums.map(n => n - 1));
+                pNums = uniquePNums;
             } else {
                 pNums = Array.from(selectedPages).sort((a, b) => a - b);
                 results = await pdfService.extractPages(file, pNums.map(n => n - 1));
@@ -49,18 +66,62 @@ function PdfSplitTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         <ToolWorkspace
             tool={tool}
             files={[file]}
+            onFilesSelected={handleFilesSelected}
             onReset={() => setFile(null)}
             processing={processing}
             onProcess={handleSplit}
             actionLabel="Split PDF Now"
             sidebar={
-                <div className="sidebar-settings">
-                    <div className="control-group">
-                        <label className="sidebar-label">Split Mode</label>
-                        <select value={extractMode} onChange={e => setExtractMode(e.target.value)} className="form-control">
-                            <option value="selected">Extract Selected Pages</option>
-                            <option value="all">Split Every Page</option>
-                        </select>
+                <div className="levels-vertical">
+                    <div className="sidebar-label">SPLIT MODE</div>
+                    <div
+                        className={`level-box ${extractMode === 'selected' ? 'active' : ''}`}
+                        onClick={() => setExtractMode('selected')}
+                    >
+                        <div className="level-meta">
+                            <div className="level-name">Extract Pages</div>
+                            <div className="level-desc">Download only the pages you select below.</div>
+                        </div>
+                    </div>
+                    <div
+                        className={`level-box ${extractMode === 'range' ? 'active' : ''}`}
+                        onClick={() => setExtractMode('range')}
+                    >
+                        <div className="level-meta">
+                            <div className="level-name">Split by Range</div>
+                            <div className="level-desc">Enter ranges like "1-5, 8, 11-13".</div>
+                        </div>
+                    </div>
+
+                    {extractMode === 'range' && (
+                        <div className="tool-field mt-3">
+                            <label className="sidebar-label">PAGE RANGES</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. 1-5, 8, 11-13"
+                                value={rangeText}
+                                onChange={(e) => setRangeText(e.target.value)}
+                                className="range-input"
+                            />
+                        </div>
+                    )}
+
+                    <div className="divider mt-4"></div>
+
+                    <div className="sidebar-label">SELECTION SUMMARY</div>
+                    <div className="order-summary">
+                        <div className="summary-row">
+                            <span>Total Pages:</span>
+                            <span>{pageCount}</span>
+                        </div>
+                        {extractMode === 'selected' && (
+                            <div className="summary-row">
+                                <span>To Extract:</span>
+                                <span style={{ color: 'var(--primary-500)' }}>
+                                    {extractMode === 'selected' ? selectedPages.size : 'From range'} pages
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
             }

@@ -64,7 +64,10 @@ function FileUploader({
                     multiple={multiple}
                     hidden
                     ref={fileInputRef}
-                    onChange={(e) => handleFiles(e.target.files)}
+                    onChange={(e) => {
+                        handleFiles(e.target.files);
+                        e.target.value = '';
+                    }}
                     accept={accept}
                 />
             </div>
