@@ -145,7 +145,7 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
 }
 
 .social-btn {
@@ -178,7 +178,7 @@
 .divider {
     text-align: center;
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 32px;
 }
 
 .divider::before {

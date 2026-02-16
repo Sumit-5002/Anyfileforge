@@ -34,6 +34,7 @@ function CloudSourceOptions({ layout = 'side' }) {
                     className={`cloud-btn-circle ${source.text ? 'cloud-btn-circle--text' : ''}`}
                     title={`${source.name} (Online mode - Paid)`}
                     aria-label={`Upload from ${source.name} (Online mode - Paid)`}
+                    onClick={() => alert(`${source.name} integration is coming soon for Premium users!`)}
                 >
                     {source.icon ? (
                         <img src={source.icon} alt="" aria-hidden="true" />

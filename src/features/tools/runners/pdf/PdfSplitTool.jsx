@@ -1,67 +1,80 @@
 import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
-import serverProcessingService from '../../../../services/serverProcessingService';
-import { parsePageRange } from '../../../../utils/pageRange';
-import GenericFileTool from '../common/GenericFileTool';
+import FileUploader from '../../../../components/ui/FileUploader';
+import ToolWorkspace from '../common/ToolWorkspace';
+import PageGrid from '../common/PageGrid';
 
-function PdfSplitTool({ tool }) {
-    const [pageRange, setPageRange] = useState('');
+function PdfSplitTool({ tool, onFilesAdded: parentOnFilesAdded }) {
+    const [file, setFile] = useState(null);
+    const [selectedPages, setSelectedPages] = useState(new Set());
+    const [extractMode, setExtractMode] = useState('selected');
+    const [processing, setProcessing] = useState(false);
+    const [pageCount, setPageCount] = useState(0);
+
+    const handleFilesSelected = async (selectedFiles) => {
+        const selectedFile = selectedFiles[0];
+        if (!selectedFile) return;
+        setFile(selectedFile);
+        const count = await pdfService.getPageCount(selectedFile);
+        setPageCount(count);
+        setSelectedPages(new Set());
+        if (parentOnFilesAdded) parentOnFilesAdded(selectedFiles);
+    };
+
+    const handleSplit = async () => {
+        setProcessing(true);
+        try {
+            let results = [];
+            let pNums = [];
+
+            if (extractMode === 'all') {
+                results = await pdfService.splitPDF(file);
+                pNums = Array.from({ length: pageCount }, (_, i) => i + 1);
+            } else {
+                pNums = Array.from(selectedPages).sort((a, b) => a - b);
+                results = await pdfService.extractPages(file, pNums.map(n => n - 1));
+            }
+
+            results.forEach((data, i) => pdfService.downloadPDF(data, `split_page_${pNums[i]}.pdf`));
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    if (!file) {
+        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} />;
+    }
 
     return (
-        <GenericFileTool
+        <ToolWorkspace
             tool={tool}
-            accept="application/pdf"
-            multiple={false}
-            actionLabel="Split PDF"
-            onProcess={async ({ files }) => {
-                const file = files[0];
-                if (!file) throw new Error('Please upload a PDF file.');
-                const maxPages = await pdfService.getPageCount(file);
-                const range = pageRange.trim();
-
-                if (!range) {
-                    const pages = await pdfService.splitPDF(file);
-                    return pages.map((data, index) => ({
-                        type: 'pdf',
-                        data,
-                        name: `page_${index + 1}.pdf`
-                    }));
-                }
-
-                const pageNumbers = parsePageRange(range, maxPages);
-                if (pageNumbers.length === 0) {
-                    throw new Error('Please provide a valid page range.');
-                }
-                if (tool.mode === 'server') {
-                    const data = await serverProcessingService.splitPDF(file, range);
-                    return {
-                        type: 'pdf',
-                        data,
-                        name: `split_${range.replace(/\s+/g, '')}.pdf`
-                    };
-                }
-
-                const indices = pageNumbers.map((n) => n - 1);
-                const pages = await pdfService.extractPages(file, indices);
-                return pages.map((data, index) => ({
-                    type: 'pdf',
-                    data,
-                    name: `page_${pageNumbers[index]}.pdf`
-                }));
-            }}
+            files={[file]}
+            onReset={() => setFile(null)}
+            processing={processing}
+            onProcess={handleSplit}
+            actionLabel="Split PDF Now"
+            sidebar={
+                <div className="sidebar-settings">
+                    <div className="control-group">
+                        <label className="sidebar-label">Split Mode</label>
+                        <select value={extractMode} onChange={e => setExtractMode(e.target.value)} className="form-control">
+                            <option value="selected">Extract Selected Pages</option>
+                            <option value="all">Split Every Page</option>
+                        </select>
+                    </div>
+                </div>
+            }
         >
-            <div className="tool-field">
-                <label htmlFor="split-range">Page range (optional)</label>
-                <input
-                    id="split-range"
-                    type="text"
-                    value={pageRange}
-                    onChange={(event) => setPageRange(event.target.value)}
-                    placeholder="e.g. 1-3,5,7"
-                />
-                <small className="tool-help">Leave empty to split every page.</small>
-            </div>
-        </GenericFileTool>
+            <PageGrid
+                file={file}
+                selectedPages={selectedPages}
+                onTogglePage={(num) => {
+                    const next = new Set(selectedPages);
+                    next.has(num) ? next.delete(num) : next.add(num);
+                    setSelectedPages(next);
+                }}
+            />
+        </ToolWorkspace>
     );
 }
 

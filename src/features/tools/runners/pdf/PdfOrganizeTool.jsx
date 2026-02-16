@@ -1,63 +1,72 @@
 import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
-import GenericFileTool from '../common/GenericFileTool';
+import FileUploader from '../../../../components/ui/FileUploader';
+import ToolWorkspace from '../common/ToolWorkspace';
+import PageGrid from '../common/PageGrid';
+import { LayoutGrid } from 'lucide-react';
 
-const parseOrder = (input) => {
-    if (!input) return [];
-    return input
-        .split(',')
-        .map((part) => parseInt(part.trim(), 10))
-        .filter((num) => Number.isFinite(num));
-};
+function PdfOrganizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
+    const [file, setFile] = useState(null);
+    const [order, setOrder] = useState([]);
+    const [processing, setProcessing] = useState(false);
 
-function PdfOrganizeTool({ tool }) {
-    const [orderInput, setOrderInput] = useState('');
+    const handleFilesSelected = async (files) => {
+        if (!files[0]) return;
+        setFile(files[0]);
+        const count = await pdfService.getPageCount(files[0]);
+        setOrder(Array.from({ length: count }, (_, i) => i + 1));
+        if (parentOnFilesAdded) parentOnFilesAdded(files);
+    };
+
+    const handleDeletePage = (pageNum) => {
+        setOrder(prev => prev.filter(n => n !== pageNum));
+    };
+
+    const handleProcess = async () => {
+        if (order.length === 0) {
+            alert('No pages left to organize.');
+            return;
+        }
+        setProcessing(true);
+        try {
+            const indices = order.map(n => n - 1);
+            const data = await pdfService.reorderPages(file, indices);
+            pdfService.downloadPDF(data, 'organized_document.pdf');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    if (!file) {
+        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} />;
+    }
 
     return (
-        <GenericFileTool
+        <ToolWorkspace
             tool={tool}
-            accept="application/pdf"
-            multiple={false}
-            actionLabel="Reorder Pages"
-            onProcess={async ({ files }) => {
-                const file = files[0];
-                if (!file) throw new Error('Please upload a PDF file.');
-                const total = await pdfService.getPageCount(file);
-                const requested = parseOrder(orderInput);
-
-                if (requested.length === 0) {
-                    throw new Error('Enter the new page order (e.g. 3,1,2).');
-                }
-
-                const unique = Array.from(new Set(requested.filter((n) => n >= 1 && n <= total)));
-                const remaining = [];
-                for (let i = 1; i <= total; i += 1) {
-                    if (!unique.includes(i)) remaining.push(i);
-                }
-
-                const finalOrder = [...unique, ...remaining];
-                const indices = finalOrder.map((n) => n - 1);
-                const data = await pdfService.reorderPages(file, indices);
-
-                return {
-                    type: 'pdf',
-                    data,
-                    name: 'organized_anyfileforge.pdf'
-                };
-            }}
+            files={[file]}
+            onReset={() => setFile(null)}
+            processing={processing}
+            onProcess={handleProcess}
+            actionLabel="Organize PDF"
+            sidebar={
+                <div className="sidebar-info">
+                    <p className="hint-text">
+                        Click the <strong>×</strong> on any page to remove it. Reordering by drag-and-drop coming soon.
+                    </p>
+                    <div className="order-summary mt-3">
+                        <LayoutGrid size={16} className="text-primary" />
+                        <span><strong>{order.length}</strong> pages remaining</span>
+                    </div>
+                </div>
+            }
         >
-            <div className="tool-field">
-                <label htmlFor="order-input">New page order</label>
-                <input
-                    id="order-input"
-                    type="text"
-                    value={orderInput}
-                    onChange={(event) => setOrderInput(event.target.value)}
-                    placeholder="e.g. 3,1,2"
-                />
-                <small className="tool-help">Pages not listed will be appended in original order.</small>
-            </div>
-        </GenericFileTool>
+            <PageGrid
+                file={file}
+                order={order}
+                onDeletePage={handleDeletePage}
+            />
+        </ToolWorkspace>
     );
 }
 

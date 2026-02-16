@@ -191,14 +191,16 @@
 
 /* Feature Grid */
 .features-section {
-    padding: clamp(30px, 4vw + 1rem, 50px) 0;
+    padding: 20px 0 40px;
+    /* Reduced top padding */
     background: rgba(255, 255, 255, 0.02);
 }
 
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
+    gap: 20px;
+    /* Reduced gap */
 }
 
 .feature-card {

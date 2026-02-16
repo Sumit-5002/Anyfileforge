@@ -7,6 +7,7 @@ import './ToolsPage.css';
 function ToolsPage() {
     const navigate = useNavigate();
     const [modeFilter, setModeFilter] = useState('all');
+    const isGlobalOnline = typeof window !== 'undefined' && window.localStorage.getItem('anyfileforge_mode') === 'online';
 
     // Flatten the TOOLS object into a renderable list of sections
     const sections = useMemo(() => {
@@ -35,7 +36,7 @@ function ToolsPage() {
                 if (filteredTools.length === 0) return;
                 result.push({
                     name: `${sectionTitle} - ${cat.category}`,
-                    description: cat.category, // or some description map
+                    description: cat.category,
                     tools: filteredTools
                 });
             });

@@ -13,6 +13,15 @@ function Footer() {
         message: ''
     });
     const [status, setStatus] = useState('idle');
+    const [isHidden, setIsHidden] = useState(false);
+
+    React.useEffect(() => {
+        const handleWorkspace = (e) => setIsHidden(e.detail.active);
+        window.addEventListener('anyfileforge-workspace-active', handleWorkspace);
+        return () => window.removeEventListener('anyfileforge-workspace-active', handleWorkspace);
+    }, []);
+
+    if (isHidden) return null;
 
     const handleSubmit = async (e) => {
         e.preventDefault();

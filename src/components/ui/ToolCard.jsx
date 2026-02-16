@@ -7,6 +7,9 @@ function ToolCard({ tool, isSelected, onClick }) {
     const modeLabel = tool.mode === 'server' ? 'Server' : 'Serverless';
     const modeClass = tool.mode === 'server' ? 'mode-server' : 'mode-serverless';
 
+    const isOnlineWorkspace = typeof window !== 'undefined' && window.localStorage.getItem('anyfileforge_mode') === 'online';
+    const showProBadge = tool.isPro && isOnlineWorkspace;
+
     return (
         <button
             className={`tool-card card ${isSelected ? 'selected' : ''}`}
@@ -16,13 +19,13 @@ function ToolCard({ tool, isSelected, onClick }) {
             {tool.mode && (
                 <span
                     className={`mode-badge ${modeClass}`}
-                    aria-label={tool.mode === 'server' ? 'Requires server mode' : 'Works offline (serverless)'}
-                    title={tool.mode === 'server' ? 'Requires server mode' : 'Works offline (serverless)'}
+                    aria-label={tool.mode === 'server' ? (isOnlineWorkspace ? 'Server Enhanced' : 'Server Optimized (Better Results on Server)') : 'Works offline (serverless)'}
+                    title={tool.mode === 'server' ? (isOnlineWorkspace ? 'Server Enhanced' : 'Use Server for better result') : 'Works offline (serverless)'}
                 >
-                    {modeLabel}
+                    {tool.mode === 'server' && !isOnlineWorkspace ? 'Server Optimized' : modeLabel}
                 </span>
             )}
-            {tool.isPro && tool.mode === 'server' && (
+            {showProBadge && (
                 <span className="pro-badge-tool" aria-label="Premium Feature" title="Premium Feature">
                     <Crown size={12} fill="currentColor" aria-hidden="true" aria-label="Premium icon" />
                     <span>PRO</span>

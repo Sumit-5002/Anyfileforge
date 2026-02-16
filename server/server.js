@@ -73,9 +73,26 @@ if (typeof cleanupTimer.unref === 'function') {
 // Security middleware
 app.use(helmet());
 
-// CORS configuration
+// CORS configuration - Allow production and local development
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://anyfileforge.web.app'
+].filter(Boolean);
+
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.error(`Blocked by CORS: origin ${origin} not in ${allowedOrigins}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 
@@ -184,7 +201,7 @@ app.use((req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 AnyFileForge Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🌐 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
+    console.log(`🌐 Client URL: ${process.env.CLIENT_URL || 'https://anyfileforge.web.app'}`);
     console.log(`Upload retention: ${FILE_RETENTION_MINUTES} minute(s), cleanup every ${Math.round(CLEANUP_INTERVAL_MS / 60000)} minute(s)`);
 });
 

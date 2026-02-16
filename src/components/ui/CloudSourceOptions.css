@@ -1,62 +1,59 @@
 .cloud-options {
     display: flex;
-    gap: 12px;
+    gap: 15px;
+    justify-content: center;
 }
 
 .cloud-options.side {
-    flex-direction: column;
+    flex-direction: row;
+    /* Horizontal "sleeping" layout */
+    margin-bottom: 5px;
 }
 
 .cloud-options.inline {
     flex-direction: row;
-    justify-content: center;
     margin-top: 14px;
 }
 
 .cloud-btn-circle {
-    width: 48px;
-    height: 48px;
-    background: rgba(255, 255, 255, 0.05);
+    width: 44px;
+    height: 44px;
+    background: #ffffff;
     border: 1px solid var(--border-bright);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: var(--transition-smooth);
-    padding: 12px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
 }
 
 .cloud-btn-circle:hover {
-    transform: scale(1.1);
-    background: rgba(255, 255, 255, 0.1);
-    border-color: white;
+    transform: translateY(-4px);
+    background: #ffffff;
+    border-color: var(--primary-500);
+    box-shadow: 0 10px 15px -3px rgba(var(--primary-rgb), 0.2);
 }
 
 .cloud-btn-circle img {
-    width: 100%;
-    height: 100%;
-    filter: brightness(0) invert(1);
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    /* No filter - keep original brand colors */
 }
 
 .cloud-btn-circle--text {
-    padding: 0;
+    background: var(--primary-500);
+    border-color: var(--primary-600);
 }
 
 .cloud-btn-text {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: var(--text-secondary);
-    letter-spacing: 0.01em;
-}
-
-.cloud-btn-circle--text:hover .cloud-btn-text {
-    color: #fff;
-}
-
-@media (max-width: 768px) {
-    .cloud-options.side {
-        flex-direction: row;
-        justify-content: center;
-    }
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
 }

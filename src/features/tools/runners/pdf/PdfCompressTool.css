@@ -1,0 +1,191 @@
+.pdf-compress-tool-workspace {
+    width: 100%;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.compress-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+}
+
+.compress-main {
+    background: var(--bg-surface);
+    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.btn-text {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.files-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.file-row-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 16px;
+    background: var(--bg-base);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+}
+
+.file-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.compression-badge {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.compress-sidebar {
+    background: var(--bg-surface);
+    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.levels-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.level-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid var(--border-bright);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.level-item:hover {
+    border-color: var(--primary-500);
+    background: rgba(var(--primary-rgb), 0.02);
+}
+
+.level-item.active {
+    border-color: var(--primary-500);
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.level-check .circle {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-bright);
+    border-radius: 50%;
+}
+
+.level-check {
+    color: var(--primary-500);
+}
+
+.level-content {
+    flex: 1;
+}
+
+.level-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rec-pill {
+    font-size: 0.65rem;
+    background: var(--primary-500);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.level-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.level-icon-right {
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.level-item.active .level-icon-right {
+    color: var(--primary-500);
+    opacity: 1;
+}
+
+.compress-start-btn {
+    margin-top: 10px;
+    height: 54px;
+    font-size: 1rem;
+    font-weight: 700;
+    gap: 10px;
+}
+
+@media (max-width: 900px) {
+    .compress-layout {
+        grid-template-columns: 1fr;
+    }
+}

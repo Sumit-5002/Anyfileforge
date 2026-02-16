@@ -1,10 +1,10 @@
 .file-uploader {
-    padding: 30px;
+    padding: 15px;
     background: transparent;
 }
 
 .upload-placeholder {
-    padding: 60px 20px;
+    padding: 40px 20px;
     border: 2px dashed var(--border-bright);
     border-radius: var(--radius-md);
     text-align: center;
@@ -32,13 +32,13 @@
 
 /* Massive Uploader for Tool Page */
 .massive-uploader {
-    padding: 100px 20px;
+    padding: 60px 20px;
     background: transparent;
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 400px;
+    min-height: 300px;
 }
 
 .massive-uploader-inner {
@@ -50,14 +50,17 @@
 
 .massive-button-group {
     display: flex;
+    flex-direction: column-reverse;
+    /* Put cloud options ABOVE button */
     align-items: center;
-    gap: 15px;
+    gap: 20px;
     position: relative;
+    width: 100%;
 }
 
 .massive-select-btn {
-    font-size: 2rem !important;
-    padding: 24px 60px !important;
+    font-size: 1.5rem !important;
+    padding: 18px 40px !important;
     border-radius: 12px !important;
     box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.3);
     height: auto !important;
@@ -112,7 +115,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 30px;
+    padding: 20px;
     background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);

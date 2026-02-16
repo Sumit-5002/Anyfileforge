@@ -1,73 +1,104 @@
 import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
-import GenericFileTool from '../common/GenericFileTool';
+import FileUploader from '../../../../components/ui/FileUploader';
+import ToolWorkspace from '../common/ToolWorkspace';
+import { Type, Opacity, RotateCw, Type as FontSizeIcon } from 'lucide-react';
+import '../common/ToolWorkspace.css';
 
-function PdfWatermarkTool({ tool }) {
+function PdfWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
+    const [file, setFile] = useState(null);
     const [text, setText] = useState('CONFIDENTIAL');
-    const [opacity, setOpacity] = useState('0.2');
-    const [angle, setAngle] = useState('30');
-    const [size, setSize] = useState('48');
+    const [opacity, setOpacity] = useState(0.2);
+    const [angle, setAngle] = useState(30);
+    const [size, setSize] = useState(48);
+    const [processing, setProcessing] = useState(false);
+
+    const handleFilesSelected = (files) => {
+        if (files[0]) setFile(files[0]);
+        if (parentOnFilesAdded) parentOnFilesAdded(files);
+    };
+
+    const handleProcess = async () => {
+        setProcessing(true);
+        try {
+            const data = await pdfService.addWatermarkText(file, {
+                text,
+                opacity: Number(opacity),
+                angle: Number(angle),
+                fontSize: Number(size)
+            });
+            pdfService.downloadPDF(data, 'watermarked_document.pdf');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    if (!file) {
+        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} />;
+    }
 
     return (
-        <GenericFileTool
+        <ToolWorkspace
             tool={tool}
-            accept="application/pdf"
-            multiple={false}
+            files={[file]}
+            onReset={() => setFile(null)}
+            processing={processing}
+            onProcess={handleProcess}
             actionLabel="Add Watermark"
-            onProcess={async ({ files }) => {
-                const file = files[0];
-                if (!file) throw new Error('Please upload a PDF file.');
-                const data = await pdfService.addWatermarkText(file, {
-                    text,
-                    opacity: Math.min(1, Math.max(0, Number(opacity) || 0.2)),
-                    angle: Number(angle) || 30,
-                    fontSize: Number(size) || 48
-                });
-                return { type: 'pdf', data, name: 'watermarked_anyfileforge.pdf' };
-            }}
+            sidebar={
+                <div className="sidebar-settings">
+                    <div className="tool-field">
+                        <label><Type size={14} /> Watermark Text</label>
+                        <input
+                            type="text"
+                            value={text}
+                            onChange={(e) => setText(e.target.value)}
+                            placeholder="e.g. CONFIDENTIAL"
+                        />
+                    </div>
+
+                    <div className="tool-field">
+                        <label><FontSizeIcon size={14} /> Font Size ({size}px)</label>
+                        <input
+                            type="range"
+                            min="12"
+                            max="120"
+                            value={size}
+                            onChange={(e) => setSize(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="tool-inline">
+                        <div className="tool-field">
+                            <label><Opacity size={14} /> Opacity</label>
+                            <input
+                                type="number"
+                                step="0.05"
+                                min="0"
+                                max="1"
+                                value={opacity}
+                                onChange={(e) => setOpacity(e.target.value)}
+                            />
+                        </div>
+                        <div className="tool-field">
+                            <label><RotateCw size={14} /> Angle</label>
+                            <input
+                                type="number"
+                                value={angle}
+                                onChange={(e) => setAngle(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </div>
+            }
         >
-            <div className="tool-field">
-                <label htmlFor="wm-text">Watermark text</label>
-                <input
-                    id="wm-text"
-                    type="text"
-                    value={text}
-                    onChange={(event) => setText(event.target.value)}
-                />
-            </div>
-            <div className="tool-inline">
-                <div className="tool-field">
-                    <label htmlFor="wm-opacity">Opacity (0-1)</label>
-                    <input
-                        id="wm-opacity"
-                        type="number"
-                        step="0.05"
-                        min="0"
-                        max="1"
-                        value={opacity}
-                        onChange={(event) => setOpacity(event.target.value)}
-                    />
-                </div>
-                <div className="tool-field">
-                    <label htmlFor="wm-angle">Angle</label>
-                    <input
-                        id="wm-angle"
-                        type="number"
-                        value={angle}
-                        onChange={(event) => setAngle(event.target.value)}
-                    />
-                </div>
-                <div className="tool-field">
-                    <label htmlFor="wm-size">Font size</label>
-                    <input
-                        id="wm-size"
-                        type="number"
-                        value={size}
-                        onChange={(event) => setSize(event.target.value)}
-                    />
+            <div className="file-item-horizontal">
+                <div className="file-item-info">
+                    <div className="file-item-name">{file.name}</div>
+                    <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
                 </div>
             </div>
-        </GenericFileTool>
+        </ToolWorkspace>
     );
 }
 

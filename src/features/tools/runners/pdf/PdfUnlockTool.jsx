@@ -1,34 +1,65 @@
 import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
-import GenericFileTool from '../common/GenericFileTool';
+import FileUploader from '../../../../components/ui/FileUploader';
+import ToolWorkspace from '../common/ToolWorkspace';
+import { LockOpen, ShieldAlert, FileText } from 'lucide-react';
+import '../common/ToolWorkspace.css';
 
-function PdfUnlockTool({ tool }) {
+function PdfUnlockTool({ tool, onFilesAdded: parentOnFilesAdded }) {
+    const [file, setFile] = useState(null);
     const [password, setPassword] = useState('');
+    const [processing, setProcessing] = useState(false);
+
+    const handleFilesSelected = (files) => {
+        if (files[0]) setFile(files[0]);
+        if (parentOnFilesAdded) parentOnFilesAdded(files);
+    };
+
+    const handleProcess = async () => {
+        setProcessing(true);
+        try {
+            const data = await pdfService.unlockPDF(file, password || undefined);
+            pdfService.downloadPDF(data, 'unlocked_document.pdf');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    if (!file) {
+        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} />;
+    }
 
     return (
-        <GenericFileTool
+        <ToolWorkspace
             tool={tool}
-            accept="application/pdf"
-            multiple={false}
-            actionLabel="Unlock PDF"
-            onProcess={async ({ files }) => {
-                const file = files[0];
-                if (!file) throw new Error('Please upload a PDF file.');
-                const data = await pdfService.unlockPDF(file, password || undefined);
-                return { type: 'pdf', data, name: 'unlocked_anyfileforge.pdf' };
-            }}
+            files={[file]}
+            onReset={() => setFile(null)}
+            processing={processing}
+            onProcess={handleProcess}
+            actionLabel="Unlock PDF Now"
+            sidebar={
+                <div className="sidebar-settings">
+                    <div className="tool-field">
+                        <label><LockOpen size={14} /> Source Password</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter password to unlock"
+                        />
+                        <p className="tool-help"><ShieldAlert size={12} /> We do not store your passwords.</p>
+                    </div>
+                </div>
+            }
         >
-            <div className="tool-field">
-                <label htmlFor="unlock-password">Password (if required)</label>
-                <input
-                    id="unlock-password"
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    placeholder="Leave empty if not password-protected"
-                />
+            <div className="file-item-horizontal">
+                <FileText size={24} className="text-danger" />
+                <div className="file-item-info">
+                    <div className="file-item-name">{file.name}</div>
+                    <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                </div>
             </div>
-        </GenericFileTool>
+        </ToolWorkspace>
     );
 }
 

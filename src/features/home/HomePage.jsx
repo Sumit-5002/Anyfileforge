@@ -105,22 +105,22 @@ function HomePage() {
                             </div>
                         </div>
 
-                        {!isOnlineMode ? (
-                            <div className="hero-actions">
-                                <button
-                                    className="btn btn-primary btn-large"
-                                    onClick={() => showcaseRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                                >
-                                    {t('common.exploreBtn')}
-                                    <ArrowRight size={20} />
-                                </button>
-                                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-large">
-                                    <Github size={20} />
-                                    Source Code
-                                </a>
-                            </div>
-                        ) : (
-                            <div className="hero-actions">
+                        <div className="hero-actions">
+                            {!isOnlineMode ? (
+                                <>
+                                    <button
+                                        className="btn btn-primary btn-large"
+                                        onClick={() => showcaseRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                                    >
+                                        {t('common.exploreBtn')}
+                                        <ArrowRight size={20} />
+                                    </button>
+                                    <a href="https://github.com/Sumit-5002/Anyfileforge" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-large">
+                                        <Github size={20} />
+                                        Source Code
+                                    </a>
+                                </>
+                            ) : (
                                 <div className="online-badge" style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
@@ -128,14 +128,15 @@ function HomePage() {
                                     color: 'var(--accent-yellow)',
                                     fontWeight: '600',
                                     background: 'rgba(250, 204, 21, 0.1)',
-                                    padding: '8px 16px',
-                                    borderRadius: '8px'
+                                    padding: '10px 20px',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(250, 204, 21, 0.2)'
                                 }}>
                                     <Zap size={18} />
-                                    <span>Online server mode is paid</span>
+                                    <span>Online Server Mode Active</span>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </section>
 
