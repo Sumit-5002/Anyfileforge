@@ -74,9 +74,10 @@ router.post('/csv-plot', async (req, res) => {
 
             const { xColumn, yColumn, chartType = 'line' } = req.body;
 
-            if (typeof xColumn !== 'string' || typeof yColumn !== 'string' || xColumn.length > 100 || yColumn.length > 100) {
-                await fs.unlink(req.file.path);
-                return res.status(400).json({ error: 'Invalid column names' });
+            const ALLOWED_CHART_TYPES = new Set(['line', 'bar', 'pie', 'scatter']);
+            if (typeof xColumn !== 'string' || typeof yColumn !== 'string' || xColumn.length > 100 || yColumn.length > 100 || !ALLOWED_CHART_TYPES.has(chartType)) {
+                await fs.unlink(req.file.path).catch(() => {});
+                return res.status(400).json({ error: 'Invalid column names or chart type' });
             }
 
             try {

@@ -22,9 +22,14 @@ router.post('/merge', async (req, res) => {
             try {
                 const mergedPdf = await PDFDocument.create();
 
-                for (const file of req.files) {
+                // Load all PDFs in parallel for better performance
+                const loadedPdfs = await Promise.all(req.files.map(async (file) => {
                     const pdfBytes = await fs.readFile(file.path);
-                    const pdf = await PDFDocument.load(pdfBytes);
+                    return PDFDocument.load(pdfBytes);
+                }));
+
+                // Copy pages from each loaded PDF
+                for (const pdf of loadedPdfs) {
                     const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
                     copiedPages.forEach((page) => mergedPdf.addPage(page));
                 }
@@ -38,13 +43,13 @@ router.post('/merge', async (req, res) => {
                 console.error('PDF merge error:', error);
                 res.status(500).json({ error: 'Failed to merge PDFs', message: error.message });
             } finally {
-                // Clean up ALL uploaded files, regardless of success or failure
+                // Clean up ALL uploaded files in parallel
                 if (req.files) {
-                    for (const file of req.files) {
-                        await fs.unlink(file.path).catch(err => {
+                    await Promise.all(req.files.map(file =>
+                        fs.unlink(file.path).catch(err => {
                             if (err.code !== 'ENOENT') console.error('Failed to unlink file:', file.path, err.message);
-                        });
-                    }
+                        })
+                    ));
                 }
             }
         });

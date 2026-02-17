@@ -29,6 +29,7 @@ const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 1
 const FILE_RETENTION_MINUTES = Number(process.env.FILE_RETENTION_MINUTES) || 30;
 const FILE_RETENTION_MS = FILE_RETENTION_MINUTES * 60 * 1000;
 const CLEANUP_INTERVAL_MS = Number(process.env.CLEANUP_INTERVAL_MS) || 5 * 60 * 1000;
+const JSON_BODY_LIMIT = process.env.JSON_BODY_LIMIT || '1mb';
 
 if (!fs.existsSync(UPLOAD_DIR)) {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -106,8 +107,8 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Body parser middleware
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(express.json({ limit: JSON_BODY_LIMIT }));
+app.use(express.urlencoded({ extended: true, limit: JSON_BODY_LIMIT }));
 
 // File upload configuration
 const storage = multer.diskStorage({
