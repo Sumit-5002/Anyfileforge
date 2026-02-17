@@ -18,9 +18,13 @@ const pdfService = {
     async mergePDFs(files) {
         const mergedPdf = await PDFDocument.create();
 
-        for (const file of files) {
+        // Load all PDFs in parallel for better performance (Bolt ⚡)
+        const loadedPdfs = await Promise.all(files.map(async (file) => {
             const arrayBuffer = await file.arrayBuffer();
-            const pdf = await PDFDocument.load(arrayBuffer);
+            return await PDFDocument.load(arrayBuffer);
+        }));
+
+        for (const pdf of loadedPdfs) {
             const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
             copiedPages.forEach((page) => mergedPdf.addPage(page));
         }
@@ -253,14 +257,17 @@ const pdfService = {
     async imagesToPDF(files) {
         const pdf = await PDFDocument.create();
 
-        for (const file of files) {
-            const arrayBuffer = await file.arrayBuffer();
-            let image;
-            if (file.type === 'image/png') {
-                image = await pdf.embedPng(arrayBuffer);
-            } else {
-                image = await pdf.embedJpg(arrayBuffer);
-            }
+        // Fetch all raw data in parallel for better performance (Bolt ⚡)
+        const buffers = await Promise.all(files.map(file => file.arrayBuffer()));
+
+        // Embed images sequentially to avoid race conditions on the shared PDFDocument (Bolt ⚡)
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const buffer = buffers[i];
+            const image = file.type === 'image/png'
+                ? await pdf.embedPng(buffer)
+                : await pdf.embedJpg(buffer);
+
             const { width, height } = image.size();
             const page = pdf.addPage([width, height]);
             page.drawImage(image, { x: 0, y: 0, width, height });
