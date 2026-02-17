@@ -29,26 +29,33 @@ router.post('/resize', async (req, res) => {
                 return res.status(400).json({ error: 'Invalid dimensions. Width and height must be between 1 and 10000.' });
             }
 
-            const image = sharp(req.file.path);
+            try {
+                const image = sharp(req.file.path);
 
-            if (w || h) {
-                image.resize(w, h, {
-                    fit: 'inside',
-                    withoutEnlargement: false
+                if (w || h) {
+                    image.resize(w, h, {
+                        fit: 'inside',
+                        withoutEnlargement: true
+                    });
+                }
+
+                const buffer = await image.toFormat(format).toBuffer();
+
+                res.setHeader('Content-Type', `image/${format}`);
+                res.setHeader('Content-Disposition', `attachment; filename=resized.${format}`);
+                res.send(buffer);
+            } catch (error) {
+                console.error('Image resize error:', error);
+                res.status(500).json({ error: 'Failed to resize image', message: error.message });
+            } finally {
+                await fs.unlink(req.file.path).catch(err => {
+                    if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
                 });
             }
-
-            const buffer = await image.toFormat(format).toBuffer();
-
-            await fs.unlink(req.file.path);
-
-            res.setHeader('Content-Type', `image/${format}`);
-            res.setHeader('Content-Disposition', `attachment; filename=resized.${format}`);
-            res.send(buffer);
         });
     } catch (error) {
-        console.error('Image resize error:', error);
-        res.status(500).json({ error: 'Failed to resize image', message: error.message });
+        console.error('Image resize outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -74,19 +81,26 @@ router.post('/compress', async (req, res) => {
                 return res.status(400).json({ error: 'Invalid quality. Must be between 1 and 100.' });
             }
 
-            const buffer = await sharp(req.file.path)
-                .toFormat(format, { quality: q })
-                .toBuffer();
+            try {
+                const buffer = await sharp(req.file.path)
+                    .toFormat(format, { quality: q })
+                    .toBuffer();
 
-            await fs.unlink(req.file.path);
-
-            res.setHeader('Content-Type', `image/${format}`);
-            res.setHeader('Content-Disposition', `attachment; filename=compressed.${format}`);
-            res.send(buffer);
+                res.setHeader('Content-Type', `image/${format}`);
+                res.setHeader('Content-Disposition', `attachment; filename=compressed.${format}`);
+                res.send(buffer);
+            } catch (error) {
+                console.error('Image compress error:', error);
+                res.status(500).json({ error: 'Failed to compress image', message: error.message });
+            } finally {
+                await fs.unlink(req.file.path).catch(err => {
+                    if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
+                });
+            }
         });
     } catch (error) {
-        console.error('Image compress error:', error);
-        res.status(500).json({ error: 'Failed to compress image', message: error.message });
+        console.error('Image compress outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -106,19 +120,26 @@ router.post('/convert', async (req, res) => {
 
             const { format = 'png' } = req.body;
 
-            const buffer = await sharp(req.file.path)
-                .toFormat(format)
-                .toBuffer();
+            try {
+                const buffer = await sharp(req.file.path)
+                    .toFormat(format)
+                    .toBuffer();
 
-            await fs.unlink(req.file.path);
-
-            res.setHeader('Content-Type', `image/${format}`);
-            res.setHeader('Content-Disposition', `attachment; filename=converted.${format}`);
-            res.send(buffer);
+                res.setHeader('Content-Type', `image/${format}`);
+                res.setHeader('Content-Disposition', `attachment; filename=converted.${format}`);
+                res.send(buffer);
+            } catch (error) {
+                console.error('Image convert error:', error);
+                res.status(500).json({ error: 'Failed to convert image', message: error.message });
+            } finally {
+                await fs.unlink(req.file.path).catch(err => {
+                    if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
+                });
+            }
         });
     } catch (error) {
-        console.error('Image convert error:', error);
-        res.status(500).json({ error: 'Failed to convert image', message: error.message });
+        console.error('Image convert outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -148,25 +169,32 @@ router.post('/crop', async (req, res) => {
                 return res.status(400).json({ error: 'Invalid crop parameters.' });
             }
 
-            const buffer = await sharp(req.file.path)
-                .extract({
-                    left: l,
-                    top: t,
-                    width: w,
-                    height: h
-                })
-                .toFormat(format)
-                .toBuffer();
+            try {
+                const buffer = await sharp(req.file.path)
+                    .extract({
+                        left: l,
+                        top: t,
+                        width: w,
+                        height: h
+                    })
+                    .toFormat(format)
+                    .toBuffer();
 
-            await fs.unlink(req.file.path);
-
-            res.setHeader('Content-Type', `image/${format}`);
-            res.setHeader('Content-Disposition', `attachment; filename=cropped.${format}`);
-            res.send(buffer);
+                res.setHeader('Content-Type', `image/${format}`);
+                res.setHeader('Content-Disposition', `attachment; filename=cropped.${format}`);
+                res.send(buffer);
+            } catch (error) {
+                console.error('Image crop error:', error);
+                res.status(500).json({ error: 'Failed to crop image', message: error.message });
+            } finally {
+                await fs.unlink(req.file.path).catch(err => {
+                    if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
+                });
+            }
         });
     } catch (error) {
-        console.error('Image crop error:', error);
-        res.status(500).json({ error: 'Failed to crop image', message: error.message });
+        console.error('Image crop outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 

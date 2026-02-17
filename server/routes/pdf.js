@@ -19,27 +19,39 @@ router.post('/merge', async (req, res) => {
                 return res.status(400).json({ error: 'At least 2 PDF files are required' });
             }
 
-            const mergedPdf = await PDFDocument.create();
+            try {
+                const mergedPdf = await PDFDocument.create();
 
-            for (const file of req.files) {
-                const pdfBytes = await fs.readFile(file.path);
-                const pdf = await PDFDocument.load(pdfBytes);
-                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-                copiedPages.forEach((page) => mergedPdf.addPage(page));
+                for (const file of req.files) {
+                    const pdfBytes = await fs.readFile(file.path);
+                    const pdf = await PDFDocument.load(pdfBytes);
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    copiedPages.forEach((page) => mergedPdf.addPage(page));
+                }
 
-                // Clean up uploaded file
-                await fs.unlink(file.path);
+                const mergedPdfBytes = await mergedPdf.save();
+
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', 'attachment; filename=merged.pdf');
+                res.send(Buffer.from(mergedPdfBytes));
+            } catch (error) {
+                console.error('PDF merge error:', error);
+                res.status(500).json({ error: 'Failed to merge PDFs', message: error.message });
+            } finally {
+                // Clean up ALL uploaded files, regardless of success or failure
+                if (req.files) {
+                    for (const file of req.files) {
+                        await fs.unlink(file.path).catch(err => {
+                            if (err.code !== 'ENOENT') console.error('Failed to unlink file:', file.path, err.message);
+                        });
+                    }
+                }
             }
-
-            const mergedPdfBytes = await mergedPdf.save();
-
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'attachment; filename=merged.pdf');
-            res.send(Buffer.from(mergedPdfBytes));
         });
     } catch (error) {
-        console.error('PDF merge error:', error);
-        res.status(500).json({ error: 'Failed to merge PDFs', message: error.message });
+        // This catch is for errors BEFORE the Multer callback starts
+        console.error('PDF merge outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -60,31 +72,37 @@ router.post('/split', async (req, res) => {
             const { pages } = req.body; // e.g., "1,3,5" or "1-3,5"
 
             if (typeof pages !== 'string' || pages.length > 1000) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Invalid or too long page range string' });
             }
 
-            const pdfBytes = await fs.readFile(req.file.path);
-            const pdf = await PDFDocument.load(pdfBytes);
+            try {
+                const pdfBytes = await fs.readFile(req.file.path);
+                const pdf = await PDFDocument.load(pdfBytes);
 
-            const newPdf = await PDFDocument.create();
-            const pageIndices = parsePageRange(pages, pdf.getPageCount());
+                const newPdf = await PDFDocument.create();
+                const pageIndices = parsePageRange(pages, pdf.getPageCount());
 
-            const copiedPages = await newPdf.copyPages(pdf, pageIndices);
-            copiedPages.forEach((page) => newPdf.addPage(page));
+                const copiedPages = await newPdf.copyPages(pdf, pageIndices);
+                copiedPages.forEach((page) => newPdf.addPage(page));
 
-            const newPdfBytes = await newPdf.save();
+                const newPdfBytes = await newPdf.save();
 
-            // Clean up
-            await fs.unlink(req.file.path);
-
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'attachment; filename=split.pdf');
-            res.send(Buffer.from(newPdfBytes));
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', 'attachment; filename=split.pdf');
+                res.send(Buffer.from(newPdfBytes));
+            } catch (error) {
+                console.error('PDF split error:', error);
+                res.status(500).json({ error: 'Failed to split PDF', message: error.message });
+            } finally {
+                await fs.unlink(req.file.path).catch(err => {
+                    if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
+                });
+            }
         });
     } catch (error) {
-        console.error('PDF split error:', error);
-        res.status(500).json({ error: 'Failed to split PDF', message: error.message });
+        console.error('PDF split outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -102,24 +120,31 @@ router.post('/compress', async (req, res) => {
                 return res.status(400).json({ error: 'PDF file is required' });
             }
 
-            const pdfBytes = await fs.readFile(req.file.path);
-            const pdf = await PDFDocument.load(pdfBytes);
+            try {
+                const pdfBytes = await fs.readFile(req.file.path);
+                const pdf = await PDFDocument.load(pdfBytes);
 
-            // Basic compression by re-saving
-            const compressedBytes = await pdf.save({
-                useObjectStreams: true,
-                addDefaultPage: false
-            });
+                // Basic compression by re-saving
+                const compressedBytes = await pdf.save({
+                    useObjectStreams: true,
+                    addDefaultPage: false
+                });
 
-            await fs.unlink(req.file.path);
-
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'attachment; filename=compressed.pdf');
-            res.send(Buffer.from(compressedBytes));
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', 'attachment; filename=compressed.pdf');
+                res.send(Buffer.from(compressedBytes));
+            } catch (error) {
+                console.error('PDF compress error:', error);
+                res.status(500).json({ error: 'Failed to compress PDF', message: error.message });
+            } finally {
+                await fs.unlink(req.file.path).catch(err => {
+                    if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
+                });
+            }
         });
     } catch (error) {
-        console.error('PDF compress error:', error);
-        res.status(500).json({ error: 'Failed to compress PDF', message: error.message });
+        console.error('PDF compress outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
