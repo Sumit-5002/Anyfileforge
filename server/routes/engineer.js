@@ -9,8 +9,12 @@ router.post('/json-format', (req, res) => {
     try {
         const { input, action } = req.body;
 
-        if (!input) {
-            return res.status(400).json({ error: 'Input JSON is required' });
+        if (typeof input !== 'string' || !input) {
+            return res.status(400).json({ error: 'Input JSON is required and must be a string' });
+        }
+
+        if (input.length > 5000000) { // 5MB limit for JSON string
+            return res.status(400).json({ error: 'Input JSON too large' });
         }
 
         const parsed = JSON.parse(input);
@@ -41,8 +45,12 @@ router.post('/base64', (req, res) => {
     try {
         const { input, action } = req.body;
 
-        if (!input) {
-            return res.status(400).json({ error: 'Input is required' });
+        if (typeof input !== 'string' || !input) {
+            return res.status(400).json({ error: 'Input is required and must be a string' });
+        }
+
+        if (input.length > 5000000) {
+            return res.status(400).json({ error: 'Input too large' });
         }
 
         let output;

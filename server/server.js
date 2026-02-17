@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
@@ -28,6 +29,7 @@ const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 1
 const FILE_RETENTION_MINUTES = Number(process.env.FILE_RETENTION_MINUTES) || 30;
 const FILE_RETENTION_MS = FILE_RETENTION_MINUTES * 60 * 1000;
 const CLEANUP_INTERVAL_MS = Number(process.env.CLEANUP_INTERVAL_MS) || 5 * 60 * 1000;
+const JSON_BODY_LIMIT = process.env.JSON_BODY_LIMIT || '1mb';
 
 if (!fs.existsSync(UPLOAD_DIR)) {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -105,8 +107,8 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Body parser middleware
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: JSON_BODY_LIMIT }));
+app.use(express.urlencoded({ extended: true, limit: JSON_BODY_LIMIT }));
 
 // File upload configuration
 const storage = multer.diskStorage({
@@ -114,10 +116,23 @@ const storage = multer.diskStorage({
         cb(null, UPLOAD_DIR);
     },
     filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+        const uniqueSuffix = crypto.randomBytes(16).toString('hex');
+        const sanitizedFieldname = (file.fieldname || 'file').replace(/[^a-z0-9]/gi, '_');
+        cb(null, sanitizedFieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
+
+const ALLOWED_EXTENSIONS = new Set(['.jpeg', '.jpg', '.png', '.gif', '.webp', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv']);
+const ALLOWED_MIME_TYPES = new Set([
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/csv',
+    'text/plain'
+]);
 
 const upload = multer({
     storage: storage,
@@ -125,12 +140,11 @@ const upload = multer({
         fileSize: MAX_FILE_SIZE
     },
     fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|csv/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
+        const extension = path.extname(file.originalname).toLowerCase();
+        const mimetype = file.mimetype.toLowerCase();
 
-        if (mimetype && extname) {
-            return cb(null, true);
+        if (ALLOWED_EXTENSIONS.has(extension) && ALLOWED_MIME_TYPES.has(mimetype)) {
+            cb(null, true);
         } else {
             cb(new Error('Invalid file type. Only images, PDFs, and office documents are allowed.'));
         }
