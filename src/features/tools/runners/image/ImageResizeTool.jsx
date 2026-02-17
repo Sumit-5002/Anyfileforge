@@ -33,9 +33,10 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         setProcessing(true);
         setCompletedCount(0);
         try {
-            for (let i = 0; i < files.length; i++) {
-                const f = files[i];
-                const normalizedQuality = Math.min(1, Math.max(0.1, Number(quality)));
+            const normalizedQuality = Math.min(1, Math.max(0.1, Number(quality)));
+
+            // Parallelize processing for better performance (Bolt ⚡)
+            await Promise.all(files.map(async (f) => {
                 const blob = tool.mode === 'server'
                     ? await serverProcessingService.resizeImage(f, {
                         width,
@@ -45,8 +46,8 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     : await imageService.resizeImageTo(f, width, height, keepAspect, format, normalizedQuality);
 
                 imageService.downloadBlob(blob, `${getBaseName(f.name)}_resized.${extension}`);
-                setCompletedCount(i + 1);
-            }
+                setCompletedCount(prev => prev + 1);
+            }));
         } finally {
             setProcessing(false);
         }
