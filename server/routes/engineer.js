@@ -132,8 +132,23 @@ router.post('/minify', (req, res) => {
     try {
         const { code, type } = req.body;
 
-        if (!code) {
-            return res.status(400).json({ error: 'Code is required' });
+        // Input validation: ensure types and length are safe
+        if (typeof code !== 'string' || !code) {
+            return res.status(400).json({ error: 'Code is required and must be a string' });
+        }
+
+        if (code.length > 1000000) { // 1MB limit to prevent DoS
+            return res.status(400).json({ error: 'Code too large (max 1MB)' });
+        }
+
+        if (typeof type !== 'string') {
+            return res.status(400).json({ error: 'Type must be a string' });
+        }
+
+        // Type whitelist
+        const ALLOWED_TYPES = new Set(['json', 'css', 'js']);
+        if (!ALLOWED_TYPES.has(type)) {
+            return res.status(400).json({ error: 'Invalid type. Use "json", "css", or "js"' });
         }
 
         let minified;
@@ -158,8 +173,6 @@ router.post('/minify', (req, res) => {
                 .replace(/\/\/.*/g, '')
                 .replace(/\s+/g, ' ')
                 .trim();
-        } else {
-            return res.status(400).json({ error: 'Invalid type. Use "json", "css", or "js"' });
         }
 
         res.json({
@@ -170,10 +183,11 @@ router.post('/minify', (req, res) => {
             reduction: ((1 - minified.length / code.length) * 100).toFixed(2) + '%'
         });
     } catch (error) {
+        // Log error internally and return generic message
+        console.error('Minify error:', error.message);
         res.status(400).json({
             success: false,
-            error: 'Minification failed',
-            message: error.message
+            error: 'Minification failed'
         });
     }
 });
@@ -183,22 +197,40 @@ router.post('/hash', (req, res) => {
     try {
         const { input, algorithm = 'sha256' } = req.body;
 
-        if (!input) {
-            return res.status(400).json({ error: 'Input is required' });
+        // Input validation: ensure types and length are safe
+        if (typeof input !== 'string' || !input) {
+            return res.status(400).json({ error: 'Input is required and must be a string' });
         }
 
-        const hash = createHash(algorithm).update(input).digest('hex');
+        if (input.length > 1000000) { // 1MB limit to prevent DoS
+            return res.status(400).json({ error: 'Input too large (max 1MB)' });
+        }
+
+        if (typeof algorithm !== 'string') {
+            return res.status(400).json({ error: 'Algorithm must be a string' });
+        }
+
+        // Algorithm whitelist: restrict to known supported types
+        const ALLOWED_ALGORITHMS = new Set(['sha256', 'sha512', 'sha1', 'md5']);
+        const selectedAlgo = algorithm.toLowerCase();
+
+        if (!ALLOWED_ALGORITHMS.has(selectedAlgo)) {
+            return res.status(400).json({ error: 'Unsupported algorithm' });
+        }
+
+        const hash = createHash(selectedAlgo).update(input).digest('hex');
 
         res.json({
             success: true,
             hash,
-            algorithm
+            algorithm: selectedAlgo
         });
     } catch (error) {
+        // Log the error internally but return a generic message to the client
+        console.error('Hash error:', error.message);
         res.status(400).json({
             success: false,
-            error: 'Hash generation failed',
-            message: error.message
+            error: 'Hash generation failed'
         });
     }
 });
