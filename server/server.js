@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
@@ -114,8 +115,9 @@ const storage = multer.diskStorage({
         cb(null, UPLOAD_DIR);
     },
     filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+        const uniqueSuffix = crypto.randomBytes(16).toString('hex');
+        const sanitizedFieldname = (file.fieldname || 'file').replace(/[^a-z0-9]/gi, '_');
+        cb(null, sanitizedFieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
 

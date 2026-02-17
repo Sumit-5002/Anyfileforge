@@ -68,6 +68,11 @@ router.post('/csv-plot', async (req, res) => {
 
             const { xColumn, yColumn, chartType = 'line' } = req.body;
 
+            if (typeof xColumn !== 'string' || typeof yColumn !== 'string' || xColumn.length > 100 || yColumn.length > 100) {
+                await fs.unlink(req.file.path);
+                return res.status(400).json({ error: 'Invalid column names' });
+            }
+
             const csvContent = await fs.readFile(req.file.path, 'utf-8');
             const lines = csvContent.split('\n').filter(line => line.trim());
 
@@ -114,8 +119,12 @@ router.post('/bibtex-parse', (req, res) => {
     try {
         const { bibtex } = req.body;
 
-        if (!bibtex) {
-            return res.status(400).json({ error: 'BibTeX content is required' });
+        if (typeof bibtex !== 'string' || !bibtex) {
+            return res.status(400).json({ error: 'BibTeX content is required and must be a string' });
+        }
+
+        if (bibtex.length > 100000) {
+            return res.status(400).json({ error: 'BibTeX content too large' });
         }
 
         // Basic BibTeX parsing
@@ -159,6 +168,10 @@ router.post('/stats', (req, res) => {
 
         if (!Array.isArray(data) || data.length === 0) {
             return res.status(400).json({ error: 'Data array is required' });
+        }
+
+        if (data.length > 10000) {
+            return res.status(400).json({ error: 'Data array too large (max 10000 items)' });
         }
 
         const numbers = data.map(Number).filter(n => !isNaN(n));

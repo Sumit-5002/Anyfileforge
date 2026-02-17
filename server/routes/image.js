@@ -20,10 +20,19 @@ router.post('/resize', async (req, res) => {
 
             const { width, height, format = 'jpeg' } = req.body;
 
+            const w = width ? parseInt(width) : null;
+            const h = height ? parseInt(height) : null;
+
+            if ((w !== null && (isNaN(w) || w <= 0 || w > 10000)) ||
+                (h !== null && (isNaN(h) || h <= 0 || h > 10000))) {
+                await fs.unlink(req.file.path);
+                return res.status(400).json({ error: 'Invalid dimensions. Width and height must be between 1 and 10000.' });
+            }
+
             const image = sharp(req.file.path);
 
-            if (width || height) {
-                image.resize(parseInt(width) || null, parseInt(height) || null, {
+            if (w || h) {
+                image.resize(w, h, {
                     fit: 'inside',
                     withoutEnlargement: false
                 });
@@ -58,9 +67,15 @@ router.post('/compress', async (req, res) => {
             }
 
             const { quality = 80, format = 'jpeg' } = req.body;
+            const q = parseInt(quality);
+
+            if (isNaN(q) || q < 1 || q > 100) {
+                await fs.unlink(req.file.path);
+                return res.status(400).json({ error: 'Invalid quality. Must be between 1 and 100.' });
+            }
 
             const buffer = await sharp(req.file.path)
-                .toFormat(format, { quality: parseInt(quality) })
+                .toFormat(format, { quality: q })
                 .toBuffer();
 
             await fs.unlink(req.file.path);
@@ -123,12 +138,22 @@ router.post('/crop', async (req, res) => {
 
             const { left, top, width, height, format = 'jpeg' } = req.body;
 
+            const l = parseInt(left);
+            const t = parseInt(top);
+            const w = parseInt(width);
+            const h = parseInt(height);
+
+            if (isNaN(l) || isNaN(t) || isNaN(w) || isNaN(h) || l < 0 || t < 0 || w <= 0 || h <= 0 || w > 10000 || h > 10000) {
+                await fs.unlink(req.file.path);
+                return res.status(400).json({ error: 'Invalid crop parameters.' });
+            }
+
             const buffer = await sharp(req.file.path)
                 .extract({
-                    left: parseInt(left),
-                    top: parseInt(top),
-                    width: parseInt(width),
-                    height: parseInt(height)
+                    left: l,
+                    top: t,
+                    width: w,
+                    height: h
                 })
                 .toFormat(format)
                 .toBuffer();

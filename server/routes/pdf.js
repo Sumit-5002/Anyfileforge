@@ -59,6 +59,11 @@ router.post('/split', async (req, res) => {
 
             const { pages } = req.body; // e.g., "1,3,5" or "1-3,5"
 
+            if (typeof pages !== 'string' || pages.length > 1000) {
+                await fs.unlink(req.file.path);
+                return res.status(400).json({ error: 'Invalid or too long page range string' });
+            }
+
             const pdfBytes = await fs.readFile(req.file.path);
             const pdf = await PDFDocument.load(pdfBytes);
 
