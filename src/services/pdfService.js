@@ -257,16 +257,17 @@ const pdfService = {
     async imagesToPDF(files) {
         const pdf = await PDFDocument.create();
 
-        // Embed all images in parallel for better performance (Bolt ⚡)
-        const embeddedImages = await Promise.all(files.map(async (file) => {
-            const arrayBuffer = await file.arrayBuffer();
-            if (file.type === 'image/png') {
-                return await pdf.embedPng(arrayBuffer);
-            }
-            return await pdf.embedJpg(arrayBuffer);
-        }));
+        // Fetch all raw data in parallel for better performance (Bolt ⚡)
+        const buffers = await Promise.all(files.map(file => file.arrayBuffer()));
 
-        for (const image of embeddedImages) {
+        // Embed images sequentially to avoid race conditions on the shared PDFDocument (Bolt ⚡)
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const buffer = buffers[i];
+            const image = file.type === 'image/png'
+                ? await pdf.embedPng(buffer)
+                : await pdf.embedJpg(buffer);
+
             const { width, height } = image.size();
             const page = pdf.addPage([width, height]);
             page.drawImage(image, { x: 0, y: 0, width, height });
