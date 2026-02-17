@@ -21,14 +21,27 @@ router.post('/merge', async (req, res) => {
 
             const mergedPdf = await PDFDocument.create();
 
-            for (const file of req.files) {
-                const pdfBytes = await fs.readFile(file.path);
-                const pdf = await PDFDocument.load(pdfBytes);
-                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-                copiedPages.forEach((page) => mergedPdf.addPage(page));
+            // Load all PDFs in parallel for better performance (Bolt ⚡)
+            try {
+                const loadedPdfs = await Promise.all(req.files.map(async (file) => {
+                    const pdfBytes = await fs.readFile(file.path);
+                    const pdf = await PDFDocument.load(pdfBytes);
+                    return { pdf, filePath: file.path };
+                }));
 
-                // Clean up uploaded file
-                await fs.unlink(file.path);
+                for (const { pdf, filePath } of loadedPdfs) {
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    copiedPages.forEach((page) => mergedPdf.addPage(page));
+                }
+            } finally {
+                // Ensure all uploaded files are cleaned up even if processing fails (Bolt ⚡)
+                await Promise.all(req.files.map(async (file) => {
+                    try {
+                        await fs.unlink(file.path);
+                    } catch (e) {
+                        // Ignore errors if file already removed or doesn't exist
+                    }
+                }));
             }
 
             const mergedPdfBytes = await mergedPdf.save();
