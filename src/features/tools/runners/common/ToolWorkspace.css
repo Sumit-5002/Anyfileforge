@@ -44,9 +44,16 @@
     border: 1px dashed var(--primary-500);
     border-radius: 6px;
     transition: all 0.2s;
+    background: transparent;
 }
 
 .btn-add-more:hover {
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.btn-add-more:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
     background: rgba(var(--primary-rgb), 0.05);
 }
 

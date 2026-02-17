@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { X, FileText, Download, Loader } from 'lucide-react';
 import './ToolWorkspace.css';
 
@@ -17,6 +17,8 @@ function ToolWorkspace({
     sidebar,
     children // This is the main grid or file list area
 }) {
+    const addMoreInputRef = useRef(null);
+
     const handleAddMore = (e) => {
         const newFiles = Array.from(e.target.files);
         if (newFiles.length > 0 && onFilesSelected) {
@@ -38,18 +40,28 @@ function ToolWorkspace({
                 </div>
                 <div className="workspace-header-actions">
                     {onFilesSelected && (
-                        <label className="btn-add-more">
-                            + Add More
+                        <>
+                            <button
+                                type="button"
+                                className="btn-add-more"
+                                onClick={() => addMoreInputRef.current?.click()}
+                                aria-label="Add more files"
+                            >
+                                + Add More
+                            </button>
                             <input
                                 type="file"
                                 multiple
                                 hidden
+                                ref={addMoreInputRef}
                                 accept={tool.accept || '*/*'}
                                 onChange={handleAddMore}
+                                tabIndex="-1"
+                                aria-hidden="true"
                             />
-                        </label>
+                        </>
                     )}
-                    <button className="btn-reset-workspace" onClick={onReset}>
+                    <button className="btn-reset-workspace" onClick={onReset} aria-label="Reset workspace">
                         <X size={16} /> Reset
                     </button>
                 </div>
