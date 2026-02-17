@@ -35,23 +35,37 @@ function FileUploader({
         handleFiles(e.dataTransfer.files);
     };
 
+    const triggerFileInput = () => {
+        fileInputRef.current.click();
+    };
+
     return (
         <div
             className={`massive-uploader ${isDragging ? 'dragging' : ''}`}
             onDragOver={(e) => handleDrag(e, true)}
             onDragLeave={(e) => handleDrag(e, false)}
             onDrop={handleDrop}
+            onClick={triggerFileInput}
+            role="region"
+            aria-label="File upload drop zone"
         >
             <div className="massive-uploader-inner">
+                <div className="massive-upload-icon-wrapper" aria-hidden="true">
+                    <Upload size={48} className="massive-upload-icon" />
+                </div>
                 <div className="massive-button-group">
                     <button
                         className="btn btn-primary massive-select-btn"
-                        onClick={() => fileInputRef.current.click()}
+                        type="button"
                     >
                         Select {tool?.name || 'File'}
                     </button>
 
-                    {isServerMode && <CloudSourceOptions layout="side" onFilesSelected={handleFiles} />}
+                    {isServerMode && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <CloudSourceOptions layout="side" onFilesSelected={handleFiles} />
+                        </div>
+                    )}
                 </div>
 
                 <p className="massive-drop-text">
@@ -63,6 +77,9 @@ function FileUploader({
                     type="file"
                     multiple={multiple}
                     hidden
+                    tabIndex="-1"
+                    aria-hidden="true"
+                    aria-label="Hidden file input"
                     ref={fileInputRef}
                     onChange={(e) => {
                         handleFiles(e.target.files);
