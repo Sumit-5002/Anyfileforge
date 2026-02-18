@@ -36,7 +36,7 @@ function FileUploader({
     };
 
     const triggerFileInput = () => {
-        fileInputRef.current.click();
+        fileInputRef.current?.click();
     };
 
     return (
@@ -57,6 +57,7 @@ function FileUploader({
                     <button
                         className="btn btn-primary massive-select-btn"
                         type="button"
+                        onClick={triggerFileInput}
                     >
                         Select {tool?.name || 'File'}
                     </button>
@@ -78,8 +79,6 @@ function FileUploader({
                     multiple={multiple}
                     hidden
                     tabIndex="-1"
-                    aria-hidden="true"
-                    aria-label="Hidden file input"
                     ref={fileInputRef}
                     onChange={(e) => {
                         handleFiles(e.target.files);

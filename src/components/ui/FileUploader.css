@@ -41,7 +41,7 @@
     min-height: 300px;
     border: 2px dashed transparent;
     border-radius: var(--radius-lg, 16px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }
 
@@ -239,5 +239,15 @@
         flex-direction: column-reverse;
         width: 100%;
     }
+}
 
+@media (prefers-reduced-motion: reduce) {
+    .massive-uploader,
+    .massive-uploader.dragging,
+    .massive-upload-icon-wrapper,
+    .massive-select-btn {
+        transition: none !important;
+        transform: none !important;
+        animation: none !important;
+    }
 }
