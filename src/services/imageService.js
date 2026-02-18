@@ -56,20 +56,11 @@ const imageService = {
      */
     async resizeImage(file, maxWidth, maxHeight) {
         const img = await this.loadImage(file);
-        let width = img.width;
-        let height = img.height;
 
-        if (width > height) {
-            if (width > maxWidth) {
-                height *= maxWidth / width;
-                width = maxWidth;
-            }
-        } else {
-            if (height > maxHeight) {
-                width *= maxHeight / height;
-                height = maxHeight;
-            }
-        }
+        // Compute uniform scale to respect both maxWidth and maxHeight while preserving aspect ratio (Bolt ⚡)
+        const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+        const width = Math.round(img.width * scale);
+        const height = Math.round(img.height * scale);
 
         const canvas = document.createElement('canvas');
         canvas.width = width;
@@ -77,8 +68,14 @@ const imageService = {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        return new Promise((resolve) => {
-            canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
+        return new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error('Canvas toBlob failed'));
+                }
+            }, 'image/jpeg', 0.8);
         });
     },
 
