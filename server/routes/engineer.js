@@ -4,6 +4,10 @@ import vm from 'vm';
 
 const router = express.Router();
 
+const ALLOWED_MINIFY_TYPES = new Set(['json', 'css', 'js']);
+const ALLOWED_HASH_ALGORITHMS = new Set(['sha256', 'sha512', 'sha1', 'md5']);
+const WEAK_HASH_ALGORITHMS = new Set(['sha1', 'md5']);
+
 // JSON Formatter & Validator
 router.post('/json-format', (req, res) => {
     try {
@@ -32,10 +36,10 @@ router.post('/json-format', (req, res) => {
             valid: true
         });
     } catch (error) {
+        console.error('JSON format error:', error.message);
         res.status(400).json({
             success: false,
-            error: 'Invalid JSON',
-            message: error.message
+            error: 'Invalid JSON'
         });
     }
 });
@@ -64,10 +68,10 @@ router.post('/base64', (req, res) => {
 
         res.json({ success: true, output });
     } catch (error) {
+        console.error('Base64 error:', error.message);
         res.status(400).json({
             success: false,
-            error: 'Base64 operation failed',
-            message: error.message
+            error: 'Base64 operation failed'
         });
     }
 });
@@ -119,10 +123,10 @@ router.post('/regex-test', (req, res) => {
     } catch (error) {
         const isTimeout = error.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' ||
             (error.message && error.message.includes('timed out'));
+        console.error('Regex test error:', error.message);
         res.status(isTimeout ? 408 : 400).json({
             success: false,
-            error: isTimeout ? 'Regex operation timed out' : 'Invalid regex pattern',
-            message: error.message
+            error: isTimeout ? 'Regex operation timed out' : 'Invalid regex pattern'
         });
     }
 });
@@ -132,8 +136,22 @@ router.post('/minify', (req, res) => {
     try {
         const { code, type } = req.body;
 
-        if (!code) {
-            return res.status(400).json({ error: 'Code is required' });
+        // Input validation: ensure types and length are safe
+        if (typeof code !== 'string' || !code) {
+            return res.status(400).json({ error: 'Code is required and must be a string' });
+        }
+
+        if (code.length > 1000000) { // 1MB limit to prevent DoS
+            return res.status(400).json({ error: 'Code too large (max 1MB)' });
+        }
+
+        if (typeof type !== 'string') {
+            return res.status(400).json({ error: 'Type must be a string' });
+        }
+
+        // Type whitelist
+        if (!ALLOWED_MINIFY_TYPES.has(type)) {
+            return res.status(400).json({ error: 'Invalid type. Use "json", "css", or "js"' });
         }
 
         let minified;
@@ -158,8 +176,6 @@ router.post('/minify', (req, res) => {
                 .replace(/\/\/.*/g, '')
                 .replace(/\s+/g, ' ')
                 .trim();
-        } else {
-            return res.status(400).json({ error: 'Invalid type. Use "json", "css", or "js"' });
         }
 
         res.json({
@@ -170,10 +186,11 @@ router.post('/minify', (req, res) => {
             reduction: ((1 - minified.length / code.length) * 100).toFixed(2) + '%'
         });
     } catch (error) {
+        // Log error internally and return generic message
+        console.error('Minify error:', error.message);
         res.status(400).json({
             success: false,
-            error: 'Minification failed',
-            message: error.message
+            error: 'Minification failed'
         });
     }
 });
@@ -181,24 +198,50 @@ router.post('/minify', (req, res) => {
 // Hash Generator
 router.post('/hash', (req, res) => {
     try {
-        const { input, algorithm = 'sha256' } = req.body;
+        const { input, algorithm = 'sha256', allowWeakAlgos = false } = req.body;
 
-        if (!input) {
-            return res.status(400).json({ error: 'Input is required' });
+        // Input validation: ensure types and length are safe
+        if (typeof input !== 'string' || !input) {
+            return res.status(400).json({ error: 'Input is required and must be a string' });
         }
 
-        const hash = createHash(algorithm).update(input).digest('hex');
+        if (input.length > 1000000) { // 1MB limit to prevent DoS
+            return res.status(400).json({ error: 'Input too large (max 1MB)' });
+        }
+
+        if (typeof algorithm !== 'string') {
+            return res.status(400).json({ error: 'Algorithm must be a string' });
+        }
+
+        // Algorithm whitelist: restrict to known supported types
+        const selectedAlgo = algorithm.toLowerCase();
+
+        if (!ALLOWED_HASH_ALGORITHMS.has(selectedAlgo)) {
+            return res.status(400).json({ error: 'Unsupported algorithm' });
+        }
+
+        // MD5 and SHA1 are cryptographically broken and unsafe for security-sensitive uses.
+        // We require an explicit opt-in to use them for non-security purposes.
+        if (WEAK_HASH_ALGORITHMS.has(selectedAlgo) && allowWeakAlgos !== true) {
+            return res.status(400).json({
+                error: 'Weak algorithm',
+                message: 'MD5 and SHA1 are cryptographically broken and unsafe for security-sensitive uses. Use a stronger algorithm like SHA256, or set allowWeakAlgos: true for non-security checksums.'
+            });
+        }
+
+        const hash = createHash(selectedAlgo).update(input).digest('hex');
 
         res.json({
             success: true,
             hash,
-            algorithm
+            algorithm: selectedAlgo
         });
     } catch (error) {
+        // Log the error internally but return a generic message to the client
+        console.error('Hash error:', error.message);
         res.status(400).json({
             success: false,
-            error: 'Hash generation failed',
-            message: error.message
+            error: 'Hash generation failed'
         });
     }
 });
