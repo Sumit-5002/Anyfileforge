@@ -219,8 +219,16 @@
 }
 
 .page-item-card:hover .page-rotate-btn,
-.page-item-card:hover .page-remove-btn {
+.page-item-card:hover .page-remove-btn,
+.page-rotate-btn:focus-visible,
+.page-remove-btn:focus-visible {
     opacity: 1;
+}
+
+.page-rotate-btn:focus-visible,
+.page-remove-btn:focus-visible {
+    outline: 2px solid white;
+    outline-offset: -4px;
 }
 
 .page-rotate-btn:hover,
@@ -347,6 +355,16 @@
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    color: inherit;
+    width: 100%;
+}
+
+.level-box:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
 }
 
 .level-box.active {
