@@ -197,9 +197,10 @@ app.use((err, req, res, next) => {
         }
     }
 
+    const isDev = process.env.NODE_ENV === 'development';
     res.status(err.status || 500).json({
-        error: err.message || 'Internal Server Error',
-        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+        error: isDev ? (err.message || 'Internal Server Error') : 'An unexpected error occurred',
+        ...(isDev && { stack: err.stack })
     });
 });
 

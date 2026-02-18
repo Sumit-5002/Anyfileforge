@@ -45,7 +45,7 @@ router.post('/csv-to-json', async (req, res) => {
                 });
             } catch (error) {
                 console.error('CSV to JSON error:', error);
-                res.status(500).json({ error: 'Failed to convert CSV', message: error.message });
+                res.status(500).json({ error: 'Failed to convert CSV' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -114,7 +114,7 @@ router.post('/csv-plot', async (req, res) => {
                 });
             } catch (error) {
                 console.error('CSV plot error:', error);
-                res.status(500).json({ error: 'Failed to generate plot data', message: error.message });
+                res.status(500).json({ error: 'Failed to generate plot data' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -168,8 +168,7 @@ router.post('/bibtex-parse', (req, res) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            error: 'BibTeX parsing failed',
-            message: error.message
+            error: 'BibTeX parsing failed'
         });
     }
 });
@@ -220,8 +219,7 @@ router.post('/stats', (req, res) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            error: 'Statistical analysis failed',
-            message: error.message
+            error: 'Statistical analysis failed'
         });
     }
 });

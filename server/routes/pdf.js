@@ -28,8 +28,13 @@ router.post('/merge', async (req, res) => {
                     return PDFDocument.load(pdfBytes);
                 }));
 
-                // Copy pages from each loaded PDF
+                // Copy pages from each loaded PDF with a total limit to prevent DoS
+                let totalPages = 0;
                 for (const pdf of loadedPdfs) {
+                    totalPages += pdf.getPageCount();
+                    if (totalPages > 1000) {
+                        return res.status(400).json({ error: 'Total page limit exceeded (max 1000 pages)' });
+                    }
                     const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
                     copiedPages.forEach((page) => mergedPdf.addPage(page));
                 }
@@ -41,7 +46,7 @@ router.post('/merge', async (req, res) => {
                 res.send(Buffer.from(mergedPdfBytes));
             } catch (error) {
                 console.error('PDF merge error:', error);
-                res.status(500).json({ error: 'Failed to merge PDFs', message: error.message });
+                res.status(500).json({ error: 'Failed to merge PDFs' });
             } finally {
                 // Clean up ALL uploaded files in parallel
                 if (req.files) {
@@ -88,6 +93,10 @@ router.post('/split', async (req, res) => {
                 const newPdf = await PDFDocument.create();
                 const pageIndices = parsePageRange(pages, pdf.getPageCount());
 
+                if (pageIndices.length > 1000) {
+                    return res.status(400).json({ error: 'Too many pages requested (max 1000)' });
+                }
+
                 const copiedPages = await newPdf.copyPages(pdf, pageIndices);
                 copiedPages.forEach((page) => newPdf.addPage(page));
 
@@ -98,7 +107,7 @@ router.post('/split', async (req, res) => {
                 res.send(Buffer.from(newPdfBytes));
             } catch (error) {
                 console.error('PDF split error:', error);
-                res.status(500).json({ error: 'Failed to split PDF', message: error.message });
+                res.status(500).json({ error: 'Failed to split PDF' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -140,7 +149,7 @@ router.post('/compress', async (req, res) => {
                 res.send(Buffer.from(compressedBytes));
             } catch (error) {
                 console.error('PDF compress error:', error);
-                res.status(500).json({ error: 'Failed to compress PDF', message: error.message });
+                res.status(500).json({ error: 'Failed to compress PDF' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
