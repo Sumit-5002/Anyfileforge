@@ -13,7 +13,7 @@
 **Learning:** Using regex `.test()` on file extensions or mimetypes without anchors (`^` and `$`) is a common security pitfall that leads to validation bypasses.
 **Prevention:** Always use strict equality checks or a whitelist (e.g., `Set.has()`) against the full extension and mimetype strings. Ensure extensions are extracted correctly using `path.extname()` and both are converted to lowercase before comparison.
 
-## 2025-05-24 - [DoS and Information Leakage in Computational Endpoints]
+## 2026-02-17 - [DoS and Information Leakage in Computational Endpoints]
 **Vulnerability:** The `/hash` and `/minify` endpoints lacked input length limits and allowed arbitrary algorithms/types, potentially leading to DoS or crashes. Additionally, raw error messages from the `crypto` and `JSON` modules were returned to the client.
 **Learning:** Computational routes are high-risk for DoS if not strictly bounded. Leaking internal error messages can provide attackers with information about the server's environment or used libraries.
 **Prevention:** Enforce strict whitelists for functional parameters and hard length limits (e.g., 1MB) on all computational payloads. Sanitize error responses to return generic messages.

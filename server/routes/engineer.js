@@ -4,6 +4,10 @@ import vm from 'vm';
 
 const router = express.Router();
 
+const ALLOWED_MINIFY_TYPES = new Set(['json', 'css', 'js']);
+const ALLOWED_HASH_ALGORITHMS = new Set(['sha256', 'sha512', 'sha1', 'md5']);
+const WEAK_HASH_ALGORITHMS = new Set(['sha1', 'md5']);
+
 // JSON Formatter & Validator
 router.post('/json-format', (req, res) => {
     try {
@@ -32,10 +36,10 @@ router.post('/json-format', (req, res) => {
             valid: true
         });
     } catch (error) {
+        console.error('JSON format error:', error.message);
         res.status(400).json({
             success: false,
-            error: 'Invalid JSON',
-            message: error.message
+            error: 'Invalid JSON'
         });
     }
 });
@@ -64,10 +68,10 @@ router.post('/base64', (req, res) => {
 
         res.json({ success: true, output });
     } catch (error) {
+        console.error('Base64 error:', error.message);
         res.status(400).json({
             success: false,
-            error: 'Base64 operation failed',
-            message: error.message
+            error: 'Base64 operation failed'
         });
     }
 });
@@ -119,10 +123,10 @@ router.post('/regex-test', (req, res) => {
     } catch (error) {
         const isTimeout = error.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' ||
             (error.message && error.message.includes('timed out'));
+        console.error('Regex test error:', error.message);
         res.status(isTimeout ? 408 : 400).json({
             success: false,
-            error: isTimeout ? 'Regex operation timed out' : 'Invalid regex pattern',
-            message: error.message
+            error: isTimeout ? 'Regex operation timed out' : 'Invalid regex pattern'
         });
     }
 });
@@ -146,8 +150,7 @@ router.post('/minify', (req, res) => {
         }
 
         // Type whitelist
-        const ALLOWED_TYPES = new Set(['json', 'css', 'js']);
-        if (!ALLOWED_TYPES.has(type)) {
+        if (!ALLOWED_MINIFY_TYPES.has(type)) {
             return res.status(400).json({ error: 'Invalid type. Use "json", "css", or "js"' });
         }
 
@@ -195,7 +198,7 @@ router.post('/minify', (req, res) => {
 // Hash Generator
 router.post('/hash', (req, res) => {
     try {
-        const { input, algorithm = 'sha256' } = req.body;
+        const { input, algorithm = 'sha256', allowWeakAlgos = false } = req.body;
 
         // Input validation: ensure types and length are safe
         if (typeof input !== 'string' || !input) {
@@ -211,11 +214,19 @@ router.post('/hash', (req, res) => {
         }
 
         // Algorithm whitelist: restrict to known supported types
-        const ALLOWED_ALGORITHMS = new Set(['sha256', 'sha512', 'sha1', 'md5']);
         const selectedAlgo = algorithm.toLowerCase();
 
-        if (!ALLOWED_ALGORITHMS.has(selectedAlgo)) {
+        if (!ALLOWED_HASH_ALGORITHMS.has(selectedAlgo)) {
             return res.status(400).json({ error: 'Unsupported algorithm' });
+        }
+
+        // MD5 and SHA1 are cryptographically broken and unsafe for security-sensitive uses.
+        // We require an explicit opt-in to use them for non-security purposes.
+        if (WEAK_HASH_ALGORITHMS.has(selectedAlgo) && allowWeakAlgos !== true) {
+            return res.status(400).json({
+                error: 'Weak algorithm',
+                message: 'MD5 and SHA1 are cryptographically broken and unsafe for security-sensitive uses. Use a stronger algorithm like SHA256, or set allowWeakAlgos: true for non-security checksums.'
+            });
         }
 
         const hash = createHash(selectedAlgo).update(input).digest('hex');
