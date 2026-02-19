@@ -74,8 +74,9 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     <label className="sidebar-label">Compression Level</label>
                     <div className="levels-vertical">
                         {LEVELS.map(l => (
-                            <div
+                            <button
                                 key={l.id}
+                                type="button"
                                 className={`level-box ${level === l.id ? 'active' : ''}`}
                                 onClick={() => setLevel(l.id)}
                             >
@@ -84,7 +85,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                                     <div className="level-name">{l.name}</div>
                                     <div className="level-desc">{l.desc}</div>
                                 </div>
-                            </div>
+                            </button>
                         ))}
                     </div>
                 </div>
