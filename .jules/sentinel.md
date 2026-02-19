@@ -17,3 +17,8 @@
 **Vulnerability:** The `/hash` and `/minify` endpoints lacked input length limits and allowed arbitrary algorithms/types, potentially leading to DoS or crashes. Additionally, raw error messages from the `crypto` and `JSON` modules were returned to the client.
 **Learning:** Computational routes are high-risk for DoS if not strictly bounded. Leaking internal error messages can provide attackers with information about the server's environment or used libraries.
 **Prevention:** Enforce strict whitelists for functional parameters and hard length limits (e.g., 1MB) on all computational payloads. Sanitize error responses to return generic messages.
+
+## 2026-02-18 - [Resource Exhaustion in PDF Processing]
+**Vulnerability:** The PDF merge and split routes did not limit the number of pages that could be produced. An attacker could request a split operation that duplicates pages thousands of times, or merge many large PDFs, leading to high CPU/memory usage and potential DoS.
+**Learning:** Resource-intensive file operations must have secondary limits beyond simple file size checks, specifically on the complexity or count of output elements.
+**Prevention:** Enforce hard limits on the total number of pages (e.g., 1000) that can be generated or processed in a single request.

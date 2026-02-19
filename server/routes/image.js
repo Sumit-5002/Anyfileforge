@@ -11,7 +11,8 @@ router.post('/resize', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('Image resize upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -66,7 +67,8 @@ router.post('/compress', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('Image compress upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -111,7 +113,8 @@ router.post('/convert', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('Image convert upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -150,7 +153,8 @@ router.post('/crop', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('Image crop upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {

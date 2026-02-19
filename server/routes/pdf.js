@@ -12,7 +12,8 @@ router.post('/merge', async (req, res) => {
 
         upload.array('files', 10)(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('PDF merge upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.files || req.files.length < 2) {
@@ -22,26 +23,29 @@ router.post('/merge', async (req, res) => {
             try {
                 const mergedPdf = await PDFDocument.create();
 
-                // Load all PDFs in parallel for better performance
-                const loadedPdfs = await Promise.all(req.files.map(async (file) => {
+                // Load and process PDFs sequentially to prevent excessive memory usage and check limits early
+                let totalPages = 0;
+                for (const file of req.files) {
                     const pdfBytes = await fs.readFile(file.path);
-                    return PDFDocument.load(pdfBytes);
-                }));
+                    const pdf = await PDFDocument.load(pdfBytes);
 
-                // Copy pages from each loaded PDF
-                for (const pdf of loadedPdfs) {
+                    totalPages += pdf.getPageCount();
+                    if (totalPages > 1000) {
+                        return res.status(400).json({ error: 'Total page limit exceeded (max 1000 pages)' });
+                    }
+
                     const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
                     copiedPages.forEach((page) => mergedPdf.addPage(page));
                 }
 
-                const mergedPdfBytes = await mergedPdf.save();
+                const mergedPdfBytes = await mergedPdf.save({ useObjectStreams: true });
 
                 res.setHeader('Content-Type', 'application/pdf');
                 res.setHeader('Content-Disposition', 'attachment; filename=merged.pdf');
                 res.send(Buffer.from(mergedPdfBytes));
             } catch (error) {
                 console.error('PDF merge error:', error);
-                res.status(500).json({ error: 'Failed to merge PDFs', message: error.message });
+                res.status(500).json({ error: 'Failed to merge PDFs' });
             } finally {
                 // Clean up ALL uploaded files in parallel
                 if (req.files) {
@@ -67,7 +71,8 @@ router.post('/split', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('PDF split upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -88,17 +93,21 @@ router.post('/split', async (req, res) => {
                 const newPdf = await PDFDocument.create();
                 const pageIndices = parsePageRange(pages, pdf.getPageCount());
 
+                if (pageIndices.length > 1000) {
+                    return res.status(400).json({ error: 'Total page limit exceeded (max 1000 pages)' });
+                }
+
                 const copiedPages = await newPdf.copyPages(pdf, pageIndices);
                 copiedPages.forEach((page) => newPdf.addPage(page));
 
-                const newPdfBytes = await newPdf.save();
+                const newPdfBytes = await newPdf.save({ useObjectStreams: true });
 
                 res.setHeader('Content-Type', 'application/pdf');
                 res.setHeader('Content-Disposition', 'attachment; filename=split.pdf');
                 res.send(Buffer.from(newPdfBytes));
             } catch (error) {
                 console.error('PDF split error:', error);
-                res.status(500).json({ error: 'Failed to split PDF', message: error.message });
+                res.status(500).json({ error: 'Failed to split PDF' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -118,7 +127,8 @@ router.post('/compress', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('PDF compress upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -140,7 +150,7 @@ router.post('/compress', async (req, res) => {
                 res.send(Buffer.from(compressedBytes));
             } catch (error) {
                 console.error('PDF compress error:', error);
-                res.status(500).json({ error: 'Failed to compress PDF', message: error.message });
+                res.status(500).json({ error: 'Failed to compress PDF' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -153,21 +163,29 @@ router.post('/compress', async (req, res) => {
     }
 });
 
-// Helper function to parse page ranges
-function parsePageRange(rangeStr, totalPages) {
+// Helper function to parse page ranges with a safety limit
+function parsePageRange(rangeStr, totalPages, maxPages = 1000) {
     const indices = [];
     const parts = rangeStr.split(',');
 
     for (const part of parts) {
         if (part.includes('-')) {
-            const [start, end] = part.split('-').map(n => parseInt(n.trim()) - 1);
-            for (let i = start; i <= end && i < totalPages; i++) {
+            const rangeParts = part.split('-');
+            if (rangeParts.length !== 2) continue;
+            const start = parseInt(rangeParts[0].trim()) - 1;
+            const end = parseInt(rangeParts[1].trim()) - 1;
+
+            if (isNaN(start) || isNaN(end)) continue;
+
+            for (let i = Math.max(0, start); i <= end && i < totalPages; i++) {
                 indices.push(i);
+                if (indices.length > maxPages) return indices;
             }
         } else {
             const page = parseInt(part.trim()) - 1;
-            if (page >= 0 && page < totalPages) {
+            if (!isNaN(page) && page >= 0 && page < totalPages) {
                 indices.push(page);
+                if (indices.length > maxPages) return indices;
             }
         }
     }
