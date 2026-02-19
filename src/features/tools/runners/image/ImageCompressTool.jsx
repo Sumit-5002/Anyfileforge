@@ -60,8 +60,9 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     <label className="sidebar-label">Compression Level</label>
                     <div className="levels-vertical">
                         {LEVELS.map(l => (
-                            <div
+                            <button
                                 key={l.id}
+                                type="button"
                                 className={`level-box ${level === l.id ? 'active' : ''}`}
                                 onClick={() => setLevel(l.id)}
                             >
@@ -70,7 +71,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                                     <div className="level-name">{l.name}</div>
                                     <div className="level-desc">{l.desc}</div>
                                 </div>
-                            </div>
+                            </button>
                         ))}
                     </div>
                 </div>
@@ -85,7 +86,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
                         </div>
                         {completed && <div className="status-badge">Compressed!</div>}
-                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))}>×</button>
+                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} aria-label={`Remove ${file.name}`}>×</button>
                     </div>
                 ))}
             </div>

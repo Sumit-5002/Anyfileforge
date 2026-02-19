@@ -120,6 +120,7 @@ function PageGrid({
                             <button
                                 className="page-rotate-btn"
                                 title="Rotate"
+                                aria-label={`Rotate page ${page.pageNumber}`}
                                 onClick={(e) => { e.stopPropagation(); onRotatePage(page.pageNumber); }}
                             >
                                 ⟳
@@ -130,6 +131,7 @@ function PageGrid({
                             <button
                                 className="page-remove-btn"
                                 title="Remove"
+                                aria-label={`Remove page ${page.pageNumber}`}
                                 onClick={(e) => { e.stopPropagation(); onDeletePage(page.pageNumber); }}
                             >
                                 ×

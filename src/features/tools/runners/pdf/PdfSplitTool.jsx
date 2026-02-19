@@ -74,7 +74,8 @@ function PdfSplitTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             sidebar={
                 <div className="levels-vertical">
                     <div className="sidebar-label">SPLIT MODE</div>
-                    <div
+                    <button
+                        type="button"
                         className={`level-box ${extractMode === 'selected' ? 'active' : ''}`}
                         onClick={() => setExtractMode('selected')}
                     >
@@ -82,8 +83,9 @@ function PdfSplitTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <div className="level-name">Extract Pages</div>
                             <div className="level-desc">Download only the pages you select below.</div>
                         </div>
-                    </div>
-                    <div
+                    </button>
+                    <button
+                        type="button"
                         className={`level-box ${extractMode === 'range' ? 'active' : ''}`}
                         onClick={() => setExtractMode('range')}
                     >
@@ -91,7 +93,7 @@ function PdfSplitTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <div className="level-name">Split by Range</div>
                             <div className="level-desc">Enter ranges like "1-5, 8, 11-13".</div>
                         </div>
-                    </div>
+                    </button>
 
                     {extractMode === 'range' && (
                         <div className="tool-field mt-3">
