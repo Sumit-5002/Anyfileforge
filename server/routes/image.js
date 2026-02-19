@@ -4,6 +4,8 @@ import fs from 'fs/promises';
 
 const router = express.Router();
 
+const ALLOWED_OUTPUT_FORMATS = new Set(['jpeg', 'jpg', 'png', 'webp', 'gif']);
+
 // Resize image
 router.post('/resize', async (req, res) => {
     try {
@@ -20,6 +22,11 @@ router.post('/resize', async (req, res) => {
             }
 
             const { width, height, format = 'jpeg' } = req.body;
+
+            if (!ALLOWED_OUTPUT_FORMATS.has(format)) {
+                await fs.unlink(req.file.path).catch(() => {});
+                return res.status(400).json({ error: 'Invalid output format' });
+            }
 
             const w = width ? parseInt(width) : null;
             const h = height ? parseInt(height) : null;
@@ -47,7 +54,7 @@ router.post('/resize', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image resize error:', error);
-                res.status(500).json({ error: 'Failed to resize image', message: error.message });
+                res.status(500).json({ error: 'Failed to resize image' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -76,6 +83,12 @@ router.post('/compress', async (req, res) => {
             }
 
             const { quality = 80, format = 'jpeg' } = req.body;
+
+            if (!ALLOWED_OUTPUT_FORMATS.has(format)) {
+                await fs.unlink(req.file.path).catch(() => {});
+                return res.status(400).json({ error: 'Invalid output format' });
+            }
+
             const q = parseInt(quality);
 
             if (isNaN(q) || q < 1 || q > 100) {
@@ -93,7 +106,7 @@ router.post('/compress', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image compress error:', error);
-                res.status(500).json({ error: 'Failed to compress image', message: error.message });
+                res.status(500).json({ error: 'Failed to compress image' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -123,6 +136,11 @@ router.post('/convert', async (req, res) => {
 
             const { format = 'png' } = req.body;
 
+            if (!ALLOWED_OUTPUT_FORMATS.has(format)) {
+                await fs.unlink(req.file.path).catch(() => {});
+                return res.status(400).json({ error: 'Invalid output format' });
+            }
+
             try {
                 const buffer = await sharp(req.file.path)
                     .toFormat(format)
@@ -133,7 +151,7 @@ router.post('/convert', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image convert error:', error);
-                res.status(500).json({ error: 'Failed to convert image', message: error.message });
+                res.status(500).json({ error: 'Failed to convert image' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -163,6 +181,11 @@ router.post('/crop', async (req, res) => {
 
             const { left, top, width, height, format = 'jpeg' } = req.body;
 
+            if (!ALLOWED_OUTPUT_FORMATS.has(format)) {
+                await fs.unlink(req.file.path).catch(() => {});
+                return res.status(400).json({ error: 'Invalid output format' });
+            }
+
             const l = parseInt(left);
             const t = parseInt(top);
             const w = parseInt(width);
@@ -189,7 +212,7 @@ router.post('/crop', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image crop error:', error);
-                res.status(500).json({ error: 'Failed to crop image', message: error.message });
+                res.status(500).json({ error: 'Failed to crop image' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);

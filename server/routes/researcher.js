@@ -33,6 +33,7 @@ router.post('/csv-to-json', async (req, res) => {
                     const values = lines[i].split(',').map(v => v.trim());
                     const obj = {};
                     headers.forEach((header, index) => {
+                        if (header === '__proto__' || header === 'constructor') return;
                         obj[header] = values[index] || '';
                     });
                     data.push(obj);
@@ -156,6 +157,7 @@ router.post('/bibtex-parse', (req, res) => {
 
             while ((fieldMatch = fieldRegex.exec(fields)) !== null) {
                 const [, fieldName, fieldValue] = fieldMatch;
+                if (fieldName === '__proto__' || fieldName === 'constructor') continue;
                 entry.fields[fieldName] = fieldValue.trim();
             }
 
