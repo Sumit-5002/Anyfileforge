@@ -30,6 +30,7 @@ const FILE_RETENTION_MINUTES = Number(process.env.FILE_RETENTION_MINUTES) || 30;
 const FILE_RETENTION_MS = FILE_RETENTION_MINUTES * 60 * 1000;
 const CLEANUP_INTERVAL_MS = Number(process.env.CLEANUP_INTERVAL_MS) || 5 * 60 * 1000;
 const JSON_BODY_LIMIT = process.env.JSON_BODY_LIMIT || '1mb';
+const isDev = process.env.NODE_ENV === 'development';
 
 if (!fs.existsSync(UPLOAD_DIR)) {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -198,8 +199,8 @@ app.use((err, req, res, next) => {
     }
 
     res.status(err.status || 500).json({
-        error: err.message || 'Internal Server Error',
-        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+        error: isDev ? (err.message || 'Internal Server Error') : 'An unexpected error occurred',
+        ...(isDev && { stack: err.stack })
     });
 });
 
