@@ -13,3 +13,7 @@
 ## 2026-02-17 - Efficient Image Loading and Parallel Batch Processing
 **Learning:** Using `FileReader.readAsDataURL` to load images creates large Base64 strings, consuming significant memory and CPU (due to encoding overhead). `URL.createObjectURL` is much faster as it creates a direct reference to the file data. Furthermore, processing multiple independent files (like resizing) in a sequential loop is a major bottleneck that can be easily solved with `Promise.all`.
 **Action:** Use `URL.createObjectURL` for image loading and ensure that independent batch operations are parallelized using `Promise.all` with functional state updates (`setCount(prev => prev + 1)`) to avoid race conditions.
+
+## 2026-02-19 - Parallelizing Image Conversion in Generic Tools
+**Learning:** Tools handling multiple files sequentially (like the original `ImageToJpgTool`) create a major bottleneck for users. Implementing chunked parallel processing with `Promise.allSettled` and a concurrency limit (e.g., 5) significantly improves throughput. Additionally, using unique IDs for files and memoizing derived file lists for child components prevents UI flickering and redundant renders during high-concurrency operations.
+**Action:** Always parallelize batch file operations in new or refactored tools, using unique IDs for state tracking and `useMemo` for passed-down file arrays.
