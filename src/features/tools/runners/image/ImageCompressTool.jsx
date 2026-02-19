@@ -17,6 +17,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [level, setLevel] = useState('medium');
     const [processing, setProcessing] = useState(false);
     const [completedIds, setCompletedIds] = useState(new Set());
+    const [failedIds, setFailedIds] = useState(new Set());
 
     const handleFilesSelected = (newFiles) => {
         const wrapped = newFiles.map(f => ({
@@ -30,6 +31,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const handleProcess = async () => {
         setProcessing(true);
         setCompletedIds(new Set());
+        setFailedIds(new Set());
         try {
             const quality = LEVELS.find(l => l.id === level).quality;
             const CONCURRENCY_LIMIT = 5;
@@ -48,6 +50,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                         setCompletedIds(prev => new Set(prev).add(id));
                     } catch (error) {
                         console.error(`Failed to compress ${file.name}:`, error);
+                        setFailedIds(prev => new Set(prev).add(id));
                     }
                 }));
             }
@@ -65,7 +68,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             tool={tool}
             files={files.map(f => f.file)}
             onFilesSelected={handleFilesSelected}
-            onReset={() => { setFiles([]); setCompletedIds(new Set()); }}
+            onReset={() => { setFiles([]); setCompletedIds(new Set()); setFailedIds(new Set()); }}
             processing={processing}
             onProcess={handleProcess}
             actionLabel="Compress Images"
@@ -74,9 +77,8 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     <label className="sidebar-label">Compression Level</label>
                     <div className="levels-vertical">
                         {LEVELS.map(l => (
-                            <button
+                            <div
                                 key={l.id}
-                                type="button"
                                 className={`level-box ${level === l.id ? 'active' : ''}`}
                                 onClick={() => setLevel(l.id)}
                             >
@@ -85,7 +87,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                                     <div className="level-name">{l.name}</div>
                                     <div className="level-desc">{l.desc}</div>
                                 </div>
-                            </button>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -100,7 +102,14 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
                         </div>
                         {completedIds.has(id) && <div className="status-badge">Compressed!</div>}
-                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter(f => f.id !== id))}>×</button>
+                        {failedIds.has(id) && <div className="status-badge error">Failed</div>}
+                        <button
+                            className="btn-icon-danger"
+                            disabled={processing}
+                            onClick={() => setFiles(files.filter(f => f.id !== id))}
+                        >
+                            ×
+                        </button>
                     </div>
                 ))}
             </div>

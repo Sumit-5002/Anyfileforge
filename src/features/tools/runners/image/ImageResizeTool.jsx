@@ -129,7 +129,7 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
                         </div>
                         {completedIndices.has(i) && <div className="status-badge"><Check size={14} /> Done</div>}
-                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} aria-label={`Remove ${file.name}`}>×</button>
+                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))}>×</button>
                     </div>
                 ))}
             </div>
