@@ -62,9 +62,8 @@ function PdfCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     </div>
                     <div className="levels-vertical mt-2">
                         {LEVELS.map(l => (
-                            <button
+                            <div
                                 key={l.id}
-                                type="button"
                                 className={`level-box ${level === l.id ? 'active' : ''}`}
                                 onClick={() => setLevel(l.id)}
                             >
@@ -73,7 +72,7 @@ function PdfCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                                     <div className="level-name">{l.name}</div>
                                     <div className="level-desc">{l.desc}</div>
                                 </div>
-                            </button>
+                            </div>
                         ))}
                     </div>
                     <div className="tool-help mt-4">
@@ -91,7 +90,7 @@ function PdfCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
                         </div>
                         {i < completedCount && <div className="status-badge">Done!</div>}
-                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} aria-label={`Remove ${file.name}`}>×</button>
+                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))}>×</button>
                     </div>
                 ))}
             </div>

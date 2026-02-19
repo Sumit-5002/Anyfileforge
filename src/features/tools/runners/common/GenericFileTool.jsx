@@ -120,7 +120,7 @@ function GenericFileTool({
                                 <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
                             </div>
                             {hasResult && <div className="status-badge">Done!</div>}
-                            <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} aria-label={`Remove ${file.name}`}>×</button>
+                            <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))}>×</button>
                         </div>
                     );
                 })}

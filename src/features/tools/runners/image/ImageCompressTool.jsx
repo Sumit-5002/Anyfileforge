@@ -16,27 +16,44 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [files, setFiles] = useState([]);
     const [level, setLevel] = useState('medium');
     const [processing, setProcessing] = useState(false);
-    const [completed, setCompleted] = useState(false);
+    const [completedIds, setCompletedIds] = useState(new Set());
+    const [failedIds, setFailedIds] = useState(new Set());
 
     const handleFilesSelected = (newFiles) => {
-        setFiles(prev => [...prev, ...newFiles]);
-        setCompleted(false);
+        const wrapped = newFiles.map(f => ({
+            id: crypto.randomUUID(),
+            file: f
+        }));
+        setFiles(prev => [...prev, ...wrapped]);
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
     };
 
     const handleProcess = async () => {
         setProcessing(true);
+        setCompletedIds(new Set());
+        setFailedIds(new Set());
         try {
             const quality = LEVELS.find(l => l.id === level).quality;
-            for (const f of files) {
-                const blob = tool.mode === 'server'
-                    ? await serverProcessingService.compressImage(f, { quality: Math.round(quality * 100), format: 'jpeg' })
-                    : await imageService.convertImage(f, 'image/jpeg', quality);
+            const CONCURRENCY_LIMIT = 5;
 
-                const baseName = f.name.replace(/\.[^/.]+$/, '');
-                imageService.downloadBlob(blob, `${baseName}_compressed.jpg`);
+            // Parallel batch processing with concurrency limit to optimize performance (Bolt ⚡)
+            for (let i = 0; i < files.length; i += CONCURRENCY_LIMIT) {
+                const chunk = files.slice(i, i + CONCURRENCY_LIMIT);
+                await Promise.allSettled(chunk.map(async ({ id, file }) => {
+                    try {
+                        const blob = tool.mode === 'server'
+                            ? await serverProcessingService.compressImage(file, { quality: Math.round(quality * 100), format: 'jpeg' })
+                            : await imageService.convertImage(file, 'image/jpeg', quality);
+
+                        const baseName = file.name.replace(/\.[^/.]+$/, '');
+                        imageService.downloadBlob(blob, `${baseName}_compressed.jpg`);
+                        setCompletedIds(prev => new Set(prev).add(id));
+                    } catch (error) {
+                        console.error(`Failed to compress ${file.name}:`, error);
+                        setFailedIds(prev => new Set(prev).add(id));
+                    }
+                }));
             }
-            setCompleted(true);
         } finally {
             setProcessing(false);
         }
@@ -49,9 +66,9 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     return (
         <ToolWorkspace
             tool={tool}
-            files={files}
+            files={files.map(f => f.file)}
             onFilesSelected={handleFilesSelected}
-            onReset={() => { setFiles([]); setCompleted(false); }}
+            onReset={() => { setFiles([]); setCompletedIds(new Set()); setFailedIds(new Set()); }}
             processing={processing}
             onProcess={handleProcess}
             actionLabel="Compress Images"
@@ -60,9 +77,8 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     <label className="sidebar-label">Compression Level</label>
                     <div className="levels-vertical">
                         {LEVELS.map(l => (
-                            <button
+                            <div
                                 key={l.id}
-                                type="button"
                                 className={`level-box ${level === l.id ? 'active' : ''}`}
                                 onClick={() => setLevel(l.id)}
                             >
@@ -71,22 +87,29 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                                     <div className="level-name">{l.name}</div>
                                     <div className="level-desc">{l.desc}</div>
                                 </div>
-                            </button>
+                            </div>
                         ))}
                     </div>
                 </div>
             }
         >
             <div className="files-list-view">
-                {files.map((file, i) => (
-                    <div key={i} className="file-item-horizontal">
+                {files.map(({ id, file }) => (
+                    <div key={id} className="file-item-horizontal">
                         <ImageIcon size={24} className="text-primary" />
                         <div className="file-item-info">
                             <div className="file-item-name">{file.name}</div>
                             <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
                         </div>
-                        {completed && <div className="status-badge">Compressed!</div>}
-                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} aria-label={`Remove ${file.name}`}>×</button>
+                        {completedIds.has(id) && <div className="status-badge">Compressed!</div>}
+                        {failedIds.has(id) && <div className="status-badge error">Failed</div>}
+                        <button
+                            className="btn-icon-danger"
+                            disabled={processing}
+                            onClick={() => setFiles(files.filter(f => f.id !== id))}
+                        >
+                            ×
+                        </button>
                     </div>
                 ))}
             </div>
