@@ -78,6 +78,7 @@ function PdfSplitTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                         type="button"
                         className={`level-box ${extractMode === 'selected' ? 'active' : ''}`}
                         onClick={() => setExtractMode('selected')}
+                        aria-pressed={extractMode === 'selected'}
                     >
                         <div className="level-meta">
                             <div className="level-name">Extract Pages</div>
@@ -88,6 +89,7 @@ function PdfSplitTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                         type="button"
                         className={`level-box ${extractMode === 'range' ? 'active' : ''}`}
                         onClick={() => setExtractMode('range')}
+                        aria-pressed={extractMode === 'range'}
                     >
                         <div className="level-meta">
                             <div className="level-name">Split by Range</div>

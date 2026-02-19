@@ -67,6 +67,7 @@ function PdfCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                                 type="button"
                                 className={`level-box ${level === l.id ? 'active' : ''}`}
                                 onClick={() => setLevel(l.id)}
+                                aria-pressed={level === l.id}
                             >
                                 <span className="level-icon">{l.icon}</span>
                                 <div className="level-meta">
