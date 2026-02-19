@@ -11,7 +11,8 @@ router.post('/resize', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('Image resize upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -46,7 +47,7 @@ router.post('/resize', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image resize error:', error);
-                res.status(500).json({ error: 'Failed to resize image' });
+                res.status(500).json({ error: 'Failed to resize image', message: error.message });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -66,7 +67,8 @@ router.post('/compress', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('Image compress upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -91,7 +93,7 @@ router.post('/compress', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image compress error:', error);
-                res.status(500).json({ error: 'Failed to compress image' });
+                res.status(500).json({ error: 'Failed to compress image', message: error.message });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -111,7 +113,8 @@ router.post('/convert', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('Image convert upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -130,7 +133,7 @@ router.post('/convert', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image convert error:', error);
-                res.status(500).json({ error: 'Failed to convert image' });
+                res.status(500).json({ error: 'Failed to convert image', message: error.message });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -150,7 +153,8 @@ router.post('/crop', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('Image crop upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -185,7 +189,7 @@ router.post('/crop', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image crop error:', error);
-                res.status(500).json({ error: 'Failed to crop image' });
+                res.status(500).json({ error: 'Failed to crop image', message: error.message });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);

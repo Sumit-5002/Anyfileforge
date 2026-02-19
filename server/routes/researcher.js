@@ -10,7 +10,8 @@ router.post('/csv-to-json', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('CSV to JSON upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -65,7 +66,8 @@ router.post('/csv-plot', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('CSV plot upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {

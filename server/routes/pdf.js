@@ -12,7 +12,8 @@ router.post('/merge', async (req, res) => {
 
         upload.array('files', 10)(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('PDF merge upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.files || req.files.length < 2) {
@@ -70,7 +71,8 @@ router.post('/split', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('PDF split upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
@@ -92,7 +94,7 @@ router.post('/split', async (req, res) => {
                 const pageIndices = parsePageRange(pages, pdf.getPageCount());
 
                 if (pageIndices.length > 1000) {
-                    return res.status(400).json({ error: 'Too many pages requested (max 1000)' });
+                    return res.status(400).json({ error: 'Total page limit exceeded (max 1000 pages)' });
                 }
 
                 const copiedPages = await newPdf.copyPages(pdf, pageIndices);
@@ -125,7 +127,8 @@ router.post('/compress', async (req, res) => {
 
         upload.single('file')(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ error: err.message });
+                console.error('PDF compress upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
             }
 
             if (!req.file) {
