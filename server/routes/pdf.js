@@ -22,24 +22,22 @@ router.post('/merge', async (req, res) => {
             try {
                 const mergedPdf = await PDFDocument.create();
 
-                // Load all PDFs in parallel for better performance
-                const loadedPdfs = await Promise.all(req.files.map(async (file) => {
-                    const pdfBytes = await fs.readFile(file.path);
-                    return PDFDocument.load(pdfBytes);
-                }));
-
-                // Copy pages from each loaded PDF with a total limit to prevent DoS
+                // Load and process PDFs sequentially to prevent excessive memory usage and check limits early
                 let totalPages = 0;
-                for (const pdf of loadedPdfs) {
+                for (const file of req.files) {
+                    const pdfBytes = await fs.readFile(file.path);
+                    const pdf = await PDFDocument.load(pdfBytes);
+
                     totalPages += pdf.getPageCount();
                     if (totalPages > 1000) {
                         return res.status(400).json({ error: 'Total page limit exceeded (max 1000 pages)' });
                     }
+
                     const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
                     copiedPages.forEach((page) => mergedPdf.addPage(page));
                 }
 
-                const mergedPdfBytes = await mergedPdf.save();
+                const mergedPdfBytes = await mergedPdf.save({ useObjectStreams: true });
 
                 res.setHeader('Content-Type', 'application/pdf');
                 res.setHeader('Content-Disposition', 'attachment; filename=merged.pdf');
@@ -100,7 +98,7 @@ router.post('/split', async (req, res) => {
                 const copiedPages = await newPdf.copyPages(pdf, pageIndices);
                 copiedPages.forEach((page) => newPdf.addPage(page));
 
-                const newPdfBytes = await newPdf.save();
+                const newPdfBytes = await newPdf.save({ useObjectStreams: true });
 
                 res.setHeader('Content-Type', 'application/pdf');
                 res.setHeader('Content-Disposition', 'attachment; filename=split.pdf');
@@ -162,21 +160,29 @@ router.post('/compress', async (req, res) => {
     }
 });
 
-// Helper function to parse page ranges
-function parsePageRange(rangeStr, totalPages) {
+// Helper function to parse page ranges with a safety limit
+function parsePageRange(rangeStr, totalPages, maxPages = 1000) {
     const indices = [];
     const parts = rangeStr.split(',');
 
     for (const part of parts) {
         if (part.includes('-')) {
-            const [start, end] = part.split('-').map(n => parseInt(n.trim()) - 1);
-            for (let i = start; i <= end && i < totalPages; i++) {
+            const rangeParts = part.split('-');
+            if (rangeParts.length !== 2) continue;
+            const start = parseInt(rangeParts[0].trim()) - 1;
+            const end = parseInt(rangeParts[1].trim()) - 1;
+
+            if (isNaN(start) || isNaN(end)) continue;
+
+            for (let i = Math.max(0, start); i <= end && i < totalPages; i++) {
                 indices.push(i);
+                if (indices.length > maxPages) return indices;
             }
         } else {
             const page = parseInt(part.trim()) - 1;
-            if (page >= 0 && page < totalPages) {
+            if (!isNaN(page) && page >= 0 && page < totalPages) {
                 indices.push(page);
+                if (indices.length > maxPages) return indices;
             }
         }
     }
