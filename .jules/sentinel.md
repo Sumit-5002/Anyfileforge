@@ -22,3 +22,13 @@
 **Vulnerability:** The PDF merge and split routes did not limit the number of pages that could be produced. An attacker could request a split operation that duplicates pages thousands of times, or merge many large PDFs, leading to high CPU/memory usage and potential DoS.
 **Learning:** Resource-intensive file operations must have secondary limits beyond simple file size checks, specifically on the complexity or count of output elements.
 **Prevention:** Enforce hard limits on the total number of pages (e.g., 1000) that can be generated or processed in a single request.
+
+## 2026-02-19 - [Information Leakage in Image Processing Routes]
+**Vulnerability:** Image processing routes in `server/routes/image.js` were returning `error.message` to the client in case of failures. This could leak internal server paths, library names (e.g., 'sharp'), and other environment details.
+**Learning:** Explicitly returning library-generated error messages to the client is a common source of information disclosure.
+**Prevention:** Always return generic error messages for server-side failures and log the detailed error internally.
+
+## 2026-02-19 - [Prototype Pollution Risk in CSV and BibTeX Parsing]
+**Vulnerability:** User-provided keys from CSV headers and BibTeX fields were used directly to set properties on plain JavaScript objects. This allowed attackers to set `__proto__` or `constructor` properties.
+**Learning:** Any operation that maps user-controlled strings to object keys is a potential prototype pollution vector.
+**Prevention:** Filter out sensitive keys like `__proto__` and `constructor` or use `Object.create(null)` for objects that store user-defined key-value pairs.
