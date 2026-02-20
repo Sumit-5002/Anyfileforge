@@ -22,6 +22,18 @@ export function useParallelFileProcessor(processFn, concurrencyLimit = 5) {
 
     const removeFile = useCallback((id) => {
         setFiles(prev => prev.filter(f => f.id !== id));
+        setCompletedIds(prev => {
+            if (!prev.has(id)) return prev;
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+        });
+        setFailedIds(prev => {
+            if (!prev.has(id)) return prev;
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+        });
     }, []);
 
     const reset = useCallback(() => {
@@ -31,15 +43,18 @@ export function useParallelFileProcessor(processFn, concurrencyLimit = 5) {
     }, []);
 
     const processFiles = useCallback(async () => {
-        if (!files.length) return;
+        // Capture a snapshot of current files to process (Bolt ⚡)
+        // This ensures that files added during processing are ignored for this run.
+        const filesSnapshot = [...files];
+        if (!filesSnapshot.length) return;
 
         setProcessing(true);
         setCompletedIds(new Set());
         setFailedIds(new Set());
 
         try {
-            for (let i = 0; i < files.length; i += concurrencyLimit) {
-                const chunk = files.slice(i, i + concurrencyLimit);
+            for (let i = 0; i < filesSnapshot.length; i += concurrencyLimit) {
+                const chunk = filesSnapshot.slice(i, i + concurrencyLimit);
                 await Promise.allSettled(chunk.map(async ({ id, file }) => {
                     try {
                         await processFn({ id, file });
@@ -66,8 +81,7 @@ export function useParallelFileProcessor(processFn, concurrencyLimit = 5) {
         handleFilesSelected,
         removeFile,
         reset,
-        processFiles,
-        setFiles
+        processFiles
     };
 }
 

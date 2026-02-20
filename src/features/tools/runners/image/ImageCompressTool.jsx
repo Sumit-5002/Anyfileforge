@@ -38,10 +38,10 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         processFiles
     } = useParallelFileProcessor(processFile, 5);
 
-    const onFilesSelected = (newFiles) => {
+    const onFilesSelected = useCallback((newFiles) => {
         handleFilesSelected(newFiles);
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
-    };
+    }, [handleFilesSelected, parentOnFilesAdded]);
 
     if (files.length === 0) {
         return <FileUploader tool={tool} onFilesSelected={onFilesSelected} multiple={true} accept="image/*" />;
