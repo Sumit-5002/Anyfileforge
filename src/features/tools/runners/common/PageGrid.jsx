@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader, Check } from 'lucide-react';
+import { Loader, Check, RotateCw, X } from 'lucide-react';
 import './ToolWorkspace.css';
 
 /**
@@ -104,6 +104,10 @@ function PageGrid({
                     key={page.pageNumber}
                     className={`page-item-card ${selectedPages?.has(page.pageNumber) ? 'selected' : ''}`}
                     onClick={() => onTogglePage && onTogglePage(page.pageNumber)}
+                    onKeyDown={(e) => onTogglePage && (e.key === 'Enter' || e.key === ' ') && onTogglePage(page.pageNumber)}
+                    role={onTogglePage ? "button" : undefined}
+                    tabIndex={onTogglePage ? "0" : undefined}
+                    aria-label={`Page ${page.pageNumber}${selectedPages?.has(page.pageNumber) ? ', selected' : ''}`}
                     draggable={!!onReorder}
                     onDragStart={(e) => handleDragStart(e, page.pageNumber)}
                     onDragOver={handleDragOver}
@@ -119,20 +123,22 @@ function PageGrid({
                         {onRotatePage && (
                             <button
                                 className="page-rotate-btn"
-                                title="Rotate"
+                                title="Rotate Page"
+                                aria-label={`Rotate Page ${page.pageNumber}`}
                                 onClick={(e) => { e.stopPropagation(); onRotatePage(page.pageNumber); }}
                             >
-                                ⟳
+                                <RotateCw size={14} />
                             </button>
                         )}
 
                         {onDeletePage && (
                             <button
                                 className="page-remove-btn"
-                                title="Remove"
+                                title="Remove Page"
+                                aria-label={`Remove Page ${page.pageNumber}`}
                                 onClick={(e) => { e.stopPropagation(); onDeletePage(page.pageNumber); }}
                             >
-                                ×
+                                <X size={14} />
                             </button>
                         )}
                     </div>
