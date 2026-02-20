@@ -7,9 +7,21 @@ import useParallelFileProcessor from '../../../../hooks/useParallelFileProcessor
 import { ImageIcon, CheckCircle, AlertCircle } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
+/**
+ * Tool component for converting multiple images to JPG format in parallel.
+ * Supports both client-side (browser) and server-side processing modes.
+ *
+ * @param {Object} props
+ * @param {Object} props.tool - Tool definition object
+ * @param {Function} props.onFilesAdded - Optional callback when files are selected
+ */
 function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [quality, setQuality] = useState(0.9);
 
+    /**
+     * Processing callback for a single file.
+     * Decides between server and client processing based on tool mode.
+     */
     const processFile = useCallback(async ({ file }) => {
         const blob = tool.mode === 'server'
             ? await serverProcessingService.convertImage(file, {
@@ -34,6 +46,9 @@ function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         processFiles
     } = useParallelFileProcessor(processFile, 5);
 
+    /**
+     * Stable callback for handling file selection.
+     */
     const onFilesSelected = useCallback((newFiles) => {
         handleFilesSelected(newFiles);
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);

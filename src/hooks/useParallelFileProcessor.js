@@ -1,10 +1,20 @@
 import { useState, useCallback, useMemo } from 'react';
 
 /**
- * Hook to handle parallel file processing with concurrency limits
- * @param {Function} processFn - Function that processes a single file: (file) => Promise<Blob | void>
- * @param {number} concurrencyLimit - Number of files to process at once
- * @returns {Object} - State and handlers for file processing
+ * Hook to handle parallel file processing with concurrency limits.
+ *
+ * @param {Function} processFn - Function that processes a single file: ({ id, file }) => Promise<Blob | void>
+ * @param {number} concurrencyLimit - Number of files to process at once (default: 5)
+ * @returns {Object} An object containing:
+ *   - files {Array}: Array of wrapped file objects { id, file }
+ *   - toolFiles {Array}: Array of raw File objects
+ *   - processing {boolean}: Whether processing is currently active
+ *   - completedIds {Set}: Set of successfully processed file IDs
+ *   - failedIds {Set}: Set of failed file IDs
+ *   - handleFilesSelected {Function}: Handler to add new files to the list
+ *   - removeFile {Function}: Handler to remove a file and clean up its status
+ *   - reset {Function}: Resets all state
+ *   - processFiles {Function}: Starts the parallel processing of the current file list
  */
 export function useParallelFileProcessor(processFn, concurrencyLimit = 5) {
     const [files, setFiles] = useState([]);
@@ -12,6 +22,9 @@ export function useParallelFileProcessor(processFn, concurrencyLimit = 5) {
     const [completedIds, setCompletedIds] = useState(new Set());
     const [failedIds, setFailedIds] = useState(new Set());
 
+    /**
+     * Wraps raw File objects with unique IDs and adds them to state.
+     */
     const handleFilesSelected = useCallback((newFiles) => {
         const wrapped = newFiles.map(f => ({
             id: crypto.randomUUID(),
@@ -20,6 +33,9 @@ export function useParallelFileProcessor(processFn, concurrencyLimit = 5) {
         setFiles(prev => [...prev, ...wrapped]);
     }, []);
 
+    /**
+     * Removes a file by ID and cleans up its completion/failure status.
+     */
     const removeFile = useCallback((id) => {
         setFiles(prev => prev.filter(f => f.id !== id));
         setCompletedIds(prev => {
@@ -36,15 +52,21 @@ export function useParallelFileProcessor(processFn, concurrencyLimit = 5) {
         });
     }, []);
 
+    /**
+     * Resets the entire processor state.
+     */
     const reset = useCallback(() => {
         setFiles([]);
         setCompletedIds(new Set());
         setFailedIds(new Set());
     }, []);
 
+    /**
+     * Processes all current files in parallel chunks.
+     * Captures a snapshot of files at the start to ensure consistency if new files are added during processing.
+     */
     const processFiles = useCallback(async () => {
         // Capture a snapshot of current files to process (Bolt ⚡)
-        // This ensures that files added during processing are ignored for this run.
         const filesSnapshot = [...files];
         if (!filesSnapshot.length) return;
 

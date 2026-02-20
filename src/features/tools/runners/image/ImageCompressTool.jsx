@@ -13,9 +13,21 @@ const LEVELS = [
     { id: 'high', name: 'High Quality', desc: 'Less compression', quality: 0.9, icon: <ShieldCheck size={18} /> }
 ];
 
+/**
+ * Tool component for compressing multiple images in parallel.
+ * Supports both client-side (browser) and server-side processing modes.
+ *
+ * @param {Object} props
+ * @param {Object} props.tool - Tool definition object
+ * @param {Function} props.onFilesAdded - Optional callback when files are selected
+ */
 function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [level, setLevel] = useState('medium');
 
+    /**
+     * Processing callback for a single file.
+     * Decides between server and client processing based on tool mode.
+     */
     const processFile = useCallback(async ({ file }) => {
         const quality = LEVELS.find(l => l.id === level).quality;
         const blob = tool.mode === 'server'
@@ -38,6 +50,9 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         processFiles
     } = useParallelFileProcessor(processFile, 5);
 
+    /**
+     * Stable callback for handling file selection.
+     */
     const onFilesSelected = useCallback((newFiles) => {
         handleFilesSelected(newFiles);
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
