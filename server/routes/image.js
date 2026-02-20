@@ -138,7 +138,13 @@ router.post('/convert', async (req, res) => {
                 return res.status(400).json({ error: 'Image file is required' });
             }
 
-            const { format = 'png' } = req.body;
+            const { format = 'png', quality } = req.body;
+            const q = quality ? parseInt(quality) : null;
+
+            if (q !== null && (isNaN(q) || q < 1 || q > 100)) {
+                await fs.unlink(req.file.path);
+                return res.status(400).json({ error: 'Invalid quality. Must be between 1 and 100.' });
+            }
 
             if (!ALLOWED_OUTPUT_FORMATS.has(format)) {
                 await fs.unlink(req.file.path).catch(() => {});
@@ -148,8 +154,9 @@ router.post('/convert', async (req, res) => {
             const normalizedFormat = format === 'jpg' ? 'jpeg' : format;
 
             try {
+                const options = q ? { quality: q } : {};
                 const buffer = await sharp(req.file.path)
-                    .toFormat(normalizedFormat)
+                    .toFormat(format, options)
                     .toBuffer();
 
                 res.setHeader('Content-Type', `image/${normalizedFormat}`);

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import imageService from '../../../../services/imageService';
 import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
+import useParallelFileProcessor from '../../../../hooks/useParallelFileProcessor';
 import { ImageIcon, Zap, CheckCircle2, ShieldCheck } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
@@ -12,65 +13,63 @@ const LEVELS = [
     { id: 'high', name: 'High Quality', desc: 'Less compression', quality: 0.9, icon: <ShieldCheck size={18} /> }
 ];
 
+/**
+ * Tool component for compressing multiple images in parallel.
+ * Supports both client-side (browser) and server-side processing modes.
+ *
+ * @param {Object} props
+ * @param {Object} props.tool - Tool definition object
+ * @param {Function} props.onFilesAdded - Optional callback when files are selected
+ */
 function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
-    const [files, setFiles] = useState([]);
     const [level, setLevel] = useState('medium');
-    const [processing, setProcessing] = useState(false);
-    const [completedIds, setCompletedIds] = useState(new Set());
-    const [failedIds, setFailedIds] = useState(new Set());
 
-    const handleFilesSelected = (newFiles) => {
-        const wrapped = newFiles.map(f => ({
-            id: crypto.randomUUID(),
-            file: f
-        }));
-        setFiles(prev => [...prev, ...wrapped]);
+    /**
+     * Processing callback for a single file.
+     * Decides between server and client processing based on tool mode.
+     */
+    const processFile = useCallback(async ({ file }) => {
+        const quality = LEVELS.find(l => l.id === level).quality;
+        const blob = tool.mode === 'server'
+            ? await serverProcessingService.compressImage(file, { quality: Math.round(quality * 100), format: 'jpeg' })
+            : await imageService.convertImage(file, 'image/jpeg', quality);
+
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
+        imageService.downloadBlob(blob, `${baseName}_compressed.jpg`);
+    }, [tool.mode, level]);
+
+    const {
+        files,
+        toolFiles,
+        processing,
+        completedIds,
+        failedIds,
+        handleFilesSelected,
+        removeFile,
+        reset,
+        processFiles
+    } = useParallelFileProcessor(processFile, 5);
+
+    /**
+     * Stable callback for handling file selection.
+     */
+    const onFilesSelected = useCallback((newFiles) => {
+        handleFilesSelected(newFiles);
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
-    };
-
-    const handleProcess = async () => {
-        setProcessing(true);
-        setCompletedIds(new Set());
-        setFailedIds(new Set());
-        try {
-            const quality = LEVELS.find(l => l.id === level).quality;
-            const CONCURRENCY_LIMIT = 5;
-
-            // Parallel batch processing with concurrency limit to optimize performance (Bolt ⚡)
-            for (let i = 0; i < files.length; i += CONCURRENCY_LIMIT) {
-                const chunk = files.slice(i, i + CONCURRENCY_LIMIT);
-                await Promise.allSettled(chunk.map(async ({ id, file }) => {
-                    try {
-                        const blob = tool.mode === 'server'
-                            ? await serverProcessingService.compressImage(file, { quality: Math.round(quality * 100), format: 'jpeg' })
-                            : await imageService.convertImage(file, 'image/jpeg', quality);
-
-                        const baseName = file.name.replace(/\.[^/.]+$/, '');
-                        imageService.downloadBlob(blob, `${baseName}_compressed.jpg`);
-                        setCompletedIds(prev => new Set(prev).add(id));
-                    } catch (error) {
-                        console.error(`Failed to compress ${file.name}:`, error);
-                        setFailedIds(prev => new Set(prev).add(id));
-                    }
-                }));
-            }
-        } finally {
-            setProcessing(false);
-        }
-    };
+    }, [handleFilesSelected, parentOnFilesAdded]);
 
     if (files.length === 0) {
-        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={true} accept="image/*" />;
+        return <FileUploader tool={tool} onFilesSelected={onFilesSelected} multiple={true} accept="image/*" />;
     }
 
     return (
         <ToolWorkspace
             tool={tool}
-            files={files.map(f => f.file)}
-            onFilesSelected={handleFilesSelected}
-            onReset={() => { setFiles([]); setCompletedIds(new Set()); setFailedIds(new Set()); }}
+            files={toolFiles}
+            onFilesSelected={onFilesSelected}
+            onReset={reset}
             processing={processing}
-            onProcess={handleProcess}
+            onProcess={processFiles}
             actionLabel="Compress Images"
             sidebar={
                 <div className="sidebar-levels">
@@ -107,7 +106,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                         <button
                             className="btn-icon-danger"
                             disabled={processing}
-                            onClick={() => setFiles(files.filter(f => f.id !== id))}
+                            onClick={() => removeFile(id)}
                         >
                             ×
                         </button>
