@@ -1,72 +1,56 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import imageService from '../../../../services/imageService';
 import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
+import useParallelFileProcessor from '../../../../hooks/useParallelFileProcessor';
 import { ImageIcon, CheckCircle, AlertCircle } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
 function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
-    const [files, setFiles] = useState([]);
     const [quality, setQuality] = useState(0.9);
-    const [processing, setProcessing] = useState(false);
-    const [completedIds, setCompletedIds] = useState(new Set());
-    const [failedIds, setFailedIds] = useState(new Set());
 
-    const handleFilesSelected = (newFiles) => {
-        const wrapped = newFiles.map(f => ({
-            id: crypto.randomUUID(),
-            file: f
-        }));
-        setFiles(prev => [...prev, ...wrapped]);
+    const processFile = useCallback(async ({ file }) => {
+        const blob = tool.mode === 'server'
+            ? await serverProcessingService.convertImage(file, {
+                quality: Math.round(quality * 100),
+                format: 'jpeg'
+            })
+            : await imageService.convertImage(file, 'image/jpeg', quality);
+
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
+        imageService.downloadBlob(blob, `${baseName}.jpg`);
+    }, [tool.mode, quality]);
+
+    const {
+        files,
+        toolFiles,
+        processing,
+        completedIds,
+        failedIds,
+        handleFilesSelected,
+        removeFile,
+        reset,
+        processFiles
+    } = useParallelFileProcessor(processFile, 5);
+
+    const onFilesSelected = (newFiles) => {
+        handleFilesSelected(newFiles);
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
     };
 
-    const handleProcess = async () => {
-        setProcessing(true);
-        setCompletedIds(new Set());
-        setFailedIds(new Set());
-        try {
-            const CONCURRENCY_LIMIT = 5;
-
-            // Parallel batch processing with concurrency limit to optimize performance (Bolt ⚡)
-            for (let i = 0; i < files.length; i += CONCURRENCY_LIMIT) {
-                const chunk = files.slice(i, i + CONCURRENCY_LIMIT);
-                await Promise.allSettled(chunk.map(async ({ id, file }) => {
-                    try {
-                        const blob = tool.mode === 'server'
-                            ? await serverProcessingService.compressImage(file, { quality: Math.round(quality * 100), format: 'jpeg' })
-                            : await imageService.convertImage(file, 'image/jpeg', quality);
-
-                        const baseName = file.name.replace(/\.[^/.]+$/, '');
-                        imageService.downloadBlob(blob, `${baseName}.jpg`);
-                        setCompletedIds(prev => new Set(prev).add(id));
-                    } catch (error) {
-                        console.error(`Failed to convert ${file.name}:`, error);
-                        setFailedIds(prev => new Set(prev).add(id));
-                    }
-                }));
-            }
-        } finally {
-            setProcessing(false);
-        }
-    };
-
-    // Memoize the file objects passed to ToolWorkspace to prevent redundant renders (Bolt ⚡)
-    const toolFiles = useMemo(() => files.map(f => f.file), [files]);
-
     if (files.length === 0) {
-        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={true} accept="image/*" />;
+        return <FileUploader tool={tool} onFilesSelected={onFilesSelected} multiple={true} accept="image/*" />;
     }
 
     return (
         <ToolWorkspace
             tool={tool}
             files={toolFiles}
-            onFilesSelected={handleFilesSelected}
-            onReset={() => { setFiles([]); setCompletedIds(new Set()); setFailedIds(new Set()); }}
+            onFilesSelected={onFilesSelected}
+            onReset={reset}
             processing={processing}
-            onProcess={handleProcess}
+            onProcess={processFiles}
             actionLabel="Convert to JPG"
             sidebar={
                 <div className="sidebar-info">
@@ -98,7 +82,13 @@ function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                         </div>
                         {completedIds.has(id) && <div className="status-badge text-success"><CheckCircle size={14} /> Converted!</div>}
                         {failedIds.has(id) && <div className="status-badge text-danger"><AlertCircle size={14} /> Failed</div>}
-                        <button className="btn-icon-danger" onClick={() => setFiles(prev => prev.filter(f => f.id !== id))}>×</button>
+                        <button
+                            className="btn-icon-danger"
+                            disabled={processing}
+                            onClick={() => removeFile(id)}
+                        >
+                            ×
+                        </button>
                     </div>
                 ))}
             </div>

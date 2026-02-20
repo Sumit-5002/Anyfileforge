@@ -62,10 +62,11 @@ const serverProcessingService = {
         return requestBinary('/api/pdf/split', formData);
     },
 
-    async convertImage(file, { format = 'png' } = {}) {
+    async convertImage(file, { format = 'png', quality } = {}) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('format', format);
+        if (quality) formData.append('quality', String(quality));
         return requestBinary('/api/image/convert', formData);
     },
 
