@@ -27,14 +27,17 @@ router.post('/csv-to-json', async (req, res) => {
                 }
 
                 const BLOCKED_KEYS = new Set(['__proto__', 'constructor']);
-                const headers = lines[0].split(',').map(h => h.trim()).filter(h => !BLOCKED_KEYS.has(h));
+                const headers = lines[0]
+                    .split(',')
+                    .map((h, i) => ({ name: h.trim(), colIndex: i }))
+                    .filter(({ name }) => !BLOCKED_KEYS.has(name));
                 const data = [];
 
                 for (let i = 1; i < lines.length; i++) {
                     const values = lines[i].split(',').map(v => v.trim());
                     const obj = Object.create(null);
-                    headers.forEach((header, index) => {
-                        obj[header] = values[index] || '';
+                    headers.forEach(({ name, colIndex }) => {
+                        obj[name] = values[colIndex] || '';
                     });
                     data.push(obj);
                 }
