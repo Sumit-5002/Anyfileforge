@@ -28,6 +28,8 @@ router.post('/resize', async (req, res) => {
                 return res.status(400).json({ error: 'Invalid output format' });
             }
 
+            const normalizedFormat = format === 'jpg' ? 'jpeg' : format;
+
             const w = width ? parseInt(width) : null;
             const h = height ? parseInt(height) : null;
 
@@ -47,10 +49,10 @@ router.post('/resize', async (req, res) => {
                     });
                 }
 
-                const buffer = await image.toFormat(format).toBuffer();
+                const buffer = await image.toFormat(normalizedFormat).toBuffer();
 
-                res.setHeader('Content-Type', `image/${format}`);
-                res.setHeader('Content-Disposition', `attachment; filename=resized.${format}`);
+                res.setHeader('Content-Type', `image/${normalizedFormat}`);
+                res.setHeader('Content-Disposition', `attachment; filename=resized.${normalizedFormat}`);
                 res.send(buffer);
             } catch (error) {
                 console.error('Image resize error:', error);
@@ -89,6 +91,8 @@ router.post('/compress', async (req, res) => {
                 return res.status(400).json({ error: 'Invalid output format' });
             }
 
+            const normalizedFormat = format === 'jpg' ? 'jpeg' : format;
+
             const q = parseInt(quality);
 
             if (isNaN(q) || q < 1 || q > 100) {
@@ -98,11 +102,11 @@ router.post('/compress', async (req, res) => {
 
             try {
                 const buffer = await sharp(req.file.path)
-                    .toFormat(format, { quality: q })
+                    .toFormat(normalizedFormat, { quality: q })
                     .toBuffer();
 
-                res.setHeader('Content-Type', `image/${format}`);
-                res.setHeader('Content-Disposition', `attachment; filename=compressed.${format}`);
+                res.setHeader('Content-Type', `image/${normalizedFormat}`);
+                res.setHeader('Content-Disposition', `attachment; filename=compressed.${normalizedFormat}`);
                 res.send(buffer);
             } catch (error) {
                 console.error('Image compress error:', error);
@@ -141,13 +145,15 @@ router.post('/convert', async (req, res) => {
                 return res.status(400).json({ error: 'Invalid output format' });
             }
 
+            const normalizedFormat = format === 'jpg' ? 'jpeg' : format;
+
             try {
                 const buffer = await sharp(req.file.path)
-                    .toFormat(format)
+                    .toFormat(normalizedFormat)
                     .toBuffer();
 
-                res.setHeader('Content-Type', `image/${format}`);
-                res.setHeader('Content-Disposition', `attachment; filename=converted.${format}`);
+                res.setHeader('Content-Type', `image/${normalizedFormat}`);
+                res.setHeader('Content-Disposition', `attachment; filename=converted.${normalizedFormat}`);
                 res.send(buffer);
             } catch (error) {
                 console.error('Image convert error:', error);
@@ -186,6 +192,8 @@ router.post('/crop', async (req, res) => {
                 return res.status(400).json({ error: 'Invalid output format' });
             }
 
+            const normalizedFormat = format === 'jpg' ? 'jpeg' : format;
+
             const l = parseInt(left);
             const t = parseInt(top);
             const w = parseInt(width);
@@ -204,11 +212,11 @@ router.post('/crop', async (req, res) => {
                         width: w,
                         height: h
                     })
-                    .toFormat(format)
+                    .toFormat(normalizedFormat)
                     .toBuffer();
 
-                res.setHeader('Content-Type', `image/${format}`);
-                res.setHeader('Content-Disposition', `attachment; filename=cropped.${format}`);
+                res.setHeader('Content-Type', `image/${normalizedFormat}`);
+                res.setHeader('Content-Disposition', `attachment; filename=cropped.${normalizedFormat}`);
                 res.send(buffer);
             } catch (error) {
                 console.error('Image crop error:', error);

@@ -26,14 +26,14 @@ router.post('/csv-to-json', async (req, res) => {
                     return res.status(400).json({ error: 'Empty CSV file' });
                 }
 
-                const headers = lines[0].split(',').map(h => h.trim());
+                const BLOCKED_KEYS = new Set(['__proto__', 'constructor']);
+                const headers = lines[0].split(',').map(h => h.trim()).filter(h => !BLOCKED_KEYS.has(h));
                 const data = [];
 
                 for (let i = 1; i < lines.length; i++) {
                     const values = lines[i].split(',').map(v => v.trim());
-                    const obj = {};
+                    const obj = Object.create(null);
                     headers.forEach((header, index) => {
-                        if (header === '__proto__' || header === 'constructor') return;
                         obj[header] = values[index] || '';
                     });
                     data.push(obj);
@@ -150,14 +150,13 @@ router.post('/bibtex-parse', (req, res) => {
 
         while ((match = entryRegex.exec(bibtex)) !== null) {
             const [, type, key, fields] = match;
-            const entry = { type, key, fields: {} };
+            const entry = { type, key, fields: Object.create(null) };
 
             const fieldRegex = /(\w+)\s*=\s*\{([^}]+)\}/g;
             let fieldMatch;
 
             while ((fieldMatch = fieldRegex.exec(fields)) !== null) {
                 const [, fieldName, fieldValue] = fieldMatch;
-                if (fieldName === '__proto__' || fieldName === 'constructor') continue;
                 entry.fields[fieldName] = fieldValue.trim();
             }
 
