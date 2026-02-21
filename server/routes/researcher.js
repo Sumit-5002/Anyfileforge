@@ -26,18 +26,14 @@ router.post('/csv-to-json', async (req, res) => {
                     return res.status(400).json({ error: 'Empty CSV file' });
                 }
 
-                const BLOCKED_KEYS = new Set(['__proto__', 'constructor']);
-                const headers = lines[0]
-                    .split(',')
-                    .map((h, i) => ({ name: h.trim(), colIndex: i }))
-                    .filter(({ name }) => !BLOCKED_KEYS.has(name));
+                const headers = lines[0].split(',').map(h => h.trim());
                 const data = [];
 
                 for (let i = 1; i < lines.length; i++) {
                     const values = lines[i].split(',').map(v => v.trim());
-                    const obj = Object.create(null);
-                    headers.forEach(({ name, colIndex }) => {
-                        obj[name] = values[colIndex] || '';
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = values[index] || '';
                     });
                     data.push(obj);
                 }
@@ -153,7 +149,7 @@ router.post('/bibtex-parse', (req, res) => {
 
         while ((match = entryRegex.exec(bibtex)) !== null) {
             const [, type, key, fields] = match;
-            const entry = { type, key, fields: Object.create(null) };
+            const entry = { type, key, fields: {} };
 
             const fieldRegex = /(\w+)\s*=\s*\{([^}]+)\}/g;
             let fieldMatch;
