@@ -28,13 +28,23 @@ function PdfCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         setCompletedCount(0);
         try {
             const quality = LEVELS.find(l => l.id === level).quality;
-            for (let i = 0; i < files.length; i++) {
-                const f = files[i];
-                const data = tool.mode === 'server'
-                    ? await serverProcessingService.compressPDF(f, { quality })
-                    : await pdfService.rewritePDF(f);
-                pdfService.downloadPDF(data, f.name.replace('.pdf', '_compressed.pdf'));
-                setCompletedCount(i + 1);
+            const CONCURRENCY_LIMIT = 3;
+
+            // Process files in parallel chunks to speed up batch compression (Bolt ⚡)
+            for (let i = 0; i < files.length; i += CONCURRENCY_LIMIT) {
+                const chunk = files.slice(i, i + CONCURRENCY_LIMIT);
+                await Promise.allSettled(chunk.map(async (f) => {
+                    try {
+                        const data = tool.mode === 'server'
+                            ? await serverProcessingService.compressPDF(f, { quality })
+                            : await pdfService.rewritePDF(f);
+                        pdfService.downloadPDF(data, f.name.replace('.pdf', '_compressed.pdf'));
+                    } catch (error) {
+                        console.error(`Failed to compress ${f.name}:`, error);
+                    }
+                }));
+                // Update progress after each chunk to reduce re-renders (Bolt ⚡)
+                setCompletedCount(prev => Math.min(files.length, prev + chunk.length));
             }
         } finally {
             setProcessing(false);

@@ -17,3 +17,7 @@
 ## 2026-02-19 - Parallelizing Image Conversion in Generic Tools
 **Learning:** Tools handling multiple files sequentially (like the original `ImageToJpgTool`) create a major bottleneck for users. Implementing chunked parallel processing with `Promise.allSettled` and a concurrency limit (e.g., 5) significantly improves throughput. Additionally, using unique IDs for files and memoizing derived file lists for child components prevents UI flickering and redundant renders during high-concurrency operations.
 **Action:** Always parallelize batch file operations in new or refactored tools, using unique IDs for state tracking and `useMemo` for passed-down file arrays.
+
+## 2026-02-20 - Batching State Updates in Parallel loops
+**Learning:** Updating progress state (like `setCompletedCount`) for every file in a high-concurrency parallel loop triggers redundant React re-renders. For large batches, this can degrade UI responsiveness.
+**Action:** Always batch progress state updates to occur after each parallel chunk (e.g., after `Promise.allSettled`) rather than after individual file completion to minimize re-renders and improve performance.
