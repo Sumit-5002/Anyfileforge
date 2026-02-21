@@ -32,3 +32,8 @@
 **Vulnerability:** User-provided keys from CSV headers and BibTeX fields were used directly to set properties on plain JavaScript objects. This allowed attackers to set `__proto__` or `constructor` properties.
 **Learning:** Any operation that maps user-controlled strings to object keys is a potential prototype pollution vector.
 **Prevention:** Filter out sensitive keys like `__proto__` and `constructor` or use `Object.create(null)` for objects that store user-defined key-value pairs.
+
+## 2026-02-20 - [Client-Side ReDoS via Regex Tester Bypass]
+**Vulnerability:** The Regex Tester tool was executing regular expressions directly in the client's browser thread using 'new RegExp()'. This allowed malicious users (or accidental input) to trigger catastrophic backtracking, freezing the user's browser tab.
+**Learning:** Even if a secure server-side endpoint exists, frontend components might still implement dangerous logic locally for "convenience" or "latency" reasons, creating a bypass of server-side security controls.
+**Prevention:** Critical computational logic with variable execution time (like Regex or Minification) must be enforced on the server-side with strict timeouts. Ensure the frontend is explicitly wired to use these secure service methods.

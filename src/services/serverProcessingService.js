@@ -141,6 +141,25 @@ const serverProcessingService = {
         formData.append('height', String(height));
         formData.append('format', format);
         return requestBinary('/api/image/crop', formData);
+    },
+
+    /**
+     * Tests a regular expression on a string via the server to prevent ReDoS.
+     * @param {string} pattern - Regex pattern.
+     * @param {string} testString - String to test against.
+     * @param {string} flags - Regex flags.
+     */
+    async testRegex(pattern, testString, flags) {
+        const response = await fetch(buildUrl('/api/engineer/regex-test'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pattern, testString, flags })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Regex test failed');
+        }
+        return response.json();
     }
 };
 

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import './TextToolRunner.css';
+import serverProcessingService from '../../services/serverProcessingService';
 
 const safeText = (text) =>
     text
@@ -13,10 +14,12 @@ function TextToolRunner({ tool }) {
     const [error, setError] = useState('');
     const [regex, setRegex] = useState('');
     const [flags, setFlags] = useState('g');
+    const [loading, setLoading] = useState(false);
 
-    const handleRun = () => {
+    const handleRun = async () => {
         setError('');
         setOutput('');
+        setLoading(true);
 
         try {
             if (tool.id === 'json-formatter') {
@@ -60,14 +63,10 @@ function TextToolRunner({ tool }) {
                     .replace(/\n/g, '<br />');
                 setOutput(html);
             } else if (tool.id === 'regex-tester') {
-                const re = new RegExp(regex, flags);
-                const matches = [];
-                let match;
-                while ((match = re.exec(input)) !== null) {
-                    matches.push({ match: match[0], index: match.index });
-                    if (!re.global) break;
-                }
-                setOutput(JSON.stringify(matches, null, 2));
+                // Moving regex testing to server to prevent ReDoS (Regular Expression Denial of Service)
+                // catastrophic backtracking on the client browser tab.
+                const result = await serverProcessingService.testRegex(regex, input, flags);
+                setOutput(JSON.stringify(result.matches, null, 2));
             } else if (tool.id === 'csv-plotter') {
                 const rows = input.trim().split('\n').map((row) => row.split(','));
                 const header = rows.shift() || [];
@@ -91,6 +90,8 @@ function TextToolRunner({ tool }) {
             }
         } catch (err) {
             setError(err.message || 'Processing failed');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -148,7 +149,9 @@ function TextToolRunner({ tool }) {
             />
 
             <div className="text-tool-actions">
-                <button className="btn btn-primary" onClick={handleRun}>Run</button>
+                <button className="btn btn-primary" onClick={handleRun} disabled={loading}>
+                    {loading ? 'Processing...' : 'Run'}
+                </button>
                 <button className="btn btn-secondary" onClick={() => { setInput(''); setOutput(''); setError(''); }}>
                     Clear
                 </button>
