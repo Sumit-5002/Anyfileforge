@@ -101,11 +101,21 @@ router.post('/regex-test', (req, res) => {
         // This ensures that even catastrophic backtracking doesn't hang the event loop
         const script = `
             const regex = new RegExp(pattern, flags || '');
-            const matches = testString.match(regex);
+            const results = [];
+            let match;
+            if (regex.global) {
+                while ((match = regex.exec(testString)) !== null) {
+                    results.push({ match: match[0], index: match.index });
+                    if (regex.lastIndex === match.index) regex.lastIndex++;
+                }
+            } else {
+                match = regex.exec(testString);
+                if (match) results.push({ match: match[0], index: match.index });
+            }
             result = {
-                matches: matches || [],
-                test: matches !== null,
-                matchCount: matches ? matches.length : 0
+                matches: results,
+                test: results.length > 0,
+                matchCount: results.length
             };
         `;
 
