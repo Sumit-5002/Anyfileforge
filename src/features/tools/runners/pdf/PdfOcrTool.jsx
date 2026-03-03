@@ -9,6 +9,7 @@ function PdfOcrTool({ tool, onFilesAdded }) {
     const [file, setFile] = useState(null);
     const [processing, setProcessing] = useState(false);
     const [done, setDone] = useState(false);
+    const [language, setLanguage] = useState('eng');
 
     const handleFilesSelected = (files) => {
         setFile(files[0] || null);
@@ -20,9 +21,9 @@ function PdfOcrTool({ tool, onFilesAdded }) {
         if (!file) return;
         setProcessing(true);
         try {
-            const blob = await serverProcessingService.ocrPDF(file);
+            const blob = await serverProcessingService.ocrPDF(file, { language });
             const baseName = file.name.replace(/\.[^/.]+$/, '');
-            pdfService.downloadBlob(blob, `${baseName}_ocr.txt`);
+            pdfService.downloadBlob(blob, `${baseName}_ocr.pdf`);
             setDone(true);
         } catch (error) {
             console.error('OCR error:', error);
@@ -51,8 +52,15 @@ function PdfOcrTool({ tool, onFilesAdded }) {
             sidebar={
                 <div className="sidebar-info">
                     <p className="tool-help">
-                        Extract text from uploaded PDF using server processing. Output is downloaded as a `.txt` file.
+                        Runs OCR and returns a searchable PDF with selectable text layer.
                     </p>
+                    <div className="tool-field mt-2">
+                        <label>OCR Language</label>
+                        <select value={language} onChange={(event) => setLanguage(event.target.value)}>
+                            <option value="eng">English</option>
+                            <option value="hin">Hindi</option>
+                        </select>
+                    </div>
                 </div>
             }
         >
@@ -61,7 +69,7 @@ function PdfOcrTool({ tool, onFilesAdded }) {
                     <div className="fade-in text-center">
                         <CircleCheck size={64} className="text-success mb-3" />
                         <h3>OCR Complete</h3>
-                        <p className="text-muted">Extracted text has been downloaded.</p>
+                        <p className="text-muted">Searchable PDF has been downloaded.</p>
                     </div>
                 ) : (
                     <div className="file-item-horizontal w-full" style={{ maxWidth: '520px' }}>
@@ -79,4 +87,3 @@ function PdfOcrTool({ tool, onFilesAdded }) {
 }
 
 export default PdfOcrTool;
-

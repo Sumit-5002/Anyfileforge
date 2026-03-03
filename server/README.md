@@ -81,6 +81,10 @@ npm run dev
 - `POST /api/pdf/merge` - Merge multiple PDFs
 - `POST /api/pdf/split` - Split PDF pages
 - `POST /api/pdf/compress` - Compress PDF
+- `POST /api/pdf/ocr` - OCR scanned PDF and return searchable PDF
+- `POST /api/pdf/edit` - Add text overlay to PDF
+- `POST /api/pdf/pdfa` - Archive-oriented PDF rewrite
+- `POST /api/pdf/protect` - Password-protect PDF
 
 ### Image Operations
 - `POST /api/image/resize` - Resize image
@@ -109,6 +113,26 @@ npm run dev
 - File size limits (50MB max)
 - File type validation
 - Automatic upload cleanup (default retention: 30 minutes)
+
+## OCR Requirements
+
+`POST /api/pdf/ocr` uses Python OCR and returns a searchable PDF.
+
+Install runtime dependencies on the server host:
+
+1. Python 3.9+
+2. Tesseract OCR binary (`tesseract` available on PATH)
+3. Python packages:
+
+```bash
+pip install ocrmypdf pytesseract pymupdf pillow
+```
+
+Optional environment variable:
+
+```env
+PYTHON_BIN=python
+```
 
 ## License
 

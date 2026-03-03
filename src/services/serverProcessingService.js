@@ -103,9 +103,10 @@ const serverProcessingService = {
      * Extracts text using server OCR/text-layer route.
      * @param {File} file - PDF file.
      */
-    async ocrPDF(file) {
+    async ocrPDF(file, { language = 'eng' } = {}) {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('language', language);
         return requestBinary('/api/pdf/ocr', formData);
     },
 

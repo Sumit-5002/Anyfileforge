@@ -3,8 +3,14 @@ import { PDFDocument } from 'pdf-lib';
 import fs from 'fs/promises';
 import path from 'path';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
 
 const router = express.Router();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const OCR_SCRIPT_PATH = path.resolve(__dirname, '../scripts/ocr_pdf.py');
+const PYTHON_BIN = process.env.PYTHON_BIN || 'python';
 
 let qpdfFactoryPromise = null;
 
@@ -30,6 +36,42 @@ const cleanupUploadedFiles = async (req) => {
         ));
     }
 };
+
+const runPythonOcr = async ({ inputPath, outputPdfPath, sidecarTextPath, language = 'eng' }) =>
+    new Promise((resolve, reject) => {
+        const args = [
+            OCR_SCRIPT_PATH,
+            '--input',
+            inputPath,
+            '--output-pdf',
+            outputPdfPath,
+            '--output-text',
+            sidecarTextPath,
+            '--language',
+            language
+        ];
+
+        const proc = spawn(PYTHON_BIN, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+        let stdout = '';
+        let stderr = '';
+
+        proc.stdout.on('data', (chunk) => {
+            stdout += String(chunk);
+        });
+
+        proc.stderr.on('data', (chunk) => {
+            stderr += String(chunk);
+        });
+
+        proc.on('error', (error) => {
+            reject(new Error(`Failed to start OCR engine: ${error.message}`));
+        });
+
+        proc.on('close', (code) => {
+            if (code === 0) return resolve({ stdout, stderr });
+            reject(new Error(stderr || stdout || `OCR process failed with exit code ${code}`));
+        });
+    });
 
 // Merge PDFs
 router.post('/merge', async (req, res) => {
@@ -189,7 +231,7 @@ router.post('/compress', async (req, res) => {
     }
 });
 
-// OCR PDF (text-layer extraction fallback)
+// OCR PDF to searchable PDF
 router.post('/ocr', async (req, res) => {
     try {
         const upload = req.app.get('upload');
@@ -205,36 +247,58 @@ router.post('/ocr', async (req, res) => {
             }
 
             try {
-                const pdfBytes = await fs.readFile(req.file.path);
-                const loadingTask = pdfjs.getDocument({ data: new Uint8Array(pdfBytes) });
-                const doc = await loadingTask.promise;
+                const language = String(req.body?.language || 'eng').trim() || 'eng';
+                const outputPdfPath = `${req.file.path}.ocr.pdf`;
+                const outputTextPath = `${req.file.path}.ocr.txt`;
 
-                const pages = [];
-                for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber += 1) {
-                    const page = await doc.getPage(pageNumber);
-                    const textContent = await page.getTextContent();
-                    const text = textContent.items
-                        .map((item) => String(item.str || '').trim())
-                        .filter(Boolean)
-                        .join(' ');
-                    pages.push(`Page ${pageNumber}\n${text}`);
-                }
-
-                const fullText = pages.join('\n\n').trim();
-                if (!fullText) {
-                    return res.status(422).json({
-                        error: 'No text layer found in PDF',
-                        message: 'This appears to be a scanned/image-only PDF. OCR engine is not configured on the server yet.'
+                try {
+                    await runPythonOcr({
+                        inputPath: req.file.path,
+                        outputPdfPath,
+                        sidecarTextPath: outputTextPath,
+                        language
                     });
-                }
 
-                const out = Buffer.from(fullText, 'utf8');
-                res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-                res.setHeader('Content-Disposition', 'attachment; filename=ocr_output.txt');
-                res.send(out);
+                    const ocrPdfBytes = await fs.readFile(outputPdfPath);
+                    res.setHeader('Content-Type', 'application/pdf');
+                    res.setHeader('Content-Disposition', 'attachment; filename=ocr_searchable.pdf');
+                    res.send(ocrPdfBytes);
+                } finally {
+                    await fs.unlink(outputPdfPath).catch(() => { });
+                    await fs.unlink(outputTextPath).catch(() => { });
+                }
             } catch (error) {
                 console.error('PDF OCR error:', error);
-                res.status(500).json({ error: 'Failed to process OCR extraction' });
+
+                // Fallback: if PDF already has a text layer, return original as searchable PDF.
+                try {
+                    const pdfBytes = await fs.readFile(req.file.path);
+                    const loadingTask = pdfjs.getDocument({ data: new Uint8Array(pdfBytes) });
+                    const doc = await loadingTask.promise;
+                    let hasText = false;
+
+                    for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber += 1) {
+                        const page = await doc.getPage(pageNumber);
+                        const textContent = await page.getTextContent();
+                        if (textContent.items.some((item) => String(item.str || '').trim())) {
+                            hasText = true;
+                            break;
+                        }
+                    }
+
+                    if (hasText) {
+                        res.setHeader('Content-Type', 'application/pdf');
+                        res.setHeader('Content-Disposition', 'attachment; filename=searchable_original.pdf');
+                        return res.send(Buffer.from(pdfBytes));
+                    }
+                } catch (fallbackError) {
+                    console.error('PDF OCR fallback error:', fallbackError);
+                }
+
+                return res.status(500).json({
+                    error: 'OCR engine unavailable or failed',
+                    message: 'Install Python OCR dependencies (tesseract + pytesseract + PyMuPDF + ocrmypdf) on the server and retry.'
+                });
             } finally {
                 await cleanupUploadedFiles(req);
             }
