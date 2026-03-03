@@ -1,262 +1,205 @@
-# AnyFileForge - Project Summary
+# AnyFileForge — Project Summary
 
-## 🎉 What We've Built
+> **Developer**: Sumit Prasad · [@Sumit-5002](https://github.com/Sumit-5002) · [sumitboy2005@gmail.com](mailto:sumitboy2005@gmail.com)  
+> **Repo**: [github.com/Sumit-5002/Anyfileforge](https://github.com/Sumit-5002/Anyfileforge)  
+> **Status**: Active Development · Version 0.0.0
 
-A complete, production-ready foundation for **AnyFileForge** - a free, open-source file processing platform designed specifically for engineers and researchers.
+---
+
+## 🎉 What Has Been Built
+
+AnyFileForge is a **privacy-first, local-first file processing web application** targeting engineers and researchers. All processing happens in the browser using WebAssembly and modern browser APIs. An optional Node.js/Express backend on Render handles heavy server-side tasks.
+
+---
 
 ## ✅ Completed Features
 
-### 1. **Professional UI/UX Design**
-- ✨ Modern, clean interface inspired by iLovePDF
-- 🎨 Beautiful gradient backgrounds and smooth animations
-- 📱 Fully responsive design (desktop, tablet, mobile)
-- 🌈 Comprehensive design system with CSS variables
-- ♿ Accessibility-focused (keyboard navigation, ARIA labels)
+### 1. Full UI/UX Design System
+- Dark theme with blue (`#2563eb`) + yellow (`#facc15`) brand palette
+- CSS custom properties (design tokens) for colors, spacing, typography, shadows
+- Glassmorphism cards, gradient backgrounds, `bg-mesh` and `bg-grid` systems
+- Smooth animations (`fadeIn`, `slideUp`, `reveal-scale`, `float`, `sweep`)
+- Fully responsive — tested on mobile (375px), tablet (768px), desktop (1200px+)
+- Google Fonts: **Outfit** (headings) + **Inter** (body)
 
-### 2. **Core Pages**
-- **HomePage**: Hero section, tool selection grid, features showcase, CTA
-- **ToolsPage**: All tools organized by category (PDF, Image, Document, Data)
-- **PricingPage**: Three-tier pricing (Free, Premium, Enterprise) with FAQ
-- **AboutPage**: Mission, values, technology stack, contribution info
+### 2. Core Pages (All Implemented)
 
-### 3. **Key Components**
-- **Header**: Sticky navigation with mobile menu
-- **Footer**: Feedback form, social links, sitemap, dynamic copyright
-- **FileUploader**: Drag-and-drop interface with file management
-- **ToolCard**: Reusable tool selection cards
+| Page | Route | Auth |
+|------|-------|:----:|
+| Home / Landing | `/` | ❌ |
+| Tools Catalog | `/tools` | ❌ |
+| Tool Detail (dynamic) | `/tools/:toolId` | ❌ |
+| About | `/about` | ❌ |
+| Developer Profile | `/developer` | ❌ |
+| Pricing | `/pricing` | ❌ |
+| Auth (Login/Register) | `/login`, `/signup` | ❌ |
+| User Profile | `/profile` | ✅ |
+| Projects | `/projects` | ✅ |
+| Project Detail + Workflow | `/projects/:id` | ✅ |
+| Privacy Policy | `/privacy` | ❌ |
+| Terms of Service | `/terms` | ❌ |
+| License | `/license` | ❌ |
 
-### 4. **Technical Infrastructure**
-- ⚡ Vite + React 18 for blazing-fast development
-- 🔥 Firebase integration (Auth, Firestore, Storage)
-- 🎯 React Router for navigation
-- 🎨 Lucide Icons for beautiful, consistent icons
-- 📦 pdf-lib & JSZip for file processing (ready to implement)
+### 3. PDF Tools (25+ Runners Implemented)
 
-### 5. **Open-Source Ready**
-- 📄 Comprehensive README.md with setup instructions
-- 🤝 CONTRIBUTING.md with development guidelines
-- ⚖️ MIT License for maximum freedom
-- 📋 .env.example for easy configuration
-- 🎨 Custom SVG logo/icon
+**Organize:** Merge · Split · Organize Pages · Remove Pages  
+**Optimize:** Compress · Repair  
+**Convert to PDF:** Word→PDF · Excel→PDF · PPT→PDF · HTML→PDF · JPG→PDF  
+**Convert from PDF:** PDF→Word · PDF→Excel · PDF→PPT · PDF→JPG  
+**Edit:** Watermark · Rotate · Page Numbers · Crop · Sign  
+**Security:** Unlock · Protect · Redact · Compare
 
-## 📁 Clean File Structure
+### 4. Image Tools (13 Runners Implemented)
 
-```
-anyfileforge/
-├── src/
-│   ├── components/          # Reusable components
-│   │   ├── Header.jsx       # Navigation header
-│   │   ├── Header.css
-│   │   ├── Footer.jsx       # Footer with feedback form
-│   │   ├── Footer.css
-│   │   ├── FileUploader.jsx # Drag-drop file interface
-│   │   ├── FileUploader.css
-│   │   ├── ToolCard.jsx     # Tool selection cards
-│   │   └── ToolCard.css
-│   ├── pages/               # Route pages
-│   │   ├── HomePage.jsx     # Landing page
-│   │   ├── HomePage.css
-│   │   ├── ToolsPage.jsx    # All tools catalog
-│   │   ├── ToolsPage.css
-│   │   ├── PricingPage.jsx  # Pricing tiers
-│   │   ├── PricingPage.css
-│   │   ├── AboutPage.jsx    # About & mission
-│   │   └── AboutPage.css
-│   ├── firebase.js          # Firebase config
-│   ├── App.jsx              # Main app with routing
-│   ├── main.jsx             # Entry point
-│   └── index.css            # Global styles & design system
-├── public/
-│   └── forge-icon.svg       # Custom logo
-├── .env.example             # Environment template
-├── README.md                # Comprehensive docs
-├── CONTRIBUTING.md          # Contribution guide
-├── LICENSE                  # MIT License
-├── package.json             # Dependencies
-└── vite.config.js           # Vite configuration
-```
+Compress · Convert to JPG · Convert from JPG · Resize · Crop · Rotate/Flip ·
+Watermark · Photo Editor · Blur Face · Remove Background · Upscale · Meme Generator · HTML→Image
 
-## 🎨 Design Highlights
+### 5. Developer / Text Tools (9 Runners)
 
-### Color Palette
-- **Primary**: Indigo gradient (#6366f1 → #4338ca)
-- **Accent**: Amber/Gold (#fbbf24 → #f59e0b)
-- **Neutrals**: Gray scale (50-900)
-- **Status**: Success (#10b981), Warning (#f59e0b), Error (#ef4444)
+JSON Formatter · JSON↔CSV · Base64 Encoder · Markdown Preview ·
+Regex Tester · Code Minifier · CSV Plotter · LaTeX Editor · BibTeX Manager
 
-### Typography
-- **Font**: Inter (Google Fonts)
-- **Weights**: 300, 400, 500, 600, 700, 800
-- **Responsive sizing** with mobile-first approach
+### 6. Firebase Integration (Complete)
+- **Auth**: Email/password + Google Sign-In via `AuthContext`
+- **Firestore**: User profiles, projects, workflows, feedback
+- **Storage**: Cloud file saves for premium users
+- **Hosting**: Deployed to `anyfileforge.web.app`
 
-### Animations
-- Fade-in effects on page load
-- Smooth hover transitions
-- Card lift effects
-- Gradient backgrounds with patterns
+### 7. Projects & Workflow Builder (New ✨)
+- Create named projects with descriptions
+- Clickable project cards navigate to `/projects/:id`
+- **Workflow Builder**: Add 50+ tools as pipeline steps, reorder them, run them
+- Live run log showing step-by-step progress
+- Save/load/delete workflows — persisted to Firestore
+- Quick tool shortcut grid in sidebar
+
+### 8. Progressive Web App (PWA)
+- Installable on desktop and mobile via `vite-plugin-pwa`
+- Offline-ready with Workbox service worker
+- Install banner prompt (`InstallPwa` component)
+
+### 9. Internationalization (i18n)
+- English, Spanish, Hindi via `i18next` + `react-i18next`
+- Language switcher in Header
+- Browser language auto-detection
+
+### 10. Optional Node.js / Express Backend (Render)
+- Express server in `server/` — deployed to Render.com
+- Routes: `/api/pdf/*`, `/api/image/*`, `/api/engineer/*`, `/api/researcher/*`
+- Helmet (security headers), CORS, rate limiting, Multer (file uploads)
+- `sharp` for high-quality image processing
+- Auto-cleanup of temporary uploads (30 min retention)
+- Health endpoint: `GET /api/health`
+
+---
+
+## 🏗️ Technology Stack
+
+### Frontend
+| Tech | Version | Role |
+|------|---------|------|
+| React | 19.x | UI framework |
+| Vite | 7.x | Build tool + dev server |
+| React Router DOM | 7.x | SPA routing |
+| Vanilla CSS | — | Design system |
+| Lucide React | 0.564 | Icon library |
+
+### PDF Processing (Browser)
+| Library | Role |
+|---------|------|
+| `pdf-lib` | Create, merge, split, rotate, watermark PDFs |
+| `pdfjs-dist` | Render PDF pages to canvas |
+| `qpdf-wasm-esm-embedded` | Password protection/unlock (WebAssembly) |
+| `mammoth` | DOCX → HTML/text extraction |
+| `docx` | Generate .docx from extracted content |
+| `xlsx` | Read/write Excel files |
+| `pptxgenjs` | Generate PowerPoint files |
+
+### Utilities
+| Library | Role |
+|---------|------|
+| `jszip` | Create ZIP archives for batch downloads |
+| `react-dnd` + `react-dnd-html5-backend` | Drag-and-drop (PDF page organizer) |
+| `i18next` + `react-i18next` | Internationalisation |
+| `i18next-browser-languagedetector` | Auto language detection |
+| `vite-plugin-pwa` + `workbox-window` | PWA / offline support |
+
+### Backend (Render)
+| Tech | Role |
+|------|------|
+| Node.js + Express | HTTP server |
+| `sharp` | Server-side image processing |
+| `multer` | File upload handling |
+| `helmet` | Security HTTP headers |
+| `express-rate-limit` | API rate limiting |
+| `cors` | Cross-origin request control |
+
+### Backend-as-a-Service (Firebase)
+| Service | Role |
+|---------|------|
+| Firebase Auth | Login, Google Sign-In |
+| Firestore | Users, projects, workflows, feedback |
+| Storage | Cloud file saves |
+| Hosting | Frontend deployment |
+
+---
+
+## 📁 Key File Locations
+
+| What | Where |
+|------|-------|
+| All tool definitions | `src/data/toolsData.js` |
+| PDF processing logic | `src/services/pdf/` |
+| Image processing logic | `src/services/image/` |
+| All tool runner UIs | `src/features/tools/runners/` |
+| Firebase config | `src/config/firebase.js` |
+| i18n config | `src/config/i18n.js` |
+| Auth context | `src/contexts/AuthContext.jsx` |
+| Global styles | `src/styles/index.css` |
+| Backend server | `server/server.js` |
+| Backend routes | `server/routes/` |
+
+> Full annotated breakdown → [FILE_STRUCTURE.md](FILE_STRUCTURE.md)
+
+---
 
 ## 🚀 How to Run
 
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+```bash
+# Frontend
+npm install
+cp .env.example .env   # fill in Firebase keys + VITE_SERVER_URL
+npm run dev            # http://localhost:5173
 
-2. **Set up Firebase** (optional for now):
-   ```bash
-   cp .env.example .env
-   # Add your Firebase credentials
-   ```
+# Backend (optional)
+cd server
+npm install
+npm run dev            # http://localhost:5000
+```
 
-3. **Start development server**:
-   ```bash
-   npm run dev
-   ```
-
-4. **Open in browser**:
-   Navigate to `http://localhost:5173`
-
-## 🎯 Next Steps (Implementation Roadmap)
-
-### Phase 1: Core Functionality
-1. **Implement PDF Tools**
-   - Use `pdf-lib` for merge, split, compress
-   - Add progress indicators
-   - Handle large files efficiently
-
-2. **Implement Image Tools**
-   - Canvas API for resizing/cropping
-   - Format conversion (JPG, PNG, WebP)
-   - Compression with quality control
-
-3. **Add File Encryption**
-   - Client-side AES encryption
-   - Secure key generation
-   - Password protection option
-
-4. **Auto-Delete System**
-   - Firebase Cloud Functions for scheduled deletion
-   - Firestore TTL (Time-To-Live) fields
-   - Storage cleanup automation
-
-### Phase 2: Enhanced Features
-1. **Batch Processing**
-   - Queue system for multiple files
-   - Progress tracking
-   - Parallel processing
-
-2. **User Authentication**
-   - Firebase Auth integration
-   - Google/GitHub OAuth
-   - Premium account management
-
-3. **API Development**
-   - RESTful API endpoints
-   - Rate limiting
-   - API key management
-
-### Phase 3: Advanced Tools
-1. **Data Format Support**
-   - JSON/YAML/XML conversion
-   - CSV/Excel processing
-   - HDF5, Parquet for researchers
-
-2. **Document Conversion**
-   - DOCX ↔ PDF
-   - XLSX ↔ CSV
-   - PPTX ↔ PDF
-
-3. **Advanced PDF Features**
-   - Annotations and comments
-   - Form filling
-   - OCR for scanned documents
-
-## 🔧 Technology Stack
-
-| Category | Technology | Purpose |
-|----------|-----------|---------|
-| **Frontend** | React 18 | UI framework |
-| **Build Tool** | Vite | Fast development & bundling |
-| **Routing** | React Router | Client-side navigation |
-| **Backend** | Firebase | Auth, Database, Storage |
-| **Icons** | Lucide React | Beautiful icon library |
-| **PDF** | pdf-lib | PDF manipulation |
-| **Compression** | JSZip | File compression |
-| **Fonts** | Google Fonts (Inter) | Typography |
-
-## 📊 File Processing Tools Planned
-
-### PDF Tools (4 tools)
-- Merge PDF
-- Split PDF
-- Compress PDF
-- Convert PDF
-
-### Image Tools (4 tools)
-- Convert Image
-- Compress Image
-- Resize Image
-- Enhance Image
-
-### Document Tools (3 tools)
-- Convert Document
-- Document to PDF
-- PDF to Document
-
-### Data Tools (4 tools)
-- JSON Tools
-- CSV Tools
-- Data Formats (HDF5, Parquet)
-- Code Tools (LaTeX, BibTeX)
-
-## 🎓 Perfect for Open Source
-
-### Why This Structure is Great:
-1. **Clear Separation**: Components, pages, utilities are well-organized
-2. **Modular Design**: Each component is self-contained with its CSS
-3. **Easy to Understand**: Consistent naming and file structure
-4. **Scalable**: Easy to add new tools and features
-5. **Well-Documented**: README, CONTRIBUTING, and inline comments
-6. **Best Practices**: Modern React patterns, responsive design, accessibility
-
-### Contribution-Friendly:
-- Clear file organization makes it easy to find code
-- Component-based architecture allows parallel development
-- Good documentation helps onboard new contributors
-- MIT License encourages community involvement
-
-## 💡 Key Features for Engineers & Researchers
-
-1. **Privacy-First**: Client-side processing, auto-delete, encryption
-2. **No Vendor Lock-in**: Open source, self-hostable
-3. **Professional Tools**: Comprehensive file format support
-4. **Free Forever**: Core features always free
-5. **Transparent**: All code auditable on GitHub
-
-## 🌟 What Makes This Special
-
-- **Beautiful UI**: Not just functional, but visually stunning
-- **Mobile-First**: Works perfectly on all devices
-- **Fast**: Vite ensures lightning-fast development and builds
-- **Modern**: Latest React patterns and web standards
-- **Accessible**: WCAG compliant, keyboard navigable
-- **Open**: MIT licensed, community-driven
+> Full Render + ENV setup → [RENDER_SETUP_GUIDE.md](RENDER_SETUP_GUIDE.md) *(see antigravity brain folder)*
 
 ---
 
-## 📝 Notes
+## 🗺️ Roadmap
 
-The application is currently running at **http://localhost:5173**
+### ✅ Done
+- [x] 25+ PDF tools with client-side processing
+- [x] 13 Image tools
+- [x] 9 Developer/text tools
+- [x] Firebase Auth + Firestore
+- [x] Projects + Workflow builder
+- [x] PWA + i18n (EN/ES/HI)
+- [x] Express backend on Render
 
-You can:
-- Navigate between pages using the header menu
-- See the tool selection grid on the homepage
-- View pricing tiers
-- Read about the project mission
-- Submit feedback via the footer form (UI only, backend TBD)
-
-**Next**: Implement actual file processing logic using pdf-lib, Canvas API, and Firebase Storage!
+### 🔜 Next
+- [ ] Stripe payment integration (Premium tier)
+- [ ] Full server-mode tool activation (Word→PDF, OCR, PDF Edit)
+- [ ] Unit tests for services
+- [ ] Firebase Cloud Functions for auto file cleanup
+- [ ] Expanded researcher tools (HDF5, Parquet)
+- [ ] Accessibility audit (ARIA, keyboard nav)
 
 ---
 
-**Built with ❤️ for the open-source community**
+*Last updated: March 2026 · by [Sumit Prasad](https://github.com/Sumit-5002)*

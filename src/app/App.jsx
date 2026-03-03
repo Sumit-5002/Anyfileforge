@@ -18,6 +18,8 @@ const DeveloperPage = lazy(() => import('../features/about/DeveloperPage'));
 const AuthPage = lazy(() => import('../features/auth/AuthPage'));
 const ProfilePage = lazy(() => import('../features/profile/ProfilePage'));
 const ProjectsPage = lazy(() => import('../features/projects/ProjectsPage'));
+const ProjectDetailPage = lazy(() => import('../features/projects/ProjectDetailPage'));
+
 
 // Lazy load named exports
 const PrivacyPage = lazy(() => import('../features/legal/LegalPages').then(m => ({ default: m.PrivacyPage })));
@@ -88,6 +90,8 @@ function App() {
               <Route path="/signup" element={<AuthPage initialMode="signup" />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/projects/:id" element={<ProjectDetailPage />} />
+
             </Routes>
           </Suspense>
         </main>

@@ -117,3 +117,24 @@
     color: var(--alert-500);
     font-size: 0.85rem;
 }
+
+.project-card-link {
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.project-card-link:hover {
+    border-color: rgba(var(--primary-rgb), 0.4);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+.project-open {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--primary-500);
+    font-weight: 700;
+    font-size: 0.8rem;
+}

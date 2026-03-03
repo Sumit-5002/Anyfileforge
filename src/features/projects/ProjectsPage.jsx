@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FolderPlus, Folder, Loader } from 'lucide-react';
+import { FolderPlus, Folder, Loader, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import projectService from '../../services/projectService';
@@ -100,7 +100,7 @@ function ProjectsPage() {
                     </form>
 
                     {projects.map((project) => (
-                        <div key={project.id} className="project-card">
+                        <Link key={project.id} to={`/projects/${project.id}`} className="project-card project-card-link">
                             <div className="project-icon">
                                 <Folder size={20} />
                             </div>
@@ -108,9 +108,9 @@ function ProjectsPage() {
                             <p>{project.description || 'No description yet.'}</p>
                             <div className="project-meta">
                                 <span>Members: {project.memberIds?.length || 1}</span>
-                                <span>Owner</span>
+                                <span className="project-open">Open <ChevronRight size={12} /></span>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </div>

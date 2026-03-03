@@ -1,0 +1,701 @@
+.project-detail-page {
+    padding: 40px 0 80px;
+    min-height: 100vh;
+}
+
+.project-detail-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    min-height: 50vh;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+/* ── Breadcrumb ── */
+.pd-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 28px;
+}
+
+.pd-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--primary-500);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+}
+
+.pd-back:hover {
+    opacity: 0.8;
+}
+
+/* ── Page Header ── */
+.pd-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+}
+
+.pd-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pd-folder-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(var(--primary-rgb), 0.15);
+    color: var(--primary-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(var(--primary-rgb), 0.25);
+}
+
+.pd-header h1 {
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.pd-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.pd-header-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.pd-badge {
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: rgba(var(--primary-rgb), 0.12);
+    color: var(--primary-500);
+    border: 1px solid rgba(var(--primary-rgb), 0.3);
+}
+
+.pd-badge.secondary {
+    background: rgba(250, 204, 21, 0.08);
+    color: var(--accent-yellow);
+    border-color: rgba(250, 204, 21, 0.25);
+}
+
+/* ── Layout: main + sidebar ── */
+.pd-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .pd-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Workflow Section ── */
+.pd-workflow-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pd-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.pd-section-header h2 {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.pd-section-header p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-top: 4px;
+}
+
+.wf-name-btn {
+    background: rgba(var(--primary-rgb), 0.08);
+    border: 1px dashed rgba(var(--primary-rgb), 0.4);
+    color: var(--primary-500);
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: var(--transition-smooth);
+}
+
+.wf-name-btn:hover {
+    background: rgba(var(--primary-rgb), 0.15);
+}
+
+.wf-name-input {
+    background: var(--bg-deep);
+    border: 1px solid rgba(var(--primary-rgb), 0.5);
+    color: var(--text-primary);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    outline: none;
+    min-width: 160px;
+}
+
+/* ── Steps List ── */
+.workflow-steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+}
+
+.workflow-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 48px 24px;
+    color: var(--text-muted);
+    text-align: center;
+    border: 2px dashed var(--border-subtle);
+    border-radius: 16px;
+}
+
+/* ── Single Step ── */
+.workflow-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    margin-bottom: 8px;
+    position: relative;
+    transition: var(--transition-smooth);
+}
+
+.workflow-step:hover {
+    border-color: var(--border-bright);
+    background: var(--bg-hover);
+}
+
+.step-running {
+    border-color: rgba(var(--primary-rgb), 0.5) !important;
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.15);
+}
+
+.step-done {
+    border-color: rgba(34, 197, 94, 0.4) !important;
+}
+
+.step-error {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.step-grip {
+    color: var(--text-muted);
+    cursor: grab;
+    flex-shrink: 0;
+}
+
+.step-number {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(var(--primary-rgb), 0.15);
+    color: var(--primary-500);
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.step-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.step-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.step-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.step-cat {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.step-status-badge {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.step-done .step-status-badge {
+    color: #22c55e;
+}
+
+.step-running .step-status-badge {
+    color: var(--primary-500);
+}
+
+.step-error .step-status-badge {
+    color: #ef4444;
+}
+
+.step-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.step-actions button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: var(--transition-smooth);
+}
+
+.step-actions button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--border-bright);
+}
+
+.step-actions button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.step-remove:hover:not(:disabled) {
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.step-connector {
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--text-muted);
+    z-index: 1;
+    background: var(--bg-surface);
+    padding: 0 4px;
+}
+
+/* ── Workflow CTAs ── */
+.workflow-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 99px;
+    border: 1px solid var(--border-bright);
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    font-family: var(--font-heading);
+    font-size: 0.875rem;
+}
+
+.btn-ghost:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+.btn-ghost:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-ghost.danger:hover {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ── Run Log ── */
+.run-log {
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+}
+
+.run-log-header {
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--border-subtle);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.log-entry {
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-success {
+    color: #4ade80;
+}
+
+.log-info {
+    color: #60a5fa;
+}
+
+.log-error {
+    color: #f87171;
+}
+
+/* ── Sidebar ── */
+.pd-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pd-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    padding: 22px;
+}
+
+.pd-card h3 {
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+}
+
+.sidebar-empty {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+/* Saved workflows list */
+.saved-wf-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.saved-wf-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+}
+
+.saved-wf-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.saved-wf-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.saved-wf-btns {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.saved-wf-btns button {
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid rgba(var(--primary-rgb), 0.25);
+    color: var(--primary-500);
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.saved-wf-btns button:hover {
+    background: rgba(var(--primary-rgb), 0.2);
+}
+
+.saved-wf-btns button.danger-text {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.saved-wf-btns button.danger-text:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+/* Quick tools */
+.quick-tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.quick-tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 10px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+    overflow: hidden;
+}
+
+.quick-tool-btn:hover {
+    border-color: var(--tool-color, var(--primary-500));
+    color: var(--tool-color, var(--primary-500));
+    background: color-mix(in srgb, var(--tool-color, var(--primary-500)) 8%, var(--bg-deep));
+    transform: translateY(-1px);
+}
+
+.quick-tool-btn span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Tool Picker Modal ── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.15s ease;
+}
+
+.tool-picker-modal {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+    animation: reveal-scale 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.modal-header h3 {
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+    border-color: var(--border-bright);
+}
+
+.modal-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+}
+
+.modal-search input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.modal-tool-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 8px;
+}
+
+.modal-tool-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    text-align: left;
+}
+
+.modal-tool-item:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-subtle);
+}
+
+.modal-tool-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.modal-tool-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.modal-tool-cat {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.modal-tool-arrow {
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+.modal-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* Spinning animation (for run state) */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
