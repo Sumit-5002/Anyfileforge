@@ -1,9 +1,11 @@
 import React from 'react';
-import { Github, Twitter, Mail, ExternalLink, Code2, Cpu, Globe, Heart, Coffee, Terminal } from 'lucide-react';
+import { Github, Mail, Cpu, Heart, Coffee, Terminal } from 'lucide-react';
 import SeoHead from '../../components/meta/SeoHead';
 import './DeveloperPage.css';
 
 function DeveloperPage() {
+    const profileImageSrc = `${import.meta.env.BASE_URL}PROFILE.png`;
+
     return (
         <>
             <SeoHead
@@ -15,7 +17,7 @@ function DeveloperPage() {
                     <div className="dev-hero-section slide-up">
                         <div className="dev-avatar-wrapper">
                             <div className="dev-avatar">
-                                <img src="/sumit_avatar.png" alt="Sumit" />
+                                <img src={profileImageSrc} alt="Sumit" width="180" height="180" decoding="async" fetchPriority="high" />
                                 <div className="dev-status-pulse"></div>
                             </div>
                         </div>

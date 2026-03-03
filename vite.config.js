@@ -11,7 +11,7 @@ export default defineConfig({
             devOptions: {
                 enabled: true
             },
-            includeAssets: ['favicon.png', 'logo.png', 'icon-192.png', 'icon-512.png'],
+            includeAssets: ['favicon.png', 'logo.png', 'PROFILE.png', 'icon-192.png', 'icon-512.png'],
             manifest: {
                 name: 'AnyFileForge',
                 short_name: 'AnyFile',

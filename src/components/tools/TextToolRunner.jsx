@@ -15,6 +15,7 @@ function TextToolRunner({ tool }) {
 
     // Tool specific states
     const [regex, setRegex] = useState('');
+    const [replace, setReplace] = useState('');
     const [flags, setFlags] = useState('g');
     const [isDecode, setIsDecode] = useState(false);
 
@@ -41,7 +42,7 @@ function TextToolRunner({ tool }) {
 
         return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [input, regex, flags, isDecode, tool.id]);
+    }, [input, regex, replace, flags, isDecode, tool.id]);
 
 
     const handleRun = () => {
@@ -53,105 +54,91 @@ function TextToolRunner({ tool }) {
                 setOutput(JSON.stringify(json, null, 4));
             } else if (tool.id === 'json-to-csv') {
                 const data = JSON.parse(input);
-                if (!Array.isArray(data)) throw new Error('JSON must be an array of objects');
-                if (data.length === 0) {
-                    setOutput('');
-                    return;
-                }
-                const keys = Array.from(
-                    data.reduce((set, row) => {
-                        Object.keys(row || {}).forEach((key) => set.add(key));
-                        return set;
-                    }, new Set())
-                );
+                const array = Array.isArray(data) ? data : [data];
+                if (array.length === 0) { setOutput(''); return; }
+
+                const keys = Array.from(array.reduce((s, r) => {
+                    Object.keys(r || {}).forEach(k => s.add(k));
+                    return s;
+                }, new Set()));
+
                 const header = keys.join(',');
-                const rows = data.map((row) =>
-                    keys.map((key) => {
-                        let val = row?.[key] ?? '';
-                        if (typeof val === 'object') val = JSON.stringify(val);
-                        // Escape quotes and wrapp in quotes if contains comma
-                        val = String(val).replace(/"/g, '""');
-                        if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-                            return `"${val}"`;
-                        }
-                        return val;
-                    }).join(',')
-                );
+                const rows = array.map(row => keys.map(k => {
+                    let v = row[k] ?? '';
+                    if (typeof v === 'object') v = JSON.stringify(v);
+                    v = String(v).replace(/"/g, '""');
+                    return (v.includes(',') || v.includes('"') || v.includes('\n')) ? `"${v}"` : v;
+                }).join(','));
                 setOutput([header, ...rows].join('\n'));
             } else if (tool.id === 'base64-encode') {
                 if (isDecode) {
-                    setOutput(atob(input));
+                    // UTF-8 safe decode
+                    setOutput(decodeURIComponent(atob(input).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
                 } else {
-                    setOutput(btoa(input));
+                    // UTF-8 safe encode
+                    setOutput(btoa(encodeURIComponent(input).replace(/%([0-9A-F]{2})/g, (m, p) => String.fromCharCode('0x' + p))));
                 }
             } else if (tool.id === 'code-minifier') {
-                // A better regex-based basic minifier
                 const minified = input
-                    .replace(/\/\*[\s\S]*?\*\//g, '') // remove multi-line comments
-                    .replace(/\/\/.*$/gm, '') // remove single-line comments
-                    .replace(/\s+/g, ' ') // collapse whitespace
-                    .replace(/{\s+/g, '{')
-                    .replace(/\s+}/g, '}')
-                    .replace(/;\s+/g, ';')
-                    .replace(/,\s+/g, ',')
+                    .replace(/\/\*[\s\S]*?\*\//g, '')
+                    .replace(/\/\/.*$/gm, '')
+                    .replace(/\s+/g, ' ')
+                    .replace(/ ?([{}()\[\],;:=+-]) ?/g, '$1')
                     .trim();
                 setOutput(minified);
             } else if (tool.id === 'markdown-preview') {
-                // Advanced regex based simple markdown parser
                 let html = safeText(input)
-                    .replace(/^### (.*)$/gm, '<h3>$1</h3>')
-                    .replace(/^## (.*)$/gm, '<h2>$1</h2>')
-                    .replace(/^# (.*)$/gm, '<h1>$1</h1>')
+                    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                    .replace(/^\- (.*$)/gm, '<li>$1</li>')
+                    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\*(.*?)\*/g, '<em>$1</em>')
                     .replace(/`(.*?)`/g, '<code>$1</code>')
                     .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+                    .replace(/^\-\-\-$/gm, '<hr />')
                     .replace(/\n\n/g, '</p><p>')
                     .replace(/\n/g, '<br />');
-
-                if (!html.startsWith('<h') && !html.startsWith('<p>')) {
-                    html = `<p>${html}</p>`;
-                }
-                setOutput(html);
+                setOutput(html.startsWith('<') ? html : `<p>${html}</p>`);
             } else if (tool.id === 'regex-tester') {
-                if (!regex) {
-                    setOutput('Please enter a regex pattern.');
-                    return;
+                if (!regex) { setOutput('Enter a regex pattern.'); return; }
+                const re = new RegExp(regex, flags);
+                const all = [...input.matchAll(re)];
+                if (all.length === 0) { setOutput('No matches found.'); return; }
+
+                const summary = all.map((m, i) => {
+                    const groups = m.length > 1 ? `\n  Groups: ${JSON.stringify(m.slice(1))}` : '';
+                    return `Match ${i + 1}: "${m[0]}" at index ${m.index}${groups}`;
+                }).join('\n\n');
+
+                let outStr = `Found ${all.length} matches:\n\n${summary}`;
+                if (replace) {
+                    const replaced = input.replace(re, replace);
+                    outStr += `\n\n-------------------\nREPLACEMENT RESULT:\n\n${replaced}`;
                 }
-                try {
-                    const re = new RegExp(regex, flags);
-                    let matches = [];
-                    if (flags.includes('g')) {
-                        const all = [...input.matchAll(re)];
-                        matches = all.map(m => ({
-                            match: m[0],
-                            index: m.index,
-                            groups: m.groups || m.slice(1)
-                        }));
-                    } else {
-                        const m = input.match(re);
-                        if (m) {
-                            matches = [{ match: m[0], index: m.index, groups: m.groups || m.slice(1) }];
-                        }
-                    }
-                    setOutput(matches.length > 0 ? JSON.stringify(matches, null, 4) : 'No matches found.');
-                } catch {
-                    throw new Error('Invalid Regular Expression');
-                }
+                setOutput(outStr);
             } else if (tool.id === 'csv-plotter') {
-                const rows = input.trim().split('\n').map((row) => row.split(','));
-                const header = rows.shift() || [];
-                const preview = rows.slice(0, 10);
-                setOutput(JSON.stringify({ header, preview, totalRows: rows.length }, null, 4));
+                const rows = input.trim().split('\n').filter(Boolean).map(r => r.split(','));
+                if (rows.length < 2) throw new Error('CSV needs a header and at least one data row');
+                const header = rows[0];
+                const stats = header.map((h, i) => {
+                    const values = rows.slice(1).map(r => parseFloat(r[i])).filter(v => !isNaN(v));
+                    if (values.length === 0) return `${h}: (Non-numeric)`;
+                    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                    return `${h}: Avg=${avg.toFixed(2)}, Min=${Math.min(...values)}, Max=${Math.max(...values)}`;
+                });
+                setOutput(`CSV Insights:\n\nColumns: ${header.join(' | ')}\nRows: ${rows.length - 1}\n\nNumeric Analysis:\n${stats.join('\n')}`);
             } else if (tool.id === 'latex-editor') {
-                setOutput(input);
+                setOutput(`% LaTeX Draft\n\\documentclass{article}\n\\begin{document}\n${input}\n\\end{document}`);
             } else if (tool.id === 'bibtex-manager') {
-                const entries = input
-                    .split('@')
-                    .map((entry) => entry.trim())
-                    .filter(Boolean)
-                    .map((entry) => entry.split('{')[0].trim());
-                setOutput(JSON.stringify(entries, null, 4));
+                const entries = input.split('@').filter(Boolean).map(e => {
+                    const type = e.split('{')[0].trim();
+                    const key = (e.match(/\{([^,]+)/) || [])[1];
+                    const title = (e.match(/title\s*=\s*[\"{](.*?)[\"}]/i) || [])[1];
+                    return `[${type.toUpperCase()}] ${key}: ${title || '(No Title)'}`;
+                });
+                setOutput(entries.length ? entries.join('\n') : 'No BibTeX entries detected.');
             }
         } catch (err) {
             setError(err.message || 'Processing failed');
@@ -213,6 +200,16 @@ function TextToolRunner({ tool }) {
                                     onChange={(e) => setFlags(e.target.value)}
                                     placeholder="flags"
                                     className="flags-input"
+                                />
+                            </div>
+                            <div className="regex-input-wrapper mt-2">
+                                <label className="me-2 text-xs opacity-70">Replace with:</label>
+                                <input
+                                    type="text"
+                                    value={replace}
+                                    onChange={(e) => setReplace(e.target.value)}
+                                    placeholder="replacement string"
+                                    className="regex-input"
                                 />
                             </div>
                         </div>
