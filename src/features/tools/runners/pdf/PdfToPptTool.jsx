@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { Presentation, CheckCircle, FileText } from 'lucide-react';
+import { Presentation, CircleCheck, FileText } from 'lucide-react';
 
 function PdfToPptTool({ tool, onFilesAdded }) {
     const [file, setFile] = useState(null);
@@ -58,7 +58,7 @@ function PdfToPptTool({ tool, onFilesAdded }) {
             <div className="files-list-view" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {done ? (
                     <div className="fade-in text-center">
-                        <CheckCircle size={64} className="text-success mb-3" />
+                        <CircleCheck size={64} className="text-success mb-3" />
                         <h3>Conversion Complete!</h3>
                         <p className="text-muted">Your PowerPoint presentation is ready.</p>
                     </div>

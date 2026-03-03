@@ -21,7 +21,7 @@ function DeveloperPage() {
                                 <div className="dev-status-pulse"></div>
                             </div>
                         </div>
-                        <h1 className="dev-name">Sumit</h1>
+                        <h1 className="dev-name">Sumit Prasad</h1>
                         <p className="dev-title">Full-Stack Software Engineer</p>
                         <p className="dev-tagline">"Crafting high-performance digital solutions with precision."</p>
 

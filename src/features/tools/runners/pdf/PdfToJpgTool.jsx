@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { FileImage, Download, CheckCircle, FileText } from 'lucide-react';
+import { FileImage, Download, CircleCheck, FileText } from 'lucide-react';
 
 function PdfToJpgTool({ tool, onFilesAdded }) {
     const [file, setFile] = useState(null);
@@ -62,7 +62,7 @@ function PdfToJpgTool({ tool, onFilesAdded }) {
             <div className="files-list-view" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {done ? (
                     <div className="fade-in text-center">
-                        <CheckCircle size={64} className="text-success mb-3" />
+                        <CircleCheck size={64} className="text-success mb-3" />
                         <h3>Extraction Complete!</h3>
                         <p className="text-muted">Your images have been downloaded as a ZIP file.</p>
                     </div>

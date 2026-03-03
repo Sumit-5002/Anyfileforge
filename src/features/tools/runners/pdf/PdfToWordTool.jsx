@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { FileText, CheckCircle, Download } from 'lucide-react';
+import { FileText, CircleCheck, Download } from 'lucide-react';
 
 function PdfToWordTool({ tool, onFilesAdded }) {
     const [file, setFile] = useState(null);
@@ -63,7 +63,7 @@ function PdfToWordTool({ tool, onFilesAdded }) {
             <div className="files-list-view" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {done ? (
                     <div className="fade-in text-center">
-                        <CheckCircle size={64} className="text-success mb-3" />
+                        <CircleCheck size={64} className="text-success mb-3" />
                         <h3>Conversion Successful!</h3>
                         <p className="text-muted">Your Word document is ready.</p>
                     </div>

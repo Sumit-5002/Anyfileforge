@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Github, Twitter, Mail, Heart, Send, Loader, CheckCircle, Globe, Linkedin } from 'lucide-react';
+import { Github, Twitter, Mail, Heart, Send, LoaderCircle, CircleCheck, Globe, Linkedin } from 'lucide-react';
 import feedbackService from '../../services/feedbackService';
 import './Footer.css';
 
@@ -58,9 +58,9 @@ function Footer() {
                         <h2>We Value Your <span className="forge-text">Feedback</span></h2>
                         <p>AnyFileForge is built for the global research community. Tell us how we can make your workflow faster.</p>
                         <ul className="feedback-benefits">
-                            <li><CheckCircle size={14} /> Open source contributions welcome</li>
-                            <li><CheckCircle size={14} /> Feature requests prioritized</li>
-                            <li><CheckCircle size={14} /> 100% Secure communication</li>
+                            <li><CircleCheck size={14} /> Open source contributions welcome</li>
+                            <li><CircleCheck size={14} /> Feature requests prioritized</li>
+                            <li><CircleCheck size={14} /> 100% Secure communication</li>
                         </ul>
                     </div>
 
@@ -102,7 +102,7 @@ function Footer() {
                             className={`btn btn-primary ${status === 'success' ? 'btn-success' : ''}`}
                             disabled={status === 'submitting' || status === 'success'}
                         >
-                            {status === 'submitting' ? <Loader className="spinning" size={18} /> : status === 'success' ? <CheckCircle size={18} /> : <Send size={18} />}
+                            {status === 'submitting' ? <LoaderCircle className="spinning" size={18} /> : status === 'success' ? <CircleCheck size={18} /> : <Send size={18} />}
                             {status === 'submitting' ? 'Processing...' : status === 'success' ? 'Sent Successfully!' : 'Send Feedback'}
                         </button>
                     </form>

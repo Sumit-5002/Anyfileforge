@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { FileType, FileText, CheckCircle, Download, FileSpreadsheet, Presentation, Globe, Image } from 'lucide-react';
+import { FileType, FileText, CircleCheck, Download, FileSpreadsheet, Presentation, Globe, Image } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import '../common/ToolWorkspace.css';
 
@@ -175,7 +175,7 @@ function SimulationRunner({ tool, onFilesAdded }) {
                     </div>
                 ) : done ? (
                     <div className="fade-in" style={{ textAlign: 'center' }}>
-                        <CheckCircle size={64} style={{ color: '#10b981', marginBottom: '20px' }} />
+                        <CircleCheck size={64} style={{ color: '#10b981', marginBottom: '20px' }} />
                         <h2 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>Conversion Complete!</h2>
                         <p style={{ color: 'var(--text-secondary)', marginBottom: '30px' }}>
                             Your file has been successfully converted in offline mode.

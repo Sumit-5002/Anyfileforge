@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, X, Zap, Crown, Rocket, Loader, CreditCard, BadgePercent } from 'lucide-react';
+import { Check, X, Zap, Crown, Rocket, LoaderCircle, CreditCard, BadgePercent } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import userService from '../../services/userService';
 import SeoHead from '../../components/meta/SeoHead';
@@ -284,7 +284,7 @@ function PricingPage() {
                                             disabled={paymentProcessing}
                                         >
                                             {paymentProcessing ? (
-                                                <><Loader size={18} className="spin" /> Processing...</>
+                                                <><LoaderCircle size={18} className="spin" /> Processing...</>
                                             ) : (
                                                 <>Authorize {formatTotal(checkoutTotal)} Payment</>
                                             )}

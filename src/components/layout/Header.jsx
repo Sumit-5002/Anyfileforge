@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Menu, X, Hammer, ChevronDown, FileText, ImageIcon, Layers, Cpu, Crown, ShieldCheck, Zap, Info, HelpCircle, Globe, User, LogOut, CreditCard, Lock, LayoutGrid, Heart, ChevronRight, Smartphone, Monitor, Briefcase, FileSignature, Code, Headphones, HelpCircle as FaqIcon, Eye, EyeOff } from 'lucide-react';
+import { Menu, X, Hammer, ChevronDown, FileText, ImageIcon, Layers, Cpu, Crown, ShieldCheck, Zap, Info, CircleHelp, Globe, User, LogOut, CreditCard, Lock, LayoutGrid, Heart, ChevronRight, Smartphone, Monitor, Briefcase, FileSignature, Code, Headphones, CircleHelp as FaqIcon, Eye, EyeOff } from 'lucide-react';
 import { useDeviceType } from '../../hooks/useDeviceType';
 import { TOOLS } from '../../data/toolsData';
 import InstallPwa from '../pwa/InstallPwa';
@@ -304,7 +304,7 @@ function Header() {
                                         }}
                                         aria-expanded={isHelpOpen}
                                     >
-                                        <div className="navbar__item__icon"><HelpCircle size={18} /></div>
+                                        <div className="navbar__item__icon"><CircleHelp size={18} /></div>
                                         <div className="navbar__item__title">Help</div>
                                         <div className={`navbar__item__go ${isHelpOpen ? 'is-open' : ''}`}><ChevronDown size={16} /></div>
                                     </button>

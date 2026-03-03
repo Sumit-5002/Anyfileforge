@@ -19,14 +19,6 @@
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
 
-  /* Neutral scale (used by legacy styles) */
-  --gray-900: #f8fafc;
-  --gray-700: #cbd5f5;
-  --gray-600: var(--text-secondary);
-  --gray-400: var(--text-muted);
-  --gray-200: rgba(255, 255, 255, 0.08);
-  --gray-100: rgba(255, 255, 255, 0.04);
-
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-bright: rgba(255, 255, 255, 0.15);
 
