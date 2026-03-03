@@ -28,6 +28,30 @@ const requestBinary = async (path, formData) => {
 };
 
 /**
+ * Internal helper to send JSON requests and receive a binary Blob response.
+ */
+const requestJsonBinary = async (path, payload) => {
+    const response = await fetch(buildUrl(path), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload ?? {})
+    });
+
+    if (!response.ok) {
+        let message = `Request failed (${response.status})`;
+        try {
+            const json = await response.json();
+            if (json?.message || json?.error) message = json.message || json.error;
+        } catch {
+            // Ignore JSON parse errors and keep default message.
+        }
+        throw new Error(message);
+    }
+
+    return response.blob();
+};
+
+/**
  * Service to handle file processing operations on the remote server.
  */
 const serverProcessingService = {
@@ -73,6 +97,54 @@ const serverProcessingService = {
         const formData = new FormData();
         formData.append('file', file);
         return requestBinary('/api/pdf/compress', formData);
+    },
+
+    /**
+     * Extracts text using server OCR/text-layer route.
+     * @param {File} file - PDF file.
+     */
+    async ocrPDF(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        return requestBinary('/api/pdf/ocr', formData);
+    },
+
+    /**
+     * Protects (encrypts) a PDF with a password.
+     * @param {File} file - PDF to encrypt.
+     * @param {string} password - User password.
+     */
+    async protectPDF(file, password) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('password', String(password ?? ''));
+        return requestBinary('/api/pdf/protect', formData);
+    },
+
+    /**
+     * Adds text to a PDF (basic edit).
+     * @param {File} file - Input PDF.
+     * @param {Object} options - { text, page, x, y, size }.
+     */
+    async editPDF(file, { text, page = 1, x = 48, y = 760, size = 18 } = {}) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('text', String(text ?? ''));
+        formData.append('page', String(page));
+        formData.append('x', String(x));
+        formData.append('y', String(y));
+        formData.append('size', String(size));
+        return requestBinary('/api/pdf/edit', formData);
+    },
+
+    /**
+     * Attempts to convert a PDF to an archival-friendly rewrite (PDF/A-like placeholder).
+     * @param {File} file - Input PDF.
+     */
+    async convertToPdfA(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        return requestBinary('/api/pdf/pdfa', formData);
     },
 
     /**
@@ -141,6 +213,15 @@ const serverProcessingService = {
         formData.append('height', String(height));
         formData.append('format', format);
         return requestBinary('/api/image/crop', formData);
+    },
+
+    /**
+     * Converts a webpage URL to an image (server-side screenshot).
+     * @param {string} url - Webpage URL.
+     * @param {Object} options - { format } where format is 'jpeg' | 'png' (svg not supported yet).
+     */
+    async htmlToImage(url, { format = 'jpeg' } = {}) {
+        return requestJsonBinary('/api/image/html-to-image', { url, format });
     },
 
     /**

@@ -2,8 +2,34 @@ import express from 'express';
 import { PDFDocument } from 'pdf-lib';
 import fs from 'fs/promises';
 import path from 'path';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 const router = express.Router();
+
+let qpdfFactoryPromise = null;
+
+const getQpdfFactory = async () => {
+    if (!qpdfFactoryPromise) {
+        qpdfFactoryPromise = import('qpdf-wasm-esm-embedded').then((m) => m.default || m);
+    }
+    return qpdfFactoryPromise;
+};
+
+const cleanupUploadedFiles = async (req) => {
+    if (req.file?.path) {
+        await fs.unlink(req.file.path).catch((err) => {
+            if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
+        });
+    }
+
+    if (Array.isArray(req.files)) {
+        await Promise.all(req.files.map((file) =>
+            fs.unlink(file.path).catch((err) => {
+                if (err.code !== 'ENOENT') console.error('Failed to unlink file:', file.path, err.message);
+            })
+        ));
+    }
+};
 
 // Merge PDFs
 router.post('/merge', async (req, res) => {
@@ -159,6 +185,230 @@ router.post('/compress', async (req, res) => {
         });
     } catch (error) {
         console.error('PDF compress outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// OCR PDF (text-layer extraction fallback)
+router.post('/ocr', async (req, res) => {
+    try {
+        const upload = req.app.get('upload');
+
+        upload.single('file')(req, res, async (err) => {
+            if (err) {
+                console.error('PDF OCR upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({ error: 'PDF file is required' });
+            }
+
+            try {
+                const pdfBytes = await fs.readFile(req.file.path);
+                const loadingTask = pdfjs.getDocument({ data: new Uint8Array(pdfBytes) });
+                const doc = await loadingTask.promise;
+
+                const pages = [];
+                for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber += 1) {
+                    const page = await doc.getPage(pageNumber);
+                    const textContent = await page.getTextContent();
+                    const text = textContent.items
+                        .map((item) => String(item.str || '').trim())
+                        .filter(Boolean)
+                        .join(' ');
+                    pages.push(`Page ${pageNumber}\n${text}`);
+                }
+
+                const fullText = pages.join('\n\n').trim();
+                if (!fullText) {
+                    return res.status(422).json({
+                        error: 'No text layer found in PDF',
+                        message: 'This appears to be a scanned/image-only PDF. OCR engine is not configured on the server yet.'
+                    });
+                }
+
+                const out = Buffer.from(fullText, 'utf8');
+                res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+                res.setHeader('Content-Disposition', 'attachment; filename=ocr_output.txt');
+                res.send(out);
+            } catch (error) {
+                console.error('PDF OCR error:', error);
+                res.status(500).json({ error: 'Failed to process OCR extraction' });
+            } finally {
+                await cleanupUploadedFiles(req);
+            }
+        });
+    } catch (error) {
+        console.error('PDF OCR outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Edit PDF (basic server editor: add text + optional rectangle)
+router.post('/edit', async (req, res) => {
+    try {
+        const upload = req.app.get('upload');
+
+        upload.single('file')(req, res, async (err) => {
+            if (err) {
+                console.error('PDF edit upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({ error: 'PDF file is required' });
+            }
+
+            const {
+                text = '',
+                page = '1',
+                x = '48',
+                y = '760',
+                size = '18',
+                drawRect = 'false',
+                rectX = '48',
+                rectY = '700',
+                rectWidth = '220',
+                rectHeight = '80'
+            } = req.body || {};
+
+            try {
+                const pdfBytes = await fs.readFile(req.file.path);
+                const pdf = await PDFDocument.load(pdfBytes);
+                const pages = pdf.getPages();
+                if (!pages.length) return res.status(400).json({ error: 'PDF has no pages' });
+
+                const pageIndex = Math.max(0, Math.min(pages.length - 1, Number(page) - 1 || 0));
+                const targetPage = pages[pageIndex];
+
+                const textValue = String(text || '').trim();
+                if (textValue) {
+                    targetPage.drawText(textValue, {
+                        x: Number(x) || 48,
+                        y: Number(y) || 760,
+                        size: Math.max(8, Math.min(96, Number(size) || 18))
+                    });
+                }
+
+                if (String(drawRect) === 'true') {
+                    targetPage.drawRectangle({
+                        x: Number(rectX) || 48,
+                        y: Number(rectY) || 700,
+                        width: Math.max(10, Number(rectWidth) || 220),
+                        height: Math.max(10, Number(rectHeight) || 80)
+                    });
+                }
+
+                const editedBytes = await pdf.save({ useObjectStreams: true });
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', 'attachment; filename=edited.pdf');
+                res.send(Buffer.from(editedBytes));
+            } catch (error) {
+                console.error('PDF edit error:', error);
+                res.status(500).json({ error: 'Failed to edit PDF' });
+            } finally {
+                await cleanupUploadedFiles(req);
+            }
+        });
+    } catch (error) {
+        console.error('PDF edit outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// PDF to PDF/A (compat rewrite)
+router.post('/pdfa', async (req, res) => {
+    try {
+        const upload = req.app.get('upload');
+
+        upload.single('file')(req, res, async (err) => {
+            if (err) {
+                console.error('PDF/A upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({ error: 'PDF file is required' });
+            }
+
+            try {
+                const pdfBytes = await fs.readFile(req.file.path);
+                const pdf = await PDFDocument.load(pdfBytes);
+                pdf.setProducer('AnyFileForge PDFA Compatibility Rewriter');
+                pdf.setCreator('AnyFileForge');
+                const out = await pdf.save({ useObjectStreams: true });
+
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', 'attachment; filename=pdfa_compatible.pdf');
+                res.send(Buffer.from(out));
+            } catch (error) {
+                console.error('PDF/A conversion error:', error);
+                res.status(500).json({ error: 'Failed to convert PDF' });
+            } finally {
+                await cleanupUploadedFiles(req);
+            }
+        });
+    } catch (error) {
+        console.error('PDF/A outer error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Protect PDF (password encryption using qpdf WASM)
+router.post('/protect', async (req, res) => {
+    try {
+        const upload = req.app.get('upload');
+
+        upload.single('file')(req, res, async (err) => {
+            if (err) {
+                console.error('PDF protect upload error:', err);
+                return res.status(400).json({ error: 'File upload failed' });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({ error: 'PDF file is required' });
+            }
+
+            const password = String(req.body?.password || '');
+            if (!password.trim()) {
+                return res.status(400).json({ error: 'Password is required' });
+            }
+
+            try {
+                const pdfBytes = await fs.readFile(req.file.path);
+                const QPDF = await getQpdfFactory();
+                const stderr = [];
+                const qpdf = await QPDF({
+                    noInitialRun: true,
+                    print: () => { },
+                    printErr: (line) => stderr.push(String(line))
+                });
+
+                qpdf.FS.writeFile('in.pdf', new Uint8Array(pdfBytes));
+                qpdf.callMain([
+                    '--encrypt',
+                    password,
+                    password,
+                    '256',
+                    '--',
+                    'in.pdf',
+                    'out.pdf'
+                ]);
+
+                const out = qpdf.FS.readFile('out.pdf');
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', 'attachment; filename=protected.pdf');
+                res.send(Buffer.from(out));
+            } catch (error) {
+                console.error('PDF protect error:', error);
+                res.status(500).json({ error: 'Failed to protect PDF with password' });
+            } finally {
+                await cleanupUploadedFiles(req);
+            }
+        });
+    } catch (error) {
+        console.error('PDF protect outer error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

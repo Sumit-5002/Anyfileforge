@@ -4,6 +4,22 @@ import fs from 'fs/promises';
 
 const router = express.Router();
 
+const escapeXml = (value = '') =>
+    String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+const toPlainText = (html = '') =>
+    String(html)
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
 // Resize image
 router.post('/resize', async (req, res) => {
     try {
@@ -206,6 +222,82 @@ router.post('/crop', async (req, res) => {
     } catch (error) {
         console.error('Image crop outer error:', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Capture URL to image (lightweight server renderer)
+router.post('/html-to-image', async (req, res) => {
+    try {
+        const { url, format = 'jpeg' } = req.body || {};
+        const normalizedFormat = String(format).toLowerCase() === 'svg' ? 'svg' : 'jpeg';
+
+        if (!url || typeof url !== 'string') {
+            return res.status(400).json({ error: 'Valid URL is required.' });
+        }
+
+        let parsed;
+        try {
+            parsed = new URL(url);
+        } catch {
+            return res.status(400).json({ error: 'Invalid URL format.' });
+        }
+
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+            return res.status(400).json({ error: 'Only http/https URLs are supported.' });
+        }
+
+        const response = await fetch(parsed.toString(), {
+            redirect: 'follow',
+            headers: {
+                'User-Agent': 'AnyFileForge-Server/1.0 (+html-to-image)'
+            }
+        });
+
+        if (!response.ok) {
+            return res.status(502).json({ error: `Unable to fetch URL (${response.status}).` });
+        }
+
+        const html = await response.text();
+        const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+        const title = titleMatch ? titleMatch[1].trim() : parsed.hostname;
+        const snippet = toPlainText(html).slice(0, 380);
+
+        const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="1366" height="768">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#bg)"/>
+  <rect x="36" y="36" width="1294" height="696" rx="16" fill="#0b1220" stroke="#334155" />
+  <text x="72" y="106" fill="#60a5fa" font-size="24" font-family="Arial, sans-serif">URL Snapshot</text>
+  <text x="72" y="152" fill="#f8fafc" font-size="34" font-family="Arial, sans-serif">${escapeXml(title).slice(0, 80)}</text>
+  <text x="72" y="198" fill="#94a3b8" font-size="18" font-family="Arial, sans-serif">${escapeXml(parsed.toString()).slice(0, 120)}</text>
+  <foreignObject x="72" y="230" width="1222" height="440">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="color:#cbd5e1;font:16px/1.6 Arial,sans-serif;white-space:normal;">
+      ${escapeXml(snippet || 'No readable text found on the target page.')}
+    </div>
+  </foreignObject>
+</svg>`;
+
+        if (normalizedFormat === 'svg') {
+            res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+            res.setHeader('Content-Disposition', 'attachment; filename=webpage_capture.svg');
+            return res.send(Buffer.from(svg, 'utf8'));
+        }
+
+        const imageBuffer = await sharp(Buffer.from(svg, 'utf8'))
+            .jpeg({ quality: 90 })
+            .toBuffer();
+
+        res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Content-Disposition', 'attachment; filename=webpage_capture.jpg');
+        return res.send(imageBuffer);
+    } catch (error) {
+        console.error('HTML to image error:', error);
+        return res.status(500).json({ error: 'Failed to convert webpage to image' });
     }
 });
 

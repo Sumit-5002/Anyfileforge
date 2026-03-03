@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
+import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
 import { Lock, ShieldAlert, FileText, CheckCircle } from 'lucide-react';
@@ -23,8 +24,14 @@ function PdfProtectTool({ tool, onFilesAdded }) {
         }
         setProcessing(true);
         try {
-            const data = await pdfService.protectPDF(file, password);
-            pdfService.downloadPDF(data, 'protected_document.pdf');
+            if (tool.mode === 'server') {
+                const blob = await serverProcessingService.protectPDF(file, password);
+                const baseName = file.name.replace(/\.[^/.]+$/, '');
+                pdfService.downloadBlob(blob, `${baseName}_protected.pdf`);
+            } else {
+                const data = await pdfService.protectPDF(file, password);
+                pdfService.downloadPDF(data, 'protected_document.pdf');
+            }
             setDone(true);
         } catch (error) {
             console.error('Protect error:', error);

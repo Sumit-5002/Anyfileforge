@@ -26,7 +26,6 @@ function ToolWorkspace({
         if (newFiles.length > 0 && onFilesSelected) {
             onFilesSelected(newFiles);
         }
-        // Clear value so the same file can be selected again
         e.target.value = '';
     };
 
@@ -70,7 +69,7 @@ function ToolWorkspace({
             </div>
 
             <div className="workspace-layout">
-                {/* Main Content Area (e.g., Page Grid or File List) */}
+                {/* Main Content Area */}
                 <div className="workspace-main">
                     {children}
                 </div>
@@ -82,18 +81,37 @@ function ToolWorkspace({
 
                         {sidebar}
 
-                        {processing && progress > 0 && (
+                        {/* ── Progress Block ── shown whenever processing is true ── */}
+                        {processing && (
                             <div className="workspace-progress-container mt-4 mb-2">
                                 <div className="progress-info">
-                                    <span>Processing...</span>
-                                    <span>{Math.round(progress)}%</span>
+                                    <span>
+                                        {progress >= 100
+                                            ? '✅ Done! Downloading…'
+                                            : progress > 0
+                                                ? 'Processing…'
+                                                : '⏳ Uploading to server…'}
+                                    </span>
+                                    {progress > 0 && progress < 100 && (
+                                        <span>{Math.round(progress)}%</span>
+                                    )}
                                 </div>
                                 <div className="progress-bar-bg">
-                                    <div
-                                        className="progress-bar-fill"
-                                        style={{ width: `${progress}%` }}
-                                    ></div>
+                                    {progress > 0 ? (
+                                        <div
+                                            className="progress-bar-fill"
+                                            style={{ width: `${Math.min(progress, 100)}%` }}
+                                        />
+                                    ) : (
+                                        /* Indeterminate sweep — server upload phase has no real % */
+                                        <div className="progress-bar-indeterminate" />
+                                    )}
                                 </div>
+                                {progress >= 100 && (
+                                    <div className="progress-done-banner">
+                                        ✅ Processing complete — your file is downloading!
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -103,7 +121,9 @@ function ToolWorkspace({
                             disabled={processing || files.length === 0}
                         >
                             {processing ? <Loader className="spinning" size={20} /> : <Download size={20} />}
-                            {processing ? 'Processing...' : (actionLabel || tool.name)}
+                            {processing
+                                ? (progress >= 100 ? 'Done!' : 'Processing…')
+                                : (actionLabel || tool.name)}
                         </button>
                     </div>
                 </div>

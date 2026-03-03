@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import imageService from '../../../../services/imageService';
 import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
@@ -6,11 +6,75 @@ import ToolWorkspace from '../common/ToolWorkspace';
 import { Globe, Info, Download } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
+const escapeHtmlForXml = (html) =>
+    html
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+const buildHtmlSvg = (html, width = 1366, height = 768) => `
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+  <foreignObject width="100%" height="100%">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="background:white;color:black;width:100%;height:100%;overflow:hidden;">
+      ${html}
+    </div>
+  </foreignObject>
+</svg>`;
+
+const svgBlobToJpegBlob = async (svgBlob) => {
+    const objectUrl = URL.createObjectURL(svgBlob);
+    try {
+        const img = await new Promise((resolve, reject) => {
+            const nextImg = new Image();
+            nextImg.onload = () => resolve(nextImg);
+            nextImg.onerror = () => reject(new Error('Failed to render HTML as image.'));
+            nextImg.src = objectUrl;
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width || 1366;
+        canvas.height = img.height || 768;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        const jpegBlob = await new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (!blob) reject(new Error('Failed to encode JPG output.'));
+                else resolve(blob);
+            }, 'image/jpeg', 0.9);
+        });
+
+        return jpegBlob;
+    } finally {
+        URL.revokeObjectURL(objectUrl);
+    }
+};
+
+const convertHtmlFileToImage = async (file, format) => {
+    const html = await file.text();
+    const svgMarkup = buildHtmlSvg(escapeHtmlForXml(html));
+    const svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+    if (format === 'svg') return svgBlob;
+    return svgBlobToJpegBlob(svgBlob);
+};
+
 function HtmlToImageTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [files, setFiles] = useState([]);
     const [urlInput, setUrlInput] = useState('');
     const [processing, setProcessing] = useState(false);
-    const [format, setFormat] = useState('jpeg'); // jpeg or svg
+    const [format, setFormat] = useState('jpeg');
+    const [resultUrl, setResultUrl] = useState('');
+    const [resultName, setResultName] = useState('');
+
+    const canCaptureUrl = useMemo(() => tool.mode === 'server', [tool.mode]);
+
+    useEffect(() => () => {
+        if (resultUrl) URL.revokeObjectURL(resultUrl);
+    }, [resultUrl]);
 
     const handleFilesSelected = (newFiles) => {
         setFiles(prev => [...prev, ...newFiles]);
@@ -18,22 +82,30 @@ function HtmlToImageTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     };
 
     const handleProcess = async () => {
-        if (tool.mode !== 'server') {
-            alert('This tool requires "Server Mode" to handle URL fetching and rendering. Please switch to Online Mode in the tool header.');
-            return;
-        }
-
         setProcessing(true);
         try {
             let blob;
+            let outputName;
+
             if (urlInput) {
+                if (!canCaptureUrl) {
+                    throw new Error('URL capture needs Online Server Mode. For Offline Mode, upload an HTML file instead.');
+                }
                 blob = await serverProcessingService.htmlToImage(urlInput, { format });
-                imageService.downloadBlob(blob, `webpage_capture.${format === 'svg' ? 'svg' : 'jpg'}`);
+                outputName = `webpage_capture.${format === 'svg' ? 'svg' : 'jpg'}`;
             } else if (files.length > 0) {
-                // For files, we might need a different server endpoint or handle locally if possible
-                // But generally html-to-image usually implies URL.
-                alert('File to Image conversion is currently optimized for URLs. Please enter a webpage URL.');
+                blob = await convertHtmlFileToImage(files[0], format);
+                const base = files[0].name.replace(/\.[^/.]+$/, '');
+                outputName = `${base}_capture.${format === 'svg' ? 'svg' : 'jpg'}`;
+            } else {
+                throw new Error('Add a URL or upload an HTML file first.');
             }
+
+            if (resultUrl) URL.revokeObjectURL(resultUrl);
+            const nextResultUrl = URL.createObjectURL(blob);
+            setResultUrl(nextResultUrl);
+            setResultName(outputName);
+            imageService.downloadBlob(blob, outputName);
         } catch (error) {
             console.error('HTML to Image error:', error);
             alert('Failed to convert HTML to Image. ' + error.message);
@@ -61,7 +133,7 @@ function HtmlToImageTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                                 className="form-control"
                                 style={{ flex: 1 }}
                             />
-                            <button className="btn btn-primary" onClick={handleProcess} disabled={!urlInput || processing}>
+                            <button className="btn btn-primary" onClick={handleProcess} disabled={!urlInput || processing || !canCaptureUrl}>
                                 {processing ? '...' : 'Capture'}
                             </button>
                         </div>
@@ -76,7 +148,7 @@ function HtmlToImageTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     </div>
                     <div className="mt-4" style={{ fontSize: '0.9rem', color: 'var(--accent-yellow)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                         <Info size={14} />
-                        Requires Online Server Mode
+                        {canCaptureUrl ? 'URL capture available in Online Mode' : 'Switch to Online Mode for URL capture (HTML file upload works offline)'}
                     </div>
                 </div>
 
@@ -95,6 +167,9 @@ function HtmlToImageTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             onReset={() => {
                 setFiles([]);
                 setUrlInput('');
+                if (resultUrl) URL.revokeObjectURL(resultUrl);
+                setResultUrl('');
+                setResultName('');
             }}
             processing={processing}
             onProcess={handleProcess}
@@ -108,7 +183,9 @@ function HtmlToImageTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <option value="svg">SVG Vector</option>
                         </select>
                     </div>
-                    <p className="hint-text mt-3">High-fidelity screenshot of the webpage.</p>
+                    <p className="hint-text mt-3">
+                        URL capture uses server mode. HTML file upload works in both offline and online modes.
+                    </p>
                 </div>
             }
         >
@@ -120,9 +197,34 @@ function HtmlToImageTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <div className="file-item-name">{file.name}</div>
                             <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
                         </div>
-                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))}>×</button>
+                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))}>x</button>
                     </div>
                 ))}
+
+                {resultUrl && (
+                    <div className="card mt-3" style={{ padding: '16px' }}>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                            <strong>Converted Output</strong>
+                        </div>
+                        <img src={resultUrl} alt="Converted output preview" style={{ width: '100%', borderRadius: '10px', border: '1px solid var(--border-subtle)' }} />
+                        <div className="mt-2">
+                            <button
+                                className="btn btn-primary"
+                                onClick={() => {
+                                    const anchor = document.createElement('a');
+                                    anchor.href = resultUrl;
+                                    anchor.download = resultName || `webpage_capture.${format === 'svg' ? 'svg' : 'jpg'}`;
+                                    document.body.appendChild(anchor);
+                                    anchor.click();
+                                    document.body.removeChild(anchor);
+                                }}
+                            >
+                                <Download size={16} />
+                                Download Again
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </ToolWorkspace>
     );

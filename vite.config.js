@@ -9,7 +9,7 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             devOptions: {
-                enabled: false
+                enabled: true
             },
             includeAssets: ['favicon.png', 'logo.png', 'PROFILE.png', 'icon-192.png', 'icon-512.png'],
             manifest: {
@@ -18,6 +18,9 @@ export default defineConfig({
                 description: 'The Ultimate Free File Processing Platform',
                 theme_color: '#020617',
                 background_color: '#020617',
+                id: '/',
+                scope: '/',
+                start_url: '/',
                 display: 'standalone',
                 icons: [
                     {
