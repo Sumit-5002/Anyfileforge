@@ -119,11 +119,7 @@ function HomePage() {
                                     </button>
                                     <a href="https://github.com/Sumit-5002/Anyfileforge" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-large">
                                         <Github size={20} />
-                                        GitHub
-                                    </a>
-                                    <a href="https://linkedin.com/in/sumit-prasad-bce2005" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-large">
-                                        <Linkedin size={20} />
-                                        LinkedIn
+                                        Source Code
                                     </a>
                                 </>
                             ) : (
