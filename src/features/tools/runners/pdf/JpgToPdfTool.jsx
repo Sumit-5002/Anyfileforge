@@ -8,6 +8,7 @@ import '../common/ToolWorkspace.css';
 function JpgToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [files, setFiles] = useState([]);
     const [processing, setProcessing] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     const handleFilesSelected = (newFiles) => {
         setFiles(prev => [...prev, ...newFiles]);
@@ -17,11 +18,13 @@ function JpgToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const handleProcess = async () => {
         if (files.length === 0) return;
         setProcessing(true);
+        setProgress(0);
         try {
-            const data = await pdfService.imagesToPDF(files);
+            const data = await pdfService.imagesToPDF(files, (p) => setProgress(p));
             pdfService.downloadPDF(data, 'images_to_pdf.pdf');
         } finally {
             setProcessing(false);
+            setProgress(0);
         }
     };
 
@@ -36,6 +39,7 @@ function JpgToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             onFilesSelected={handleFilesSelected}
             onReset={() => setFiles([])}
             processing={processing}
+            progress={progress}
             onProcess={handleProcess}
             actionLabel="Convert Images to PDF"
             sidebar={

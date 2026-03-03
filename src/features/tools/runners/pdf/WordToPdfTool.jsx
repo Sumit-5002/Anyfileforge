@@ -8,6 +8,7 @@ import '../common/ToolWorkspace.css';
 function WordToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [files, setFiles] = useState([]);
     const [processing, setProcessing] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     const handleFilesSelected = (newFiles) => {
         setFiles(prev => [...prev, ...newFiles]);
@@ -17,9 +18,10 @@ function WordToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const handleProcess = async () => {
         if (files.length === 0) return;
         setProcessing(true);
+        setProgress(0);
         try {
             // Process the first file for simplicity in this version
-            const data = await pdfService.wordToPDF(files[0]);
+            const data = await pdfService.wordToPDF(files[0], (p) => setProgress(p));
             const outputName = files[0].name.replace(/\.[^/.]+$/, '') + '.pdf';
             pdfService.downloadPDF(data, outputName);
         } catch (err) {
@@ -27,6 +29,7 @@ function WordToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             alert('Failed to convert Word to PDF. Please ensure the file is a valid .docx document.');
         } finally {
             setProcessing(false);
+            setProgress(0);
         }
     };
 
@@ -41,6 +44,7 @@ function WordToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             onFilesSelected={handleFilesSelected}
             onReset={() => setFiles([])}
             processing={processing}
+            progress={progress}
             onProcess={handleProcess}
             actionLabel="Convert Word to PDF"
             sidebar={

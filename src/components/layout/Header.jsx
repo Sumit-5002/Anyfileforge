@@ -97,7 +97,7 @@ function Header() {
                     <Link to="/projects" className="nav-link bold">PROJECTS</Link>
                     <div className="nav-item-dropdown" onMouseEnter={() => !isMobile && setActiveDropdown('pdf')}>
                         <button className={`nav-link-btn ${activeDropdown === 'pdf' ? 'active' : ''}`} onClick={() => toggleDropdown('pdf')}>
-                            PDF TOOLS <ChevronDown size={14} />
+                            PDF SUITE <ChevronDown size={14} />
                         </button>
                         {activeDropdown === 'pdf' && (
                             <div className="mega-menu">
@@ -105,7 +105,7 @@ function Header() {
                                     {TOOLS.pdf.map((cat, idx) => (
                                         <div key={idx} className="mega-col">
                                             <h4 className="mega-title">{cat.category}</h4>
-                                            {cat.tools.slice(0, 6).map(tool => (
+                                            {cat.tools.slice(0, 8).map(tool => (
                                                 <Link key={tool.id} to={`/tools/${tool.id}`} className="mega-item" onClick={() => setActiveDropdown(null)}>
                                                     <div className="mega-icon-wrapper" style={{ color: tool.color }}>
                                                         <tool.icon size={18} />
@@ -122,7 +122,7 @@ function Header() {
 
                     <div className="nav-item-dropdown" onMouseEnter={() => !isMobile && setActiveDropdown('image')}>
                         <button className={`nav-link-btn ${activeDropdown === 'image' ? 'active' : ''}`} onClick={() => toggleDropdown('image')}>
-                            IMAGE TOOLS <ChevronDown size={14} />
+                            IMAGE ENGINE <ChevronDown size={14} />
                         </button>
                         {activeDropdown === 'image' && (
                             <div className="mega-menu">
@@ -145,7 +145,40 @@ function Header() {
                         )}
                     </div>
 
-                    <Link to="/tools" className="nav-link bold">ALL TOOLS</Link>
+                    <div className="nav-item-dropdown" onMouseEnter={() => !isMobile && setActiveDropdown('data')}>
+                        <button className={`nav-link-btn ${activeDropdown === 'data' ? 'active' : ''}`} onClick={() => toggleDropdown('data')}>
+                            DATA FORGE <ChevronDown size={14} />
+                        </button>
+                        {activeDropdown === 'data' && (
+                            <div className="mega-menu">
+                                <div className="mega-menu-grid">
+                                    <div className="mega-col">
+                                        <h4 className="mega-title">ENGINEER TOOLS</h4>
+                                        {TOOLS.engineer?.[0]?.tools?.slice(0, 8).map(tool => (
+                                            <Link key={tool.id} to={`/tools/${tool.id}`} className="mega-item" onClick={() => setActiveDropdown(null)}>
+                                                <div className="mega-icon-wrapper" style={{ color: tool.color }}>
+                                                    <tool.icon size={18} />
+                                                </div>
+                                                {tool.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                    <div className="mega-col">
+                                        <h4 className="mega-title">RESEARCHER TOOLS</h4>
+                                        {TOOLS.researcher?.[0]?.tools?.slice(0, 8).map(tool => (
+                                            <Link key={tool.id} to={`/tools/${tool.id}`} className="mega-item" onClick={() => setActiveDropdown(null)}>
+                                                <div className="mega-icon-wrapper" style={{ color: tool.color }}>
+                                                    <tool.icon size={18} />
+                                                </div>
+                                                {tool.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     <Link to="/pricing" className="nav-link bold">PRICING</Link>
                 </nav>
 

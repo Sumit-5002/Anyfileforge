@@ -7,6 +7,7 @@ import { Presentation, FileText, CheckCircle } from 'lucide-react';
 function PptToPdfTool({ tool, onFilesAdded }) {
     const [file, setFile] = useState(null);
     const [processing, setProcessing] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [done, setDone] = useState(false);
 
     const handleFilesSelected = (files) => {
@@ -18,8 +19,9 @@ function PptToPdfTool({ tool, onFilesAdded }) {
     const handleProcess = async () => {
         if (!file) return;
         setProcessing(true);
+        setProgress(0);
         try {
-            const data = await pdfService.pptToPDF(file);
+            const data = await pdfService.pptToPDF(file, (p) => setProgress(p));
             pdfService.downloadPDF(data, file.name.replace('.pptx', '.pdf'));
             setDone(true);
         } catch (error) {
@@ -27,6 +29,7 @@ function PptToPdfTool({ tool, onFilesAdded }) {
             alert('Failed to convert PowerPoint to PDF.');
         } finally {
             setProcessing(false);
+            setProgress(0);
         }
     };
 
@@ -41,6 +44,7 @@ function PptToPdfTool({ tool, onFilesAdded }) {
             onFilesSelected={handleFilesSelected}
             onReset={() => { setFile(null); setDone(false); }}
             processing={processing}
+            progress={progress}
             onProcess={handleProcess}
             actionLabel="Convert to PDF"
             sidebarTitle="Conversion Settings"

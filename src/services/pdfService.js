@@ -9,6 +9,7 @@ import * as imgConv from './pdf/pdfImageConverter';
 import * as wordConv from './pdf/pdfWordConverter';
 import * as excelConv from './pdf/pdfExcelConverter';
 import * as htmlConv from './pdf/pdfHtmlConverter';
+import * as comparator from './pdf/pdfComparator';
 import * as pdfToWord from './pdf/pdfToWordConverter';
 
 const pdfService = {
@@ -23,6 +24,7 @@ const pdfService = {
     ...wordConv,
     ...excelConv,
     ...htmlConv,
+    ...comparator,
     ...pdfToWord
 };
 

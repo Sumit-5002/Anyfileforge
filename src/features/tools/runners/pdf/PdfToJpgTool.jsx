@@ -7,6 +7,7 @@ import { FileImage, Download, CheckCircle, FileText } from 'lucide-react';
 function PdfToJpgTool({ tool, onFilesAdded }) {
     const [file, setFile] = useState(null);
     const [processing, setProcessing] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [done, setDone] = useState(false);
 
     const handleFilesSelected = (files) => {
@@ -18,14 +19,16 @@ function PdfToJpgTool({ tool, onFilesAdded }) {
     const handleProcess = async () => {
         if (!file) return;
         setProcessing(true);
+        setProgress(0);
         try {
-            await pdfService.pdfToJpg(file);
+            await pdfService.pdfToJpg(file, (p) => setProgress(p));
             setDone(true);
         } catch (error) {
             console.error('PDF to JPG error:', error);
             alert('Failed to extract images from PDF.');
         } finally {
             setProcessing(false);
+            setProgress(0);
         }
     };
 
@@ -40,6 +43,7 @@ function PdfToJpgTool({ tool, onFilesAdded }) {
             onFilesSelected={handleFilesSelected}
             onReset={() => { setFile(null); setDone(false); }}
             processing={processing}
+            progress={progress}
             onProcess={handleProcess}
             actionLabel="Extract JPG Images"
             sidebarTitle="Export Settings"

@@ -8,6 +8,7 @@ import '../common/ToolWorkspace.css';
 function ExcelToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [files, setFiles] = useState([]);
     const [processing, setProcessing] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     const handleFilesSelected = (newFiles) => {
         setFiles(prev => [...prev, ...newFiles]);
@@ -17,8 +18,9 @@ function ExcelToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const handleProcess = async () => {
         if (files.length === 0) return;
         setProcessing(true);
+        setProgress(0);
         try {
-            const data = await pdfService.excelToPDF(files[0]);
+            const data = await pdfService.excelToPDF(files[0], (p) => setProgress(p));
             const outputName = files[0].name.replace(/\.[^/.]+$/, '') + '.pdf';
             pdfService.downloadPDF(data, outputName);
         } catch (err) {
@@ -26,6 +28,7 @@ function ExcelToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             alert('Failed to convert Excel to PDF. Please ensure the file is a valid .xlsx or .xls document.');
         } finally {
             setProcessing(false);
+            setProgress(0);
         }
     };
 
@@ -40,6 +43,7 @@ function ExcelToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             onFilesSelected={handleFilesSelected}
             onReset={() => setFiles([])}
             processing={processing}
+            progress={progress}
             onProcess={handleProcess}
             actionLabel="Convert Excel to PDF"
             sidebar={

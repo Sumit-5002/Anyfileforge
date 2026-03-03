@@ -7,6 +7,7 @@ import { FileText, CheckCircle, Download } from 'lucide-react';
 function PdfToWordTool({ tool, onFilesAdded }) {
     const [file, setFile] = useState(null);
     const [processing, setProcessing] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [done, setDone] = useState(false);
 
     const handleFilesSelected = (files) => {
@@ -18,8 +19,9 @@ function PdfToWordTool({ tool, onFilesAdded }) {
     const handleProcess = async () => {
         if (!file) return;
         setProcessing(true);
+        setProgress(0);
         try {
-            const data = await pdfService.pdfToWord(file);
+            const data = await pdfService.pdfToWord(file, (p) => setProgress(p));
             pdfService.downloadBlob(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), file.name.replace('.pdf', '.docx'));
             setDone(true);
         } catch (error) {
@@ -27,6 +29,7 @@ function PdfToWordTool({ tool, onFilesAdded }) {
             alert('Failed to convert PDF to Word. Note: Only text-based PDFs are supported for offline conversion.');
         } finally {
             setProcessing(false);
+            setProgress(0);
         }
     };
 
@@ -41,6 +44,7 @@ function PdfToWordTool({ tool, onFilesAdded }) {
             onFilesSelected={handleFilesSelected}
             onReset={() => { setFile(null); setDone(false); }}
             processing={processing}
+            progress={progress}
             onProcess={handleProcess}
             actionLabel="Convert to Word"
             sidebarTitle="Conversion Settings"

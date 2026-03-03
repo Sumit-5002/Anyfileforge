@@ -7,7 +7,7 @@ if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {
     pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 }
 
-export const pdfToWord = async (file) => {
+export const pdfToWord = async (file, onProgress) => {
     try {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
@@ -15,6 +15,7 @@ export const pdfToWord = async (file) => {
         let allParas = [];
 
         for (let i = 1; i <= pdf.numPages; i++) {
+            if (onProgress) onProgress((i / pdf.numPages) * 100);
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
             let lastY = -1;

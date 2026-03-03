@@ -16,6 +16,7 @@ function ToolWorkspace({
     actionLabel,
     sidebar,
     sidebarTitle = 'Settings',
+    progress = 0, // 0 to 100
     children // This is the main grid or file list area
 }) {
     const addMoreInputRef = useRef(null);
@@ -80,6 +81,21 @@ function ToolWorkspace({
                         {sidebarTitle && <h4 className="sidebar-title">{sidebarTitle}</h4>}
 
                         {sidebar}
+
+                        {processing && progress > 0 && (
+                            <div className="workspace-progress-container mt-4 mb-2">
+                                <div className="progress-info">
+                                    <span>Processing...</span>
+                                    <span>{Math.round(progress)}%</span>
+                                </div>
+                                <div className="progress-bar-bg">
+                                    <div
+                                        className="progress-bar-fill"
+                                        style={{ width: `${progress}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        )}
 
                         <button
                             className="btn-primary btn-full workspace-action-btn"

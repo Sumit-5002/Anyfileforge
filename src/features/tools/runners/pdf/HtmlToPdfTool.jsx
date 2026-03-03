@@ -9,6 +9,7 @@ function HtmlToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [files, setFiles] = useState([]);
     const [urlInput, setUrlInput] = useState('');
     const [processing, setProcessing] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     const handleFilesSelected = (newFiles) => {
         setFiles(prev => [...prev, ...newFiles]);
@@ -22,14 +23,16 @@ function HtmlToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         }
         if (files.length === 0) return;
         setProcessing(true);
+        setProgress(0);
         try {
-            const data = await pdfService.htmlToPDF(files[0]);
+            const data = await pdfService.htmlToPDF(files[0], (p) => setProgress(p));
             pdfService.downloadPDF(data, files[0].name.replace(/\.[^/.]+$/, "") + ".pdf");
         } catch (error) {
             console.error('HTML to PDF error:', error);
             alert('Failed to convert HTML to PDF.');
         } finally {
             setProcessing(false);
+            setProgress(0);
         }
     };
 
@@ -78,6 +81,7 @@ function HtmlToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 setUrlInput('');
             }}
             processing={processing}
+            progress={progress}
             onProcess={handleProcess}
             actionLabel="Convert HTML to PDF"
             sidebar={

@@ -167,36 +167,36 @@ function HomePage() {
                                     onClick={() => setActiveTab('pdf')}
                                 >
                                     <FileText size={20} />
-                                    {t('common.pdfTools', 'PDF Tools')}
+                                    {t('common.pdfTools', 'PDF Suite')}
                                 </button>
                                 <button
                                     className={`tab-btn ${activeTab === 'image' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('image')}
                                 >
                                     <ImageIcon size={20} />
-                                    {t('common.imageTools', 'Image Tools')}
+                                    {t('common.imageTools', 'Image Engine')}
                                 </button>
                                 <button
                                     className={`tab-btn ${activeTab === 'engineer' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('engineer')}
                                 >
                                     <Code size={20} />
-                                    Engineer
+                                    Engineer Labs
                                 </button>
                                 <button
                                     className={`tab-btn ${activeTab === 'researcher' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('researcher')}
                                 >
                                     <FlaskConical size={20} />
-                                    Researcher
+                                    Data Researcher
                                 </button>
                             </div>
 
                             <h2 className="section-title text-center">
-                                {activeTab === 'pdf' && 'The Ultimate PDF Toolkit'}
-                                {activeTab === 'image' && 'Your Professional Photo Editor'}
-                                {activeTab === 'engineer' && 'Essential Engineering Utilities'}
-                                {activeTab === 'researcher' && 'Scientific Data Tools'}
+                                {activeTab === 'pdf' && 'The Ultimate PDF Suite'}
+                                {activeTab === 'image' && 'Your High-Performance Image Engine'}
+                                {activeTab === 'engineer' && 'Essential Engineer Labs'}
+                                {activeTab === 'researcher' && 'Scientific Data Forge'}
                             </h2>
                             <p className="section-subtitle text-center">
                                 {activeTab === 'pdf' && '100% FREE tools to Merge, Split, Compress, Convert and Edit PDFs.'}
