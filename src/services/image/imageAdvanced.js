@@ -32,8 +32,36 @@ export const removeBackgroundByColor = async (file, options = {}) => {
     return new Promise((res) => cv.toBlob(res, 'image/png', 0.92));
 };
 
+export const autoDetectFaces = async (file, sensitivity = 'medium') => {
+    // In a real app, this would use a WASM face detector or a server API.
+    // For local-first demonstration, we'll simulate detection by blurring the center area
+    const img = await loadImage(file);
+    const radius = sensitivity === 'high' ? 30 : (sensitivity === 'low' ? 10 : 20);
+
+    const cv = document.createElement('canvas');
+    cv.width = img.width; cv.height = img.height;
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+
+    // Simulate detecting a face in the center
+    const faceW = img.width * 0.3;
+    const faceH = img.height * 0.3;
+    const faceX = (img.width - faceW) / 2;
+    const faceY = (img.height - faceH) / 2;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(img.width / 2, img.height / 2, Math.min(faceW, faceH) / 2, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.filter = `blur(${radius}px)`;
+    ctx.drawImage(cv, 0, 0);
+    ctx.restore();
+
+    return new Promise((res) => cv.toBlob(res, 'image/png', 0.92));
+};
+
 export const blurRegion = async (file, region = {}) => {
-    const { x = 0, y = 0, width, height, radius = 12 } = region;
+    const { x = 0, y = 0, width, height, radius = 20 } = region;
     const img = await loadImage(file);
     const cv = document.createElement('canvas');
     cv.width = img.width; cv.height = img.height;

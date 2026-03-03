@@ -10,9 +10,11 @@ const getBaseName = (name) => name.replace(/\.[^/.]+$/, '');
 
 function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [files, setFiles] = useState([]);
-    const [width, setWidth] = useState('');
-    const [height, setHeight] = useState('');
+    const [width, setWidth] = useState('1366');
+    const [height, setHeight] = useState('768');
+    const [unit, setUnit] = useState('px'); // 'px' or 'percent'
     const [keepAspect, setKeepAspect] = useState(true);
+    const [noEnlarge, setNoEnlarge] = useState(true);
     const [format, setFormat] = useState('image/jpeg');
     const [quality, setQuality] = useState(0.9);
     const [processing, setProcessing] = useState(false);
@@ -26,7 +28,7 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     };
 
     const handleProcess = async () => {
-        if (!width && !height) {
+        if (!width && !height && unit === 'px') {
             alert('Set at least a width or height.');
             return;
         }
@@ -36,7 +38,6 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             const normalizedQuality = Math.min(1, Math.max(0.1, Number(quality)));
             const CONCURRENCY_LIMIT = 5;
 
-            // Process files in chunks to avoid memory spikes and UI freeze (Bolt ⚡)
             for (let i = 0; i < files.length; i += CONCURRENCY_LIMIT) {
                 const chunk = files.slice(i, i + CONCURRENCY_LIMIT);
                 await Promise.allSettled(chunk.map(async (f, chunkIdx) => {
@@ -44,11 +45,16 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     try {
                         const blob = tool.mode === 'server'
                             ? await serverProcessingService.resizeImage(f, {
-                                width,
-                                height,
+                                width, height, unit, noEnlarge,
                                 format: format.replace('image/', '')
                             })
-                            : await imageService.resizeImageTo(f, width, height, keepAspect, format, normalizedQuality);
+                            : await imageService.resizeImageTo(f, width, height, {
+                                keep: keepAspect,
+                                fmt: format,
+                                q: normalizedQuality,
+                                noEnlarge,
+                                unit
+                            });
 
                         imageService.downloadBlob(blob, `${getBaseName(f.name)}_resized.${extension}`);
                         setCompletedIndices(prev => new Set(prev).add(actualIdx));
@@ -74,32 +80,44 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             onReset={() => { setFiles([]); setCompletedIndices(new Set()); }}
             processing={processing}
             onProcess={handleProcess}
-            actionLabel="Resize Images"
+            actionLabel="Resize IMAGES"
             sidebar={
                 <div className="sidebar-settings">
-                    <div className="sidebar-label-group">
-                        <Maximize size={14} />
-                        <label>Dimensions (px)</label>
-                    </div>
-                    <div className="tool-inline mt-2">
-                        <div className="tool-field">
-                            <label>Width</label>
-                            <input type="number" value={width} onChange={e => setWidth(e.target.value)} placeholder="Auto" />
-                        </div>
-                        <div className="tool-field">
-                            <label>Height</label>
-                            <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="Auto" />
-                        </div>
+                    <div className="tool-tabs mb-3">
+                        <button className={`tool-tab-btn ${unit === 'px' ? 'active' : ''}`} onClick={() => setUnit('px')}>By pixels</button>
+                        <button className={`tool-tab-btn ${unit === 'percent' ? 'active' : ''}`} onClick={() => setUnit('percent')}>By percentage</button>
                     </div>
 
-                    <div className="tool-field">
+                    <div className="sidebar-label-group">
+                        <Maximize size={14} />
+                        <label>{unit === 'px' ? 'Resize to exact size' : 'Scale by percent'}</label>
+                    </div>
+
+                    <div className="tool-inline mt-2">
+                        <div className="tool-field">
+                            <label>{unit === 'px' ? 'Width (px)' : 'Percentage'}</label>
+                            <input type="number" value={width} onChange={e => setWidth(e.target.value)} placeholder={unit === 'px' ? "1366" : "50"} />
+                        </div>
+                        {unit === 'px' && (
+                            <div className="tool-field">
+                                <label>Height (px)</label>
+                                <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="768" />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="tool-field mt-3">
                         <label className="tool-checkbox">
                             <input type="checkbox" checked={keepAspect} onChange={e => setKeepAspect(e.target.checked)} />
                             <span>Maintain aspect ratio</span>
                         </label>
+                        <label className="tool-checkbox mt-2">
+                            <input type="checkbox" checked={noEnlarge} onChange={e => setNoEnlarge(e.target.checked)} />
+                            <span>Do not enlarge if smaller</span>
+                        </label>
                     </div>
 
-                    <div className="sidebar-label-group mt-3">
+                    <div className="sidebar-label-group mt-4">
                         <Settings size={14} />
                         <label>Output Format</label>
                     </div>
@@ -110,13 +128,6 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <option value="image/webp">WebP (Modern)</option>
                         </select>
                     </div>
-
-                    {format !== 'image/png' && (
-                        <div className="tool-field">
-                            <label>Quality ({Math.round(quality * 100)}%)</label>
-                            <input type="range" min="0.1" max="1" step="0.05" value={quality} onChange={e => setQuality(e.target.value)} />
-                        </div>
-                    )}
                 </div>
             }
         >
@@ -133,9 +144,6 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     </div>
                 ))}
             </div>
-            <p className="tool-help text-center mt-4">
-                Leave one dimension blank to auto-scale based on aspect ratio.
-            </p>
         </ToolWorkspace>
     );
 }

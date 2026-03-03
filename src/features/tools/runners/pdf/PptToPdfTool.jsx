@@ -22,11 +22,11 @@ function PptToPdfTool({ tool, onFilesAdded }) {
         setProgress(0);
         try {
             const data = await pdfService.pptToPDF(file, (p) => setProgress(p));
-            pdfService.downloadPDF(data, file.name.replace('.pptx', '.pdf'));
+            pdfService.downloadPDF(data, file.name.replace(/\.(pptx|ppt)$/i, '.pdf'));
             setDone(true);
         } catch (error) {
             console.error('PPT to PDF error:', error);
-            alert('Failed to convert PowerPoint to PDF.');
+            alert(error?.message || 'Failed to convert PowerPoint to PDF.');
         } finally {
             setProcessing(false);
             setProgress(0);
@@ -34,7 +34,7 @@ function PptToPdfTool({ tool, onFilesAdded }) {
     };
 
     if (!file) {
-        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} accept=".pptx" />;
+        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} accept=".ppt,.pptx" />;
     }
 
     return (

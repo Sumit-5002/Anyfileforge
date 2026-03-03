@@ -42,6 +42,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         files,
         toolFiles,
         processing,
+        progress,
         completedIds,
         failedIds,
         handleFilesSelected,
@@ -69,6 +70,7 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             onFilesSelected={onFilesSelected}
             onReset={reset}
             processing={processing}
+            progress={progress}
             onProcess={processFiles}
             actionLabel="Compress Images"
             sidebar={

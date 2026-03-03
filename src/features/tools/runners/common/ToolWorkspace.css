@@ -592,3 +592,141 @@
         min-height: 400px;
     }
 }
+
+/* Tool Mode Tabs */
+.tool-tabs {
+    display: flex;
+    background: var(--bg-base);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    gap: 4px;
+}
+
+.tool-tab-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tool-tab-btn.active {
+    background: var(--bg-surface);
+    color: var(--primary-500);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Quick Selection Levels */
+.levels-horizontal {
+    display: flex;
+    gap: 10px;
+}
+
+.level-btn {
+    flex: 1;
+    border: 2px solid var(--border-subtle);
+    background: var(--bg-base);
+    padding: 12px 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.level-btn.active {
+    border-color: var(--primary-500);
+    background: rgba(var(--primary-rgb), 0.05);
+    color: var(--primary-500);
+}
+
+.level-btn:hover:not(.active) {
+    border-color: var(--border-bright);
+}
+
+/* Before/After Comparison Slider */
+.comparison-container {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.comparison-slider {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    border-radius: 16px;
+    overflow: hidden;
+    user-select: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    aspect-ratio: 16 / 9;
+    background: #000;
+}
+
+.comparison-slider img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.comparison-slider .after-image {
+    width: 50%;
+    overflow: hidden;
+    border-right: 2px solid white;
+    z-index: 2;
+}
+
+.comparison-slider .after-image img {
+    width: 600px; /* Reference width to match parent container max-width */
+}
+
+.slider-handle-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    background: white;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.slider-handle-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    color: var(--text-dark);
+    font-size: 1.2rem;
+    z-index: 11;
+}
+
+.comparison-labels {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}

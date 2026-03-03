@@ -38,6 +38,7 @@ function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         files,
         toolFiles,
         processing,
+        progress,
         completedIds,
         failedIds,
         handleFilesSelected,
@@ -65,6 +66,7 @@ function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             onFilesSelected={onFilesSelected}
             onReset={reset}
             processing={processing}
+            progress={progress}
             onProcess={processFiles}
             actionLabel="Convert to JPG"
             sidebar={

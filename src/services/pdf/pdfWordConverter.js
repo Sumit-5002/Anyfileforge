@@ -2,6 +2,12 @@ import { PDFDocument, StandardFonts } from 'pdf-lib';
 import * as mammoth from 'mammoth';
 import { safeText, downloadBlob } from './pdfUtils';
 import pptxgen from 'pptxgenjs';
+import * as pdfjs from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {
+    pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
+}
 
 export const wordToPDF = async (file, onProgress) => {
     const images = [];
@@ -82,16 +88,118 @@ export const wordToPDF = async (file, onProgress) => {
 
 import JSZip from 'jszip';
 
+const normalizePptxPath = (path) => String(path || '').replace(/\\/g, '/');
+
+const resolveRelTarget = (baseDir, target) => {
+    const b = normalizePptxPath(baseDir);
+    const t = normalizePptxPath(target);
+    if (!t) return null;
+
+    // Targets are typically relative paths like ../media/image1.png
+    const combined = t.startsWith('/') ? t.replace(/^\/+/, '') : `${b}${t}`;
+    const parts = combined.split('/');
+    const out = [];
+    for (const p of parts) {
+        if (!p || p === '.') continue;
+        if (p === '..') out.pop();
+        else out.push(p);
+    }
+    return out.join('/');
+};
+
+const parseRelationships = (relsXml) => {
+    const rels = [];
+    const matches = String(relsXml || '').match(/<Relationship\b[^>]*?>/g) || [];
+    for (const m of matches) {
+        const id = (m.match(/\sId="([^"]+)"/) || [])[1];
+        const type = (m.match(/\sType="([^"]+)"/) || [])[1];
+        const target = (m.match(/\sTarget="([^"]+)"/) || [])[1];
+        if (id && target) rels.push({ id, type: type || '', target });
+    }
+    return rels;
+};
+
+const drawBackgroundFromXml = async ({ xmlText, relsById, zip, pdf, page, slideW, slideH }) => {
+    const bgBlock = String(xmlText || '').match(/<p:bg[\s\S]*?<\/p:bg>/);
+    if (!bgBlock) return false;
+
+    const rId = (bgBlock[0].match(/r:embed="([^"]+)"/) || [])[1];
+    const mediaPath = rId ? relsById?.[rId] : null;
+    if (!mediaPath || !zip.file(mediaPath)) return false;
+
+    try {
+        const imgData = await zip.file(mediaPath).async('uint8array');
+        const img = mediaPath.toLowerCase().endsWith('.png') ? await pdf.embedPng(imgData) : await pdf.embedJpg(imgData);
+        page.drawImage(img, { x: 0, y: 0, width: slideW, height: slideH });
+        return true;
+    } catch (e) {
+        console.warn('Failed to embed background image:', mediaPath, e);
+        return false;
+    }
+};
+
+const drawPicsFromXml = async ({ xmlText, relsById, zip, pdf, page, emuToPt, slideH }) => {
+    const picMatches = String(xmlText || '').match(/<p:pic>([\s\S]*?)<\/p:pic>/g) || [];
+    let drawn = 0;
+
+    for (const picXml of picMatches) {
+        const offMatch = picXml.match(/<a:off\s+x="(\d+)"\s+y="(\d+)"/);
+        const extMatch = picXml.match(/<a:ext\s+cx="(\d+)"\s+cy="(\d+)"/);
+        const rTitleMatch = picXml.match(/r:embed="([^"]+)"/);
+
+        if (!offMatch || !extMatch || !rTitleMatch) continue;
+        const rId = rTitleMatch[1];
+        const mediaPath = relsById?.[rId];
+        if (!mediaPath || !zip.file(mediaPath)) continue;
+
+        try {
+            const x = parseInt(offMatch[1]) * emuToPt;
+            const y = slideH - (parseInt(offMatch[2]) * emuToPt);
+            const w = parseInt(extMatch[1]) * emuToPt;
+            const h = parseInt(extMatch[2]) * emuToPt;
+
+            const imgData = await zip.file(mediaPath).async('uint8array');
+            const pdfImg = mediaPath.toLowerCase().endsWith('.png') ? await pdf.embedPng(imgData) : await pdf.embedJpg(imgData);
+            page.drawImage(pdfImg, { x, y: y - h, width: w, height: h });
+            drawn += 1;
+        } catch (e) {
+            console.warn('Failed to embed image:', mediaPath, e);
+        }
+    }
+
+    return drawn;
+};
+
 export const pptToPDF = async (file, onProgress) => {
     try {
+        const name = String(file?.name || '').toLowerCase();
+        if (name.endsWith('.ppt') && !name.endsWith('.pptx')) {
+            throw new Error('Legacy .ppt files are not supported in browser mode. Please use a .pptx file (or convert using server mode).');
+        }
+
         const zip = await JSZip.loadAsync(await file.arrayBuffer());
         const pdf = await PDFDocument.create();
         const font = await pdf.embedFont(StandardFonts.Helvetica);
         const emuToPt = 72 / 914400; // 914400 EMUs per inch, 72 points per inch
 
-        // Default PPTX slide size in EMUs (10x7.5 inches for 4:3, or 10x5.625 for 16:9)
-        // We'll try to detect it from ppt/presentation.xml later, or just use 16:9 defaults
-        const slideW = 960, slideH = 540;
+        // Slide size: read from ppt/presentation.xml (<p:sldSz cx="..." cy="...">) and convert EMU -> points.
+        // Fallback is 16:9 (10 x 5.625 inches).
+        let slideW = 9144000 * emuToPt; // 10 inches -> 720 pt
+        let slideH = 5143500 * emuToPt; // 5.625 inches -> 405 pt
+
+        const presFile = zip.file('ppt/presentation.xml');
+        if (presFile) {
+            const presXml = await presFile.async('text');
+            const sldSz = presXml.match(/<p:sldSz[^>]*\scx="(\d+)"[^>]*\scy="(\d+)"/);
+            if (sldSz) {
+                const cx = Number(sldSz[1]);
+                const cy = Number(sldSz[2]);
+                if (Number.isFinite(cx) && cx > 0 && Number.isFinite(cy) && cy > 0) {
+                    slideW = cx * emuToPt;
+                    slideH = cy * emuToPt;
+                }
+            }
+        }
 
         const slideFiles = Object.keys(zip.files).filter(name => name.startsWith('ppt/slides/slide') && name.endsWith('.xml'));
         slideFiles.sort((a, b) => {
@@ -108,50 +216,75 @@ export const pptToPDF = async (file, onProgress) => {
 
             const xmlText = await zip.file(slidePath).async('text');
             let relsMap = {};
+            let slideLayoutPath = null;
 
             // Parse relationships for images
             if (zip.file(relsPath)) {
                 const relsXml = await zip.file(relsPath).async('text');
-                const relationshipMatches = relsXml.match(/<Relationship\s+Id="([^"]+)"\s+Type="[^"]+image"\s+Target="([^"]+)"/g) || [];
-                relationshipMatches.forEach(rel => {
-                    const id = rel.match(/Id="([^"]+)"/)[1];
-                    const target = rel.match(/Target="([^"]+)"/)[1];
-                    // Target is usually ../media/image1.png
-                    relsMap[id] = target.replace('../', 'ppt/');
+                const rels = parseRelationships(relsXml);
+                rels.forEach((r) => {
+                    const resolved = resolveRelTarget('ppt/slides/', r.target);
+                    if (resolved && r.type.toLowerCase().includes('/image')) relsMap[r.id] = resolved;
+                    if (resolved && r.type.toLowerCase().includes('/slidelayout')) slideLayoutPath = resolved;
                 });
             }
 
             const page = pdf.addPage([slideW, slideH]);
 
-            // Handle Images (<p:pic>)
-            const picMatches = xmlText.match(/<p:pic>([\s\S]*?)<\/p:pic>/g) || [];
-            for (const picXml of picMatches) {
-                const offMatch = picXml.match(/<a:off\s+x="(\d+)"\s+y="(\d+)"/);
-                const extMatch = picXml.match(/<a:ext\s+cx="(\d+)"\s+cy="(\d+)"/);
-                const rTitleMatch = picXml.match(/r:embed="([^"]+)"/);
+            // PPTX visuals often live in slide layouts/masters (backgrounds, decorative images).
+            // Render order: master -> layout -> slide (then slide text).
+            if (slideLayoutPath && zip.file(slideLayoutPath)) {
+                try {
+                    const layoutXml = await zip.file(slideLayoutPath).async('text');
+                    const layoutNum = (slideLayoutPath.match(/slideLayout(\d+)\.xml/i) || [0, 0])[1];
+                    const layoutRelsPath = layoutNum ? `ppt/slideLayouts/_rels/slideLayout${layoutNum}.xml.rels` : null;
 
-                if (offMatch && extMatch && rTitleMatch) {
-                    const rId = rTitleMatch[1];
-                    const mediaPath = relsMap[rId];
-                    if (mediaPath && zip.file(mediaPath)) {
+                    let layoutImgs = {};
+                    let slideMasterPath = null;
+                    if (layoutRelsPath && zip.file(layoutRelsPath)) {
+                        const layoutRelsXml = await zip.file(layoutRelsPath).async('text');
+                        const rels = parseRelationships(layoutRelsXml);
+                        rels.forEach((r) => {
+                            const resolved = resolveRelTarget('ppt/slideLayouts/', r.target);
+                            if (resolved && r.type.toLowerCase().includes('/image')) layoutImgs[r.id] = resolved;
+                            if (resolved && r.type.toLowerCase().includes('/slidemaster')) slideMasterPath = resolved;
+                        });
+                    }
+
+                    // Master (usually contains theme backgrounds / template art)
+                    if (slideMasterPath && zip.file(slideMasterPath)) {
                         try {
-                            const x = parseInt(offMatch[1]) * emuToPt;
-                            const y = slideH - (parseInt(offMatch[2]) * emuToPt);
-                            const w = parseInt(extMatch[1]) * emuToPt;
-                            const h = parseInt(extMatch[2]) * emuToPt;
+                            const masterXml = await zip.file(slideMasterPath).async('text');
+                            const masterNum = (slideMasterPath.match(/slideMaster(\d+)\.xml/i) || [0, 0])[1];
+                            const masterRelsPath = masterNum ? `ppt/slideMasters/_rels/slideMaster${masterNum}.xml.rels` : null;
 
-                            const imgData = await zip.file(mediaPath).async('uint8array');
-                            let pdfImg;
-                            if (mediaPath.toLowerCase().endsWith('.png')) pdfImg = await pdf.embedPng(imgData);
-                            else pdfImg = await pdf.embedJpg(imgData);
+                            let masterImgs = {};
+                            if (masterRelsPath && zip.file(masterRelsPath)) {
+                                const masterRelsXml = await zip.file(masterRelsPath).async('text');
+                                const rels = parseRelationships(masterRelsXml);
+                                rels.forEach((r) => {
+                                    const resolved = resolveRelTarget('ppt/slideMasters/', r.target);
+                                    if (resolved && r.type.toLowerCase().includes('/image')) masterImgs[r.id] = resolved;
+                                });
+                            }
 
-                            page.drawImage(pdfImg, { x, y: y - h, width: w, height: h });
+                            await drawBackgroundFromXml({ xmlText: masterXml, relsById: masterImgs, zip, pdf, page, slideW, slideH });
+                            await drawPicsFromXml({ xmlText: masterXml, relsById: masterImgs, zip, pdf, page, emuToPt, slideH });
                         } catch (e) {
-                            console.warn("Failed to embed image:", mediaPath, e);
+                            console.warn('Failed to render slide master for', slidePath, e);
                         }
                     }
+
+                    await drawBackgroundFromXml({ xmlText: layoutXml, relsById: layoutImgs, zip, pdf, page, slideW, slideH });
+                    await drawPicsFromXml({ xmlText: layoutXml, relsById: layoutImgs, zip, pdf, page, emuToPt, slideH });
+                } catch (e) {
+                    console.warn('Failed to render slide layout for', slidePath, e);
                 }
             }
+
+            await drawBackgroundFromXml({ xmlText, relsById: relsMap, zip, pdf, page, slideW, slideH });
+            const picMatches = xmlText.match(/<p:pic>([\s\S]*?)<\/p:pic>/g) || [];
+            await drawPicsFromXml({ xmlText, relsById: relsMap, zip, pdf, page, emuToPt, slideH });
 
             // Simple XML parsing for shapes and text boxes (<p:sp>)
             const shapeMatches = xmlText.match(/<p:sp>([\s\S]*?)<\/p:sp>/g) || [];

@@ -93,11 +93,16 @@ export function useParallelFileProcessor(processFn, concurrencyLimit = 5) {
     }, [files, processFn, concurrencyLimit]);
 
     const toolFiles = useMemo(() => files.map(f => f.file), [files]);
+    const progress = useMemo(() => {
+        if (files.length === 0) return 0;
+        return Math.round(((completedIds.size + failedIds.size) / files.length) * 100);
+    }, [files.length, completedIds.size, failedIds.size]);
 
     return {
         files,
         toolFiles,
         processing,
+        progress,
         completedIds,
         failedIds,
         handleFilesSelected,

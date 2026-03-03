@@ -49,6 +49,7 @@ export const TOOL_RUNNERS = {
     'image-remove-bg': lazy(() => import('./image/ImageRemoveBgTool')),
     'image-blur-face': lazy(() => import('./image/ImageBlurFaceTool')),
     'image-editor': lazy(() => import('./image/ImageEditorTool')),
+    'html-to-image': lazy(() => import('./image/HtmlToImageTool')),
 
     'json-formatter': lazy(() => import('./text/JsonFormatterTool')),
     'json-to-csv': lazy(() => import('./text/JsonToCsvTool')),

@@ -14,6 +14,7 @@ const SERVER_MODE_TOOL_IDS = new Set([
     'pdf-edit',
     'pdf-protect',
     'pdf-pdfa',
+    'html-to-image',
 ]);
 
 const applyMode = (groups, defaultAccept = '*/*') => groups.map((group) => ({
@@ -91,7 +92,8 @@ export const TOOLS = {
             tools: [
                 { id: 'image-compress', name: 'Compress IMAGE', description: 'Save space while maintaining quality.', icon: Zap, color: '#09c1d5' },
                 { id: 'image-to-jpg', name: 'Convert to JPG', description: 'Bulk convert formats into JPG.', icon: RefreshCcw, color: '#3b82f6' },
-                { id: 'image-from-jpg', name: 'Convert from JPG', description: 'Turn JPG to PNG, GIF or WebP.', icon: RefreshCcw, color: '#8b5cf6' }
+                { id: 'image-from-jpg', name: 'Convert from JPG', description: 'Turn JPG to PNG, GIF or WebP.', icon: RefreshCcw, color: '#8b5cf6' },
+                { id: 'html-to-image', name: 'HTML to IMAGE', description: 'Convert webpages to JPG or SVG.', icon: Globe, color: '#06b6d4' }
             ]
         },
         {

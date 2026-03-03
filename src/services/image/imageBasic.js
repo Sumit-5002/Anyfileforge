@@ -19,19 +19,35 @@ export const resizeImage = async (file, mw, mh) => {
     return new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.8));
 };
 
-export const resizeImageTo = async (file, w, h, keep = true, fmt = 'image/jpeg', q = 0.9) => {
+export const resizeImageTo = async (file, w, h, options = {}) => {
+    const { keep = true, fmt = 'image/jpeg', q = 0.9, noEnlarge = false, unit = 'px' } = options;
     const img = await loadImage(file);
-    let tw = Number(w) || img.width;
-    let th = Number(h) || img.height;
-    if (keep) {
-        const r = img.width / img.height;
-        if (tw && !th) th = Math.round(tw / r);
-        else if (!tw && th) tw = Math.round(th * r);
-        else {
-            const fw = th * r; const fh = tw / r;
-            if (fw <= tw) tw = Math.round(fw); else th = Math.round(fh);
+
+    let tw, th;
+
+    if (unit === 'percent') {
+        const pct = (Number(w) || 100) / 100;
+        tw = Math.round(img.width * pct);
+        th = Math.round(img.height * pct);
+    } else {
+        tw = Number(w) || img.width;
+        th = Number(h) || img.height;
+        if (keep) {
+            const r = img.width / img.height;
+            if (w && !h) th = Math.round(tw / r);
+            else if (!w && h) tw = Math.round(th * r);
+            else {
+                const fw = th * r; const fh = tw / r;
+                if (fw <= tw) tw = Math.round(fw); else th = Math.round(fh);
+            }
         }
     }
+
+    if (noEnlarge && (tw > img.width || th > img.height)) {
+        tw = img.width;
+        th = img.height;
+    }
+
     const canvas = document.createElement('canvas');
     canvas.width = tw; canvas.height = th;
     canvas.getContext('2d').drawImage(img, 0, 0, tw, th);
