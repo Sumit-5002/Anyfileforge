@@ -18,25 +18,22 @@ const detectIosSafari = () => {
 
 const InstallPwa = () => {
     const [promptInstall, setPromptInstall] = useState(() => window[DEFERRED_PROMPT_KEY] || null);
+    const [isInstalled, setIsInstalled] = useState(() => (typeof window !== 'undefined' ? isStandalone() : false));
     const isIosInstallable = detectIosSafari() && !isStandalone();
-    const [supportsPWA, setSupportsPWA] = useState(() => {
-        if (typeof window === 'undefined') return false;
-        if (window[DEFERRED_PROMPT_KEY]) return true;
-        return detectIosSafari() && !isStandalone();
-    });
+    const canUseServiceWorker = typeof window !== 'undefined' && 'serviceWorker' in navigator;
+    const shouldShowManualInstall = canUseServiceWorker && !isStandalone();
 
     useEffect(() => {
         const handler = (e) => {
             e.preventDefault();
             window[DEFERRED_PROMPT_KEY] = e;
-            setSupportsPWA(true);
             setPromptInstall(e);
         };
 
         const onInstalled = () => {
             window[DEFERRED_PROMPT_KEY] = null;
-            setSupportsPWA(false);
             setPromptInstall(null);
+            setIsInstalled(true);
         };
 
         window.addEventListener('beforeinstallprompt', handler);
@@ -57,6 +54,7 @@ const InstallPwa = () => {
         }
 
         if (!promptInstall) {
+            alert('Install prompt is not ready yet. Use your browser menu and choose "Install app" or "Add to Home screen". In Chrome this appears in the address bar or 3-dot menu.');
             return;
         }
 
@@ -64,10 +62,11 @@ const InstallPwa = () => {
         await promptInstall.userChoice;
         window[DEFERRED_PROMPT_KEY] = null;
         setPromptInstall(null);
-        setSupportsPWA(false);
     };
 
-    if (!supportsPWA) {
+    const shouldRenderButton = !isInstalled && (Boolean(promptInstall) || isIosInstallable || shouldShowManualInstall);
+
+    if (!shouldRenderButton) {
         return null;
     }
 

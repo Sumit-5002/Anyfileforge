@@ -1,4 +1,11 @@
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+const resolveDefaultServerUrl = () => {
+    if (typeof window === 'undefined') return 'http://localhost:5000';
+    const host = window.location.hostname;
+    if (!host || host === 'localhost' || host === '127.0.0.1') return 'http://localhost:5000';
+    return `http://${host}:5000`;
+};
+
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || resolveDefaultServerUrl();
 
 const buildUrl = (path) => `${SERVER_URL}${path}`;
 

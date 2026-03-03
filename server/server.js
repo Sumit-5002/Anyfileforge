@@ -31,6 +31,7 @@ const FILE_RETENTION_MS = FILE_RETENTION_MINUTES * 60 * 1000;
 const CLEANUP_INTERVAL_MS = Number(process.env.CLEANUP_INTERVAL_MS) || 5 * 60 * 1000;
 const JSON_BODY_LIMIT = process.env.JSON_BODY_LIMIT || '1mb';
 const isDev = process.env.NODE_ENV === 'development';
+const LOCAL_NETWORK_ORIGIN_REGEX = /^https?:\/\/(?:localhost|127\.0\.0\.1|(?:10|192\.168)\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(?::\d+)?$/i;
 
 if (!fs.existsSync(UPLOAD_DIR)) {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -84,15 +85,25 @@ const allowedOrigins = [
     'https://anyfileforge.web.app'
 ].filter(Boolean);
 
+const extraAllowedOrigins = (process.env.CLIENT_URLS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+const isAllowedOrigin = (origin) =>
+    allowedOrigins.includes(origin) ||
+    extraAllowedOrigins.includes(origin) ||
+    (isDev && LOCAL_NETWORK_ORIGIN_REGEX.test(origin));
+
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, curl, or server-to-server)
         if (!origin) return callback(null, true);
 
-        if (allowedOrigins.includes(origin)) {
+        if (isAllowedOrigin(origin)) {
             callback(null, true);
         } else {
-            console.error(`Blocked by CORS: origin ${origin} not in ${allowedOrigins}`);
+            console.error(`Blocked by CORS: origin ${origin} not in allowlist`);
             callback(new Error('Not allowed by CORS'));
         }
     },

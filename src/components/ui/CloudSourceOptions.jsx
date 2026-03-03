@@ -16,11 +16,6 @@ const CLOUD_SOURCES = [
         key: 'onedrive',
         name: 'OneDrive',
         icon: 'https://upload.wikimedia.org/wikipedia/commons/4/4e/Microsoft_Office_OneDrive_%282019-present%29.svg'
-    },
-    {
-        key: 'ilovepdf',
-        name: 'iLovePDF',
-        text: 'iLPDF'
     }
 ];
 
