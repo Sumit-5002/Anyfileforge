@@ -10,15 +10,7 @@ import ENGINEER_TOOLS from '../tools/engineer';
 import RESEARCHER_TOOLS from '../tools/researcher';
 
 const SERVER_MODE_TOOL_IDS = new Set([
-    'html-to-pdf',
-    'word-to-pdf',
-    'excel-to-pdf',
-    'pp-to-pdf',
     'pdf-ocr',
-    'pdf-to-word',
-    'pdf-to-excel',
-    'pdf-to-pp',
-    'pdf-to-jpg',
     'pdf-edit',
     'pdf-protect',
     'pdf-pdfa',
@@ -58,16 +50,16 @@ export const TOOLS = {
                 { id: 'word-to-pdf', name: 'Word to PDF', description: 'Convert DOCX files to PDF.', icon: FileText, color: '#2b5797' },
                 { id: 'excel-to-pdf', name: 'Excel to PDF', description: 'Convert XLSX spreadsheets to PDF.', icon: FileSpreadsheet, color: '#1e7145' },
                 { id: 'pp-to-pdf', name: 'PowerPoint to PDF', description: 'Convert PPTX slideshows to PDF.', icon: Presentation, color: '#d24726' },
-                { id: 'html-to-pdf', name: 'HTML to PDF', description: 'Convert webpages to PDF via URL.', icon: Globe, color: '#06b6d4', isPro: true },
+                { id: 'html-to-pdf', name: 'HTML to PDF', description: 'Convert webpages to PDF via URL.', icon: Globe, color: '#06b6d4' },
                 { id: 'jpg-to-pdf', name: 'JPG to PDF', description: 'Convert JPG images to PDF easily.', icon: Image, color: '#3b82f6' }
             ]
         },
         {
             category: 'Convert from PDF',
             tools: [
-                { id: 'pdf-to-word', name: 'PDF to Word', description: 'Convert PDF to editable DOCX.', icon: FileText, color: '#2b5797', isPro: true },
-                { id: 'pdf-to-excel', name: 'PDF to Excel', description: 'Extract data to Excel spreadsheets.', icon: FileSpreadsheet, color: '#1e7145', isPro: true },
-                { id: 'pdf-to-pp', name: 'PDF to PowerPoint', description: 'Convert PDF to editable PPTX.', icon: Presentation, color: '#d24726', isPro: true },
+                { id: 'pdf-to-word', name: 'PDF to Word', description: 'Convert PDF to editable DOCX.', icon: FileText, color: '#2b5797' },
+                { id: 'pdf-to-excel', name: 'PDF to Excel', description: 'Extract data to Excel spreadsheets.', icon: FileSpreadsheet, color: '#1e7145' },
+                { id: 'pdf-to-pp', name: 'PDF to PowerPoint', description: 'Convert PDF to editable PPTX.', icon: Presentation, color: '#d24726' },
                 { id: 'pdf-to-jpg', name: 'PDF to JPG', description: 'Extract images or convert pages to JPG.', icon: Image, color: '#3b82f6' }
             ]
         },

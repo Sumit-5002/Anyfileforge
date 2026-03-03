@@ -239,6 +239,10 @@ function Header() {
 
                                 {/* General Links */}
                                 <div className="menu-comp__section border-top pt-16">
+                                    <div className="mobile-install-wrap">
+                                        <InstallPwa />
+                                    </div>
+
                                     <Link to="/pricing" className="navbar__item navbar__item--xs" onClick={() => setIsMenuOpen(false)}>
                                         <div className="navbar__item__icon"><CreditCard size={18} /></div>
                                         <div className="navbar__item__title">Pricing</div>

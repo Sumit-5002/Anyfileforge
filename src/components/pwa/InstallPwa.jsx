@@ -2,28 +2,46 @@ import React, { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
 import './InstallPwa.css';
 
+const DEFERRED_PROMPT_KEY = '__anyfileforgeDeferredInstallPrompt';
+
 const InstallPwa = () => {
-    const [supportsPWA, setSupportsPWA] = useState(false);
-    const [promptInstall, setPromptInstall] = useState(null);
+    const [promptInstall, setPromptInstall] = useState(() => window[DEFERRED_PROMPT_KEY] || null);
+    const [supportsPWA, setSupportsPWA] = useState(() => Boolean(window[DEFERRED_PROMPT_KEY]));
 
     useEffect(() => {
         const handler = (e) => {
             e.preventDefault();
-            console.log("we are being triggered :D");
+            window[DEFERRED_PROMPT_KEY] = e;
             setSupportsPWA(true);
             setPromptInstall(e);
         };
-        window.addEventListener("beforeinstallprompt", handler);
 
-        return () => window.removeEventListener("transitionend", handler);
+        const onInstalled = () => {
+            window[DEFERRED_PROMPT_KEY] = null;
+            setSupportsPWA(false);
+            setPromptInstall(null);
+        };
+
+        window.addEventListener('beforeinstallprompt', handler);
+        window.addEventListener('appinstalled', onInstalled);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handler);
+            window.removeEventListener('appinstalled', onInstalled);
+        };
     }, []);
 
-    const onClick = (evt) => {
+    const onClick = async (evt) => {
         evt.preventDefault();
         if (!promptInstall) {
             return;
         }
+
         promptInstall.prompt();
+        await promptInstall.userChoice;
+        window[DEFERRED_PROMPT_KEY] = null;
+        setPromptInstall(null);
+        setSupportsPWA(false);
     };
 
     if (!supportsPWA) {

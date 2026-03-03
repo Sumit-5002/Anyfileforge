@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import SimulationRunner from './pdf/SimulationRunner';
 
 /**
  * TOOL_RUNNERS is a registry of all tool runner components.
@@ -25,6 +26,15 @@ export const TOOL_RUNNERS = {
     'pdf-compare': lazy(() => import('./pdf/PdfCompareTool')),
     'pdf-crop': lazy(() => import('./pdf/PdfCropTool')),
     'jpg-to-pdf': lazy(() => import('./pdf/JpgToPdfTool')),
+
+    'word-to-pdf': SimulationRunner,
+    'excel-to-pdf': SimulationRunner,
+    'pp-to-pdf': SimulationRunner,
+    'html-to-pdf': SimulationRunner,
+    'pdf-to-word': SimulationRunner,
+    'pdf-to-excel': SimulationRunner,
+    'pdf-to-pp': SimulationRunner,
+    'pdf-to-jpg': SimulationRunner,
 
     'image-compress': lazy(() => import('./image/ImageCompressTool')),
     'image-to-jpg': lazy(() => import('./image/ImageToJpgTool')),

@@ -162,7 +162,14 @@ const pdfService = {
 
     async unlockPDF(file, password) {
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await PDFDocument.load(arrayBuffer, password ? { password } : undefined);
+
+        const pdf = await PDFDocument.load(arrayBuffer, {
+            password: password ? password : undefined,
+            ignoreEncryption: false
+        });
+
+        // Calling save on the document that was successfully loaded with a password 
+        // will remove the encryption from the resulting saved file bytes unless we explicitly encrypt it again.
         return pdf.save();
     },
 

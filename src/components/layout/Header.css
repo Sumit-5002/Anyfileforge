@@ -871,3 +871,19 @@ button.navbar__item {
         display: none;
     }
 }
+
+.mobile-install-wrap {
+    margin-bottom: 12px;
+}
+
+.mobile-install-wrap .install-pwa-btn {
+    width: 100%;
+    justify-content: center;
+    margin-right: 0;
+}
+
+@media (max-width: 768px) {
+    .mobile-install-wrap .install-pwa-btn {
+        display: flex;
+    }
+}
