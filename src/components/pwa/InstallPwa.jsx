@@ -21,7 +21,8 @@ const InstallPwa = () => {
     const [isInstalled, setIsInstalled] = useState(() => (typeof window !== 'undefined' ? isStandalone() : false));
     const isIosInstallable = detectIosSafari() && !isStandalone();
     const canUseServiceWorker = typeof window !== 'undefined' && 'serviceWorker' in navigator;
-    const shouldShowManualInstall = canUseServiceWorker && !isStandalone();
+    const isSecure = typeof window !== 'undefined' ? window.isSecureContext : false;
+    const shouldShowManualInstall = !isStandalone();
 
     useEffect(() => {
         const handler = (e) => {
@@ -53,6 +54,16 @@ const InstallPwa = () => {
             return;
         }
 
+        if (!isSecure && !isIosInstallable) {
+            alert('Install popup is blocked on non-HTTPS network URLs. Open this app on https:// or localhost to get the PWA popup.');
+            return;
+        }
+
+        if (!canUseServiceWorker && !isIosInstallable) {
+            alert('This browser/context does not support service workers here. Use Chrome/Edge on https:// or localhost.');
+            return;
+        }
+
         if (!promptInstall) {
             alert('Install prompt is not ready yet. Use your browser menu and choose "Install app" or "Add to Home screen". In Chrome this appears in the address bar or 3-dot menu.');
             return;
@@ -64,7 +75,7 @@ const InstallPwa = () => {
         setPromptInstall(null);
     };
 
-    const shouldRenderButton = !isInstalled && (Boolean(promptInstall) || isIosInstallable || shouldShowManualInstall);
+    const shouldRenderButton = !isInstalled && shouldShowManualInstall;
 
     if (!shouldRenderButton) {
         return null;
