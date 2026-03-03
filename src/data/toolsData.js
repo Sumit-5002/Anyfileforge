@@ -47,11 +47,11 @@ export const TOOLS = {
         {
             category: 'Convert to PDF',
             tools: [
-                { id: 'word-to-pdf', name: 'Word to PDF', description: 'Convert DOCX files to PDF.', icon: FileText, color: '#2b5797' },
-                { id: 'excel-to-pdf', name: 'Excel to PDF', description: 'Convert XLSX spreadsheets to PDF.', icon: FileSpreadsheet, color: '#1e7145' },
-                { id: 'pp-to-pdf', name: 'PowerPoint to PDF', description: 'Convert PPTX slideshows to PDF.', icon: Presentation, color: '#d24726' },
-                { id: 'html-to-pdf', name: 'HTML to PDF', description: 'Convert webpages to PDF via URL.', icon: Globe, color: '#06b6d4' },
-                { id: 'jpg-to-pdf', name: 'JPG to PDF', description: 'Convert JPG images to PDF easily.', icon: Image, color: '#3b82f6' }
+                { id: 'word-to-pdf', name: 'Word to PDF', description: 'Convert DOCX files to PDF.', icon: FileText, color: '#2b5797', accept: '.docx,.doc' },
+                { id: 'excel-to-pdf', name: 'Excel to PDF', description: 'Convert XLSX spreadsheets to PDF.', icon: FileSpreadsheet, color: '#1e7145', accept: '.xlsx,.xls' },
+                { id: 'pp-to-pdf', name: 'PowerPoint to PDF', description: 'Convert PPTX slideshows to PDF.', icon: Presentation, color: '#d24726', accept: '.pptx,.ppt' },
+                { id: 'html-to-pdf', name: 'HTML to PDF', description: 'Convert webpages to PDF via URL.', icon: Globe, color: '#06b6d4', accept: '.html,.htm' },
+                { id: 'jpg-to-pdf', name: 'JPG to PDF', description: 'Convert JPG images to PDF easily.', icon: Image, color: '#3b82f6', accept: 'image/*' }
             ]
         },
         {

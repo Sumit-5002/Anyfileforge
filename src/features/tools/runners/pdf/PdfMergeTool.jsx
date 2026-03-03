@@ -59,12 +59,9 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             processing={processing}
             onProcess={handleMerge}
             actionLabel="Merge PDF"
+            sidebarTitle="Merge Settings"
             sidebar={
                 <div className="sidebar-settings">
-                    <div className="sidebar-label-group">
-                        <ListOrdered size={14} />
-                        <label>Merge Queue</label>
-                    </div>
                     <div className="order-summary mt-2">
                         <ArrowUpDown size={16} />
                         <span>{files.length} PDFs Selected</span>

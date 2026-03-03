@@ -57,7 +57,7 @@ function FileUploader({
                     <button
                         className="btn btn-primary massive-select-btn"
                         type="button"
-                        onClick={triggerFileInput}
+                        onClick={(e) => { e.stopPropagation(); triggerFileInput(); }}
                     >
                         Select {tool?.name || 'File'}
                     </button>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Loader, Check, RotateCw, X } from 'lucide-react';
 import './ToolWorkspace.css';
+import * as pdfjs from 'pdfjs-dist';
 
-/**
- * Reusable Page Grid Component
- * Loads PDF and displays thumbnails
- */
+// Configure PDF.js Worker using local bundle for reliability (Bolt ⚡)
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
+
 function PageGrid({
     file,
     selectedPages,
@@ -19,25 +20,18 @@ function PageGrid({
     const [pageData, setPageData] = useState([]); // Array of { pageNumber, thumbnail }
     const [loading, setLoading] = useState(false);
 
-
     const loadPages = useCallback(async () => {
         if (!file) return;
         setLoading(true);
         try {
-            const pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
-            if (!pdfjsLib) {
-                console.error('PDF.js library not found on window object.');
-                return;
-            }
-
             const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
             const pageCount = pdf.numPages;
 
             const thumbnails = [];
             for (let i = 1; i <= pageCount; i++) {
                 const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 0.3 });
+                const viewport = page.getViewport({ scale: 0.25 });
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 canvas.width = viewport.width;
@@ -46,12 +40,12 @@ function PageGrid({
                 await page.render({ canvasContext: context, viewport: viewport }).promise;
                 thumbnails.push({
                     pageNumber: i,
-                    thumbnail: canvas.toDataURL()
+                    thumbnail: canvas.toDataURL('image/webp', 0.8) // Use WebP for better performance
                 });
             }
             setPageData(thumbnails);
         } catch (err) {
-            console.error(err);
+            console.error('Failed to load PDF pages:', err);
         } finally {
             setLoading(false);
         }

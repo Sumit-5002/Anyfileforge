@@ -15,6 +15,7 @@ function ToolWorkspace({
     onProcess,
     actionLabel,
     sidebar,
+    sidebarTitle = 'Settings',
     children // This is the main grid or file list area
 }) {
     const addMoreInputRef = useRef(null);
@@ -76,7 +77,7 @@ function ToolWorkspace({
                 {/* Sidebar Controls */}
                 <div className="workspace-sidebar">
                     <div className="sidebar-inner">
-                        <h4 className="sidebar-title">Settings</h4>
+                        {sidebarTitle && <h4 className="sidebar-title">{sidebarTitle}</h4>}
 
                         {sidebar}
 

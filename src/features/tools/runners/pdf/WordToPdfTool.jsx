@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { ImageIcon, FileType } from 'lucide-react';
+import { FileText, FileType } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
-function JpgToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
+function WordToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [files, setFiles] = useState([]);
     const [processing, setProcessing] = useState(false);
 
@@ -18,15 +18,20 @@ function JpgToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         if (files.length === 0) return;
         setProcessing(true);
         try {
-            const data = await pdfService.imagesToPDF(files);
-            pdfService.downloadPDF(data, 'images_to_pdf.pdf');
+            // Process the first file for simplicity in this version
+            const data = await pdfService.wordToPDF(files[0]);
+            const outputName = files[0].name.replace(/\.[^/.]+$/, '') + '.pdf';
+            pdfService.downloadPDF(data, outputName);
+        } catch (err) {
+            console.error('Word to PDF error:', err);
+            alert('Failed to convert Word to PDF. Please ensure the file is a valid .docx document.');
         } finally {
             setProcessing(false);
         }
     };
 
     if (files.length === 0) {
-        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={true} accept={tool.accept || "image/*"} />;
+        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} accept=".docx" />;
     }
 
     return (
@@ -37,13 +42,13 @@ function JpgToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             onReset={() => setFiles([])}
             processing={processing}
             onProcess={handleProcess}
-            actionLabel="Convert Images to PDF"
+            actionLabel="Convert Word to PDF"
             sidebar={
                 <div className="sidebar-info">
-                    <p className="hint-text">All images will be combined into a single PDF document in the order listed.</p>
+                    <p className="hint-text">This tool converts DOCX files to PDF directly in your browser.</p>
                     <div className="mt-3 d-flex align-items-center gap-2">
                         <FileType className="text-primary" size={20} />
-                        <span>Creating PDF from <strong>{files.length}</strong> images</span>
+                        <span>Ready to convert <strong>{files[0].name}</strong></span>
                     </div>
                 </div>
             }
@@ -51,8 +56,7 @@ function JpgToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             <div className="files-list-view">
                 {files.map((file, i) => (
                     <div key={i} className="file-item-horizontal">
-                        <span className="file-index">{i + 1}</span>
-                        <ImageIcon size={24} className="text-primary" />
+                        <FileText size={24} className="text-primary" />
                         <div className="file-item-info">
                             <div className="file-item-name">{file.name}</div>
                             <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
@@ -65,4 +69,4 @@ function JpgToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     );
 }
 
-export default JpgToPdfTool;
+export default WordToPdfTool;

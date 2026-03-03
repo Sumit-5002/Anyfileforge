@@ -20,6 +20,9 @@ function PdfUnlockTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         try {
             const data = await pdfService.unlockPDF(file, password || undefined);
             pdfService.downloadPDF(data, 'unlocked_document.pdf');
+        } catch (error) {
+            console.error('Unlock error:', error);
+            alert(error?.message || 'Failed to unlock PDF.');
         } finally {
             setProcessing(false);
         }
