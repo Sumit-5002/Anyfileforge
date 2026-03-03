@@ -2,18 +2,45 @@
 import argparse
 import io
 import json
+import os
 import shutil
 import subprocess
 import sys
 
 
+def find_tesseract_path():
+    env_path = os.environ.get("TESSERACT_PATH")
+    if env_path and os.path.exists(env_path):
+        return env_path
+
+    by_path = shutil.which("tesseract")
+    if by_path:
+        return by_path
+
+    common_candidates = [
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+        r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+    ]
+    for candidate in common_candidates:
+        if os.path.exists(candidate):
+            return candidate
+
+    return None
+
+
 def run_ocrmypdf(input_pdf, output_pdf, output_text, language):
-    ocrmypdf_bin = shutil.which("ocrmypdf")
-    if not ocrmypdf_bin:
-        raise RuntimeError("ocrmypdf is not installed")
+    tesseract_path = find_tesseract_path()
+    if not tesseract_path:
+        raise RuntimeError("tesseract binary not found")
+
+    env = os.environ.copy()
+    tesseract_dir = os.path.dirname(tesseract_path)
+    env["PATH"] = tesseract_dir + os.pathsep + env.get("PATH", "")
 
     cmd = [
-        ocrmypdf_bin,
+        sys.executable,
+        "-m",
+        "ocrmypdf",
         "--force-ocr",
         "--skip-text",
         "--optimize",
@@ -27,7 +54,7 @@ def run_ocrmypdf(input_pdf, output_pdf, output_text, language):
         input_pdf,
         output_pdf,
     ]
-    subprocess.run(cmd, check=True, capture_output=True, text=True)
+    subprocess.run(cmd, check=True, capture_output=True, text=True, env=env)
     return "ocrmypdf"
 
 
@@ -41,6 +68,12 @@ def run_pymupdf_tesseract(input_pdf, output_pdf, output_text, language):
         raise RuntimeError(
             "Fallback OCR requires PyMuPDF, Pillow and pytesseract"
         ) from exc
+
+    tesseract_path = find_tesseract_path()
+    if not tesseract_path:
+        raise RuntimeError("tesseract binary not found")
+
+    pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
     src = fitz.open(input_pdf)
     dst = fitz.open()
@@ -127,4 +160,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
