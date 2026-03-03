@@ -60,7 +60,7 @@ function HomePage() {
                             {t('common.heroSubtitle')}
                         </p>
                         {/* Mode Toggle */}
-                        <div className="hero-toggle-wrapper" style={{ marginBottom: '30px' }}>
+                        <div className="hero-toggle-wrapper">
                             <div className="mode-toggle-pill" style={{
                                 display: 'inline-flex',
                                 background: 'var(--bg-surface-secondary)',
@@ -145,21 +145,6 @@ function HomePage() {
                 {/* Tools Showcase */}
                 <section ref={showcaseRef} className="tools-showcase bg-grid">
                     <div className="container">
-                        <div className="development-banner" style={{
-                            background: 'rgba(var(--primary-rgb), 0.1)',
-                            border: '1px solid rgba(var(--primary-rgb), 0.2)',
-                            borderRadius: '12px',
-                            padding: '12px 20px',
-                            marginBottom: '30px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            fontSize: '0.9rem',
-                            color: 'var(--text-secondary)'
-                        }}>
-                            <FlaskConical size={18} color="var(--primary-500)" />
-                            <span><strong>Development Note:</strong> We are actively migrating all tools to a 100% Local-First architecture. Some advanced server-side features are being rewritten for browser-native execution.</span>
-                        </div>
                         <div className="showcase-header">
                             <div className="tab-switcher">
                                 <button

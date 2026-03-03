@@ -23,9 +23,7 @@ export const wordToPDF = async (file, onProgress) => {
 
     const { value: html } = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() }, options);
     const pdf = await PDFDocument.create(),
-        fontN = await pdf.embedFont(StandardFonts.Helvetica),
-        fontB = await pdf.embedFont(StandardFonts.HelveticaBold),
-        fontI = await pdf.embedFont(StandardFonts.HelveticaOblique);
+        fontN = await pdf.embedFont(StandardFonts.Helvetica);
 
     const margin = 50, fontSize = 11, lineH = 15;
     let page = pdf.addPage(), y = page.getHeight() - margin, maxW = page.getWidth() - (margin * 2);

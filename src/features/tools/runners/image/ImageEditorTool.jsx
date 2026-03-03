@@ -14,7 +14,7 @@ function ImageEditorTool({ tool }) {
     const [y, setY] = useState('64');
     const [fontSize, setFontSize] = useState('42');
     const [color, setColor] = useState('#ffffff');
-    const [opacity, setOpacity] = useState('0.9');
+    const [opacity] = useState('0.9');
 
     return (
         <GenericFileTool

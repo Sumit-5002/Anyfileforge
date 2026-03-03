@@ -46,8 +46,6 @@ export const autoDetectFaces = async (file, sensitivity = 'medium') => {
     // Simulate detecting a face in the center
     const faceW = img.width * 0.3;
     const faceH = img.height * 0.3;
-    const faceX = (img.width - faceW) / 2;
-    const faceY = (img.height - faceH) / 2;
 
     ctx.save();
     ctx.beginPath();

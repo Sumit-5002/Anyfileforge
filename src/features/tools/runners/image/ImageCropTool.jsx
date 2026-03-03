@@ -12,7 +12,7 @@ function ImageCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [file, setFile] = useState(null);
     const [cropData, setCropData] = useState({ x: 0, y: 0, width: 800, height: 600 });
     const [format, setFormat] = useState('image/jpeg');
-    const [quality, setQuality] = useState(0.9);
+    const [quality] = useState(0.9);
     const [processing, setProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
 

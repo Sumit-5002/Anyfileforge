@@ -16,7 +16,7 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [keepAspect, setKeepAspect] = useState(true);
     const [noEnlarge, setNoEnlarge] = useState(true);
     const [format, setFormat] = useState('image/jpeg');
-    const [quality, setQuality] = useState(0.9);
+    const [quality] = useState(0.9);
 
     const extension = format === 'image/png' ? 'png' : format === 'image/webp' ? 'webp' : 'jpg';
 

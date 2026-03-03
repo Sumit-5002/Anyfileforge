@@ -35,7 +35,7 @@ const decryptWithQpdf = async (buffer, password) => {
     const stderr = [];
     const qpdf = await QPDF({
         noInitialRun: true,
-        print: () => {},
+        print: () => { },
         printErr: (s) => stderr.push(String(s))
     });
 
@@ -50,7 +50,7 @@ const decryptWithQpdf = async (buffer, password) => {
             'in.pdf',
             'out.pdf'
         ]);
-    } catch (e) {
+    } catch {
         const errText = stderr.join('\n').toLowerCase();
         if (errText.includes('invalid password') || errText.includes('incorrect password') || errText.includes('password')) {
             throw new Error('Incorrect password. Please provide the correct password to unlock.');
@@ -140,7 +140,7 @@ export const unlockPDF = async (file, password) => {
     }
 };
 
-export const protectPDF = async (file, _password) => {
+export const protectPDF = async (file) => {
     // Note: encryption in save() is not natively supported by pdf-lib.
     // Full encryption is handled in Server Mode. Here we perform a structural rewrite.
     const pdf = await PDFDocument.load(await file.arrayBuffer());

@@ -11,7 +11,6 @@ export const pdfToWord = async (file, onProgress) => {
     try {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-        const sections = [];
         let allParas = [];
 
         for (let i = 1; i <= pdf.numPages; i++) {

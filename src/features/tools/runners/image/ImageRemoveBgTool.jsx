@@ -10,10 +10,10 @@ function ImageRemoveBgTool({ tool }) {
     const [tolerance, setTolerance] = useState('40');
     const [preview, setPreview] = useState(null); // { original, processed }
     const [sliderPos, setSliderPos] = useState(50);
-    const [processing, setProcessing] = useState(false);
+    // const [processing, setProcessing] = useState(false); // Removed unused state
 
     const handleProcess = async (file) => {
-        setProcessing(true);
+        // setProcessing(true);
         try {
             const blob = await imageService.removeBackgroundByColor(file, {
                 mode,
@@ -27,10 +27,10 @@ function ImageRemoveBgTool({ tool }) {
                 blob,
                 name: `${getBaseName(file.name)}_no_bg.png`
             });
-        } catch (err) {
+        } catch {
             alert('Failed to remove background.');
         } finally {
-            setProcessing(false);
+            // setProcessing(false);
         }
     };
 
@@ -103,4 +103,3 @@ function ImageRemoveBgTool({ tool }) {
 }
 
 export default ImageRemoveBgTool;
-

@@ -15,7 +15,6 @@ export const htmlToPDF = async (fileOrContent, onProgress) => {
     const pdf = await PDFDocument.create();
     const font = await pdf.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
-    const fontItalic = await pdf.embedFont(StandardFonts.HelveticaOblique);
 
     const margin = 50, baseSize = 10, lineH = 14;
     let page = pdf.addPage(), y = page.getHeight() - margin;

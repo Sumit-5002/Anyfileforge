@@ -1,9 +1,9 @@
 .home-page {
-    padding-bottom: 70px;
+    padding-bottom: 40px;
 }
 
 .hero {
-    padding: clamp(30px, 4vw + 1rem, 60px) 0;
+    padding: clamp(24px, 3.5vw + 0.75rem, 52px) 0;
     text-align: center;
     position: relative;
     z-index: 1;
@@ -12,7 +12,7 @@
 .hero-title {
     font-size: clamp(2rem, 4vw + 1rem, 3.5rem);
     line-height: 1.1;
-    margin-bottom: 16px;
+    margin: 0 0 12px;
     letter-spacing: -0.04em;
     font-weight: 800;
     background: linear-gradient(135deg, #fff 40%, var(--primary-500));
@@ -25,8 +25,12 @@
     font-size: clamp(1rem, 1.25vw + 0.6rem, 1.15rem);
     color: var(--text-secondary);
     max-width: 750px;
-    margin: 0 auto 32px;
+    margin: 0 auto 20px;
     line-height: 1.6;
+}
+
+.hero-toggle-wrapper {
+    margin-bottom: 20px;
 }
 
 .hero-actions {
@@ -38,17 +42,17 @@
 
 /* Tool Showcase Section */
 .tools-showcase {
-    padding: 20px 0;
+    padding: 12px 0;
 }
 
 .section-header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 .section-title {
     font-size: 2rem;
-    margin-bottom: 16px;
+    margin: 0 0 12px;
     color: var(--text-primary);
 }
 
@@ -59,11 +63,19 @@
     margin: 0 auto;
 }
 
+.showcase-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
 /* Tab Switcher - Glass Style */
 .tab-switcher-container {
     display: flex;
     justify-content: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .tab-switcher {
@@ -144,7 +156,7 @@
 }
 
 .tool-category-group {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .category-title {
@@ -154,8 +166,8 @@
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 30px;
-    padding-bottom: 15px;
+    margin: 0 0 18px;
+    padding-bottom: 10px;
     border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -165,7 +177,7 @@
 
 /* Workflow - Futuristic Call to Action */
 .workflow-teaser {
-    margin: 40px 0;
+    margin: 28px 0;
     padding: clamp(20px, 3vw + 0.5rem, 40px);
     border-radius: var(--radius-lg);
     background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.08), rgba(var(--accent-rgb), 0.08));
@@ -173,7 +185,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 40px;
+    gap: 24px;
     flex-wrap: wrap;
 }
 
@@ -191,7 +203,7 @@
 
 /* Feature Grid */
 .features-section {
-    padding: 20px 0 40px;
+    padding: 16px 0 28px;
     /* Reduced top padding */
     background: rgba(255, 255, 255, 0.02);
 }
@@ -199,7 +211,7 @@
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
+    gap: 16px;
     /* Reduced gap */
 }
 
@@ -263,9 +275,8 @@
 }
 
 @media (max-width: 768px) {
-    .container {
-        padding: 0 10px;
-        /* Reduced from 20px to give more room */
+    .home-page .container {
+        padding: 0 12px;
     }
 
     .hero {

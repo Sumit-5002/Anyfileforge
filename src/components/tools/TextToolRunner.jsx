@@ -83,7 +83,7 @@ function TextToolRunner({ tool }) {
                     .replace(/\/\*[\s\S]*?\*\//g, '')
                     .replace(/\/\/.*$/gm, '')
                     .replace(/\s+/g, ' ')
-                    .replace(/ ?([{}()\[\],;:=+-]) ?/g, '$1')
+                    .replace(/ ?([{}()[\] ,;:=+-]) ?/g, '$1')
                     .trim();
                 setOutput(minified);
             } else if (tool.id === 'markdown-preview') {
@@ -91,13 +91,13 @@ function TextToolRunner({ tool }) {
                     .replace(/^# (.*$)/gm, '<h1>$1</h1>')
                     .replace(/^## (.*$)/gm, '<h2>$1</h2>')
                     .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-                    .replace(/^\- (.*$)/gm, '<li>$1</li>')
+                    .replace(/^- (.*$)/gm, '<li>$1</li>')
                     .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\*(.*?)\*/g, '<em>$1</em>')
                     .replace(/`(.*?)`/g, '<code>$1</code>')
                     .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
-                    .replace(/^\-\-\-$/gm, '<hr />')
+                    .replace(/^---$/gm, '<hr />')
                     .replace(/\n\n/g, '</p><p>')
                     .replace(/\n/g, '<br />');
                 setOutput(html.startsWith('<') ? html : `<p>${html}</p>`);
@@ -135,7 +135,7 @@ function TextToolRunner({ tool }) {
                 const entries = input.split('@').filter(Boolean).map(e => {
                     const type = e.split('{')[0].trim();
                     const key = (e.match(/\{([^,]+)/) || [])[1];
-                    const title = (e.match(/title\s*=\s*[\"{](.*?)[\"}]/i) || [])[1];
+                    const title = (e.match(/title\s*=\s*["{](.*?)["}]/i) || [])[1];
                     return `[${type.toUpperCase()}] ${key}: ${title || '(No Title)'}`;
                 });
                 setOutput(entries.length ? entries.join('\n') : 'No BibTeX entries detected.');

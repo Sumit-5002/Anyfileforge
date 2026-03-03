@@ -12,7 +12,7 @@ function ImageRotateTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [angle, setAngle] = useState('90');
     const [filter, setFilter] = useState('all'); // all, landscape, portrait
     const [format, setFormat] = useState('image/jpeg');
-    const [quality, setQuality] = useState('0.9');
+    const [quality] = useState('0.9');
 
     const extension = format === 'image/png' ? 'png' : format === 'image/webp' ? 'webp' : 'jpg';
 
