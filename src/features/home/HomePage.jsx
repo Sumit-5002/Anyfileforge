@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
     Star, ArrowRight, Github, Zap, Shield, Lock,
     FileText, Image as ImageIcon, Play, Layers,
-    Code, FlaskConical
+    Code, FlaskConical, Linkedin
 } from 'lucide-react';
 import ToolCard from '../../components/ui/ToolCard';
 import { TOOLS } from '../../data/toolsData';
@@ -119,7 +119,11 @@ function HomePage() {
                                     </button>
                                     <a href="https://github.com/Sumit-5002/Anyfileforge" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-large">
                                         <Github size={20} />
-                                        Source Code
+                                        GitHub
+                                    </a>
+                                    <a href="https://linkedin.com/in/sumit-prasad-bce2005" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-large">
+                                        <Linkedin size={20} />
+                                        LinkedIn
                                     </a>
                                 </>
                             ) : (

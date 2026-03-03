@@ -1,5 +1,5 @@
 import React from 'react';
-import { Github, Mail, Cpu, Heart, Coffee, Terminal } from 'lucide-react';
+import { Github, Mail, Cpu, Heart, Coffee, Terminal, Linkedin } from 'lucide-react';
 import SeoHead from '../../components/meta/SeoHead';
 import './DeveloperPage.css';
 
@@ -22,13 +22,17 @@ function DeveloperPage() {
                             </div>
                         </div>
                         <h1 className="dev-name">Sumit</h1>
-                        <p className="dev-title">Full-Stack Engineer & Privacy Advocate</p>
-                        <p className="dev-tagline">"Building tools that respect your data as much as you do."</p>
+                        <p className="dev-title">Full-Stack Software Engineer</p>
+                        <p className="dev-tagline">"Crafting high-performance digital solutions with precision."</p>
 
                         <div className="dev-social-stack">
                             <a href="https://github.com/Sumit-5002" target="_blank" rel="noopener noreferrer" className="dev-social-link">
                                 <Github size={20} />
                                 <span>GitHub</span>
+                            </a>
+                            <a href="https://linkedin.com/in/sumit-prasad-bce2005" target="_blank" rel="noopener noreferrer" className="dev-social-link">
+                                <Linkedin size={20} />
+                                <span>LinkedIn</span>
                             </a>
                             <a href="mailto:sumitboy2005@gmail.com" className="dev-social-link">
                                 <Mail size={20} />

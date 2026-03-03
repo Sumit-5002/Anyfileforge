@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Github, Twitter, Mail, Heart, Send, Loader, CheckCircle, Globe } from 'lucide-react';
+import { Github, Twitter, Mail, Heart, Send, Loader, CheckCircle, Globe, Linkedin } from 'lucide-react';
 import feedbackService from '../../services/feedbackService';
 import './Footer.css';
 
@@ -114,6 +114,7 @@ function Footer() {
                         <p className="footer-text">The ultimate local-first file utility for engineers and researchers. Privacy guaranteed by mathematics.</p>
                         <div className="social-links">
                             <a href="https://github.com/Sumit-5002" target="_blank" rel="noopener noreferrer" className="social-link"><Github size={20} /></a>
+                            <a href="https://linkedin.com/in/sumit-prasad-bce2005" target="_blank" rel="noopener noreferrer" className="social-link"><Linkedin size={20} /></a>
                             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-link"><Twitter size={20} /></a>
                             <a href="mailto:sumitboy2005@gmail.com" className="social-link"><Mail size={20} /></a>
                         </div>
