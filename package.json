@@ -39,7 +39,7 @@
     "react-i18next": "^16.5.4",
     "react-router-dom": "^7.13.0",
     "tesseract.js": "^7.0.0",
-    "vite-plugin-pwa": "^0.19.8",
+    "vite-plugin-pwa": "^1.2.0",
     "workbox-window": "^7.4.0",
     "xlsx": "^0.18.5"
   },

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Download } from 'lucide-react';
+import { useFileList } from '../../../../components/tools/shared/useFileList';
+import { parseNetCDF, getVariableData } from '../../../../services/researcher/netcdfService';
+import ToolWorkspace from '../common/ToolWorkspace';
+import { Download, Layers, Activity, Info, File as FileIcon, Trash2, Loader2, Database, ChevronRight, ChevronDown } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,11 +14,6 @@ import {
   Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import ToolWorkspace from '../common/ToolWorkspace';
-import { useFileList } from '../../../../components/tools/shared/useFileList';
-import { parseNetCDF, getVariableData } from '../../../../services/researcher/netcdfService';
-import { Layers, FileText, Info } from 'lucide-react';
-import './NetCdfViewerTool.css';
 
 ChartJS.register(
   CategoryScale,
@@ -27,252 +25,223 @@ ChartJS.register(
   Legend
 );
 
+import './Hdf5ViewerTool.css';
+
+const VarNode = ({ name, node, path, onSelect, activeVar, isHdf5 }) => {
+    const [expanded, setExpanded] = useState(path === '/');
+    const isGroup = node.keys && typeof node.keys !== 'undefined';
+    const isSelected = activeVar === path;
+
+    return (
+        <div className="nc-tree-node">
+            <div className={`node-label ${isSelected ? 'active-node' : ''}`} onClick={isGroup ? () => setExpanded(!expanded) : () => onSelect(path, node)}>
+                <span className="node-icon">
+                    {isGroup ? (expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />) : <span style={{width:14}}/>}
+                </span>
+                <span className="type-icon">
+                    {isGroup ? <Database size={14} color="#3b82f6" /> : <Activity size={14} color="#10b981" />}
+                </span>
+                <span className="node-name truncate">{name}</span>
+            </div>
+            {isGroup && expanded && node.keys.map(key => (
+                <div key={path+key} className="node-children">
+                    <VarNode name={key} node={node.get(key)} path={path === '/' ? `/${key}` : `${path}/${key}`} onSelect={onSelect} activeVar={activeVar} isHdf5={isHdf5} />
+                </div>
+            ))}
+        </div>
+    );
+};
+
 const NetCdfViewerTool = () => {
-    const { files, addFiles } = useFileList();
-    const [ncData, setNcData] = useState(null);
+    const { files, addFiles, removeFile } = useFileList();
+    const [loadedNc, setLoadedNc] = useState({}); // { fileName: ncData }
+    const [currentFile, setCurrentFile] = useState(null);
     const [selectedVar, setSelectedVar] = useState(null);
+    const [selectedNode, setSelectedNode] = useState(null);
     const [chartData, setChartData] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState('');
+    const [activeTab, setActiveTab] = useState('overview');
 
     useEffect(() => {
-        if (files.length > 0) {
-            loadFile(files[0].file);
-        } else {
-            setNcData(null);
-            setSelectedVar(null);
-            setChartData(null);
-            setError('');
-        }
+        const loadNcFiles = async () => {
+            const nextLoaded = { ...loadedNc };
+            let lastAdded = null;
+            for (const f of files) {
+                if (!nextLoaded[f.file.name]) {
+                    setIsProcessing(true);
+                    setError('');
+                    try {
+                        const buffer = await f.file.arrayBuffer();
+                        const data = await parseNetCDF(buffer);
+                        nextLoaded[f.file.name] = data;
+                        lastAdded = f.file.name;
+                    } catch (err) {
+                        setError(`Failed to parse ${f.file.name}: ${err.message}`);
+                    } finally {
+                        setIsProcessing(false);
+                    }
+                }
+            }
+            const currentNames = files.map(f => f.file.name);
+            Object.keys(nextLoaded).forEach(name => { if (!currentNames.includes(name)) delete nextLoaded[name]; });
+            setLoadedNc(nextLoaded);
+            if (lastAdded) setCurrentFile(lastAdded);
+            else if (currentFile && !currentNames.includes(currentFile)) setCurrentFile(currentNames[0] || null);
+        };
+        loadNcFiles();
     }, [files]);
 
-    const loadFile = async (fileObj) => {
-        try {
-            setError('');
-            const arrayBuffer = await fileObj.arrayBuffer();
-            const parsed = parseNetCDF(arrayBuffer);
-            setNcData(parsed);
-            
-            // Automatically select the first 1D numeric variable to show something
-            const defaultVar = parsed.variables.find(v => v.dimensions.length === 1 && v.size > 0);
-            if (defaultVar) {
-                handleSelectVar(defaultVar.name, parsed);
-            }
-        } catch (err) {
-            setError(err.message);
-        }
+    const activeNc = currentFile ? loadedNc[currentFile] : null;
+
+    const handleSelectVar3 = (name) => {
+        if (!activeNc) return;
+        const vInfo = activeNc.variables.find(v => v.name === name);
+        updateView(name, vInfo);
     };
 
-    const handleSelectVar = (varName, dataOverrides = null) => {
+    const updateView = (name, node) => {
+        setSelectedVar(name);
+        setSelectedNode(node);
         try {
-            const dataToUse = dataOverrides || ncData;
-            if (!dataToUse || !dataToUse.reader) return;
+            const rawData = getVariableData(activeNc.reader, name, activeNc.isHdf5);
+            const shape = node.dimensions || node.shape || [];
             
-            setSelectedVar(varName);
-            const variableInfo = dataToUse.variables.find(v => v.name === varName);
-            const rawData = getVariableData(dataToUse.reader, varName);
-            
-            // Basic plotting implementation for 1D arrays
-            if (variableInfo.dimensions.length === 1) {
-                // If it's too large, downsample it for browser performance
+            if (shape.length === 1 || (shape.length > 1 && shape.slice(1).every(d => d <= 1))) {
                 let displayData = Array.from(rawData);
                 const MAX_POINTS = 1000;
-                
                 if (displayData.length > MAX_POINTS) {
                     const step = Math.ceil(displayData.length / MAX_POINTS);
                     displayData = displayData.filter((_, i) => i % step === 0);
                 }
-
                 setChartData({
                     labels: displayData.map((_, i) => i + 1),
-                    datasets: [
-                        {
-                            label: varName,
-                            data: displayData,
-                            borderColor: 'rgb(75, 192, 192)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                            tension: 0.1
-                        }
-                    ]
+                    datasets: [{ label: name, data: displayData, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.1, fill: true, pointRadius: 0 }]
                 });
-            } else {
-                // Not supported fallback
-                setChartData(null);
-            }
-        } catch (err) {
-            setError('Could not plot variable. ' + err.message);
-            setChartData(null);
-        }
-    };
-
-    const handleExportData = (format) => {
-        if (!selectedVar || !chartData) return;
-        
-        const dataLength = chartData.labels.length;
-        let content = "";
-        
-        if (format === 'csv') {
-            content = "Index,Value\n";
-            for (let i = 0; i < dataLength; i++) {
-                content += `${chartData.labels[i]},${chartData.datasets[0].data[i]}\n`;
-            }
-        } else if (format === 'txt') {
-            content = `Variable: ${selectedVar}\n------------------------\n`;
-            for (let i = 0; i < dataLength; i++) {
-                content += `[${chartData.labels[i]}] = ${chartData.datasets[0].data[i]}\n`;
-            }
-        }
-
-        const blob = new Blob([content], { type: format === 'csv' ? 'text/csv' : 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${selectedVar}_export.${format}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+            } else { setChartData(null); }
+        } catch (e) { setError(e.message); setChartData(null); }
     };
 
     return (
         <ToolWorkspace
-            tool={{ name: 'NetCDF Viewer' }}
+            tool={{ name: 'NetCDF Explorer' }}
             files={files.map(f => f.file)}
             onFilesSelected={addFiles}
             accept=".nc"
-            dropzoneLabel="Drop your .nc file here"
-            dropzoneHint="NetCDF visualization with 100% browser privacy"
-            onReset={() => { setNcData(null); setSelectedVar(null); setChartData(null); setError(''); }}
+            multiple={true}
+            layout="research"
+            onReset={() => { setLoadedNc({}); setCurrentFile(null); setSelectedVar(null); setChartData(null); }}
             sidebar={
-                <div className="sidebar-info">
-                    {ncData && (
-                        <>
-                            <div className="nc-stats">
-                                <h4 style={{ color: 'var(--primary-500)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>File Info</h4>
-                                <div className="stat-item d-flex justify-content-between mb-2">
-                                    <span>Variables:</span>
-                                    <strong>{ncData.variables.length}</strong>
-                                </div>
-                                <div className="stat-item d-flex justify-content-between mb-2">
-                                    <span>Dimensions:</span>
-                                    <strong>{ncData.dimensions.length}</strong>
-                                </div>
-                            </div>
-
-                            <div className="nc-variables-list mt-6">
-                                <h4 style={{ color: 'var(--primary-500)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', marginBottom: '12px' }}>Variables</h4>
-                                <ul style={{ listStyle: 'none', padding: 0 }}>
-                                    {ncData.variables.map(v => (
-                                        <li 
-                                            key={v.name}
-                                            className={selectedVar === v.name ? 'active' : ''}
-                                            onClick={() => handleSelectVar(v.name)}
-                                            style={{ 
-                                                padding: '10px', 
-                                                borderRadius: '8px', 
-                                                cursor: 'pointer',
-                                                background: selectedVar === v.name ? 'rgba(var(--primary-rgb), 0.1)' : 'transparent',
-                                                border: selectedVar === v.name ? '1px solid var(--primary-500)' : '1px solid transparent',
-                                                marginBottom: '8px'
-                                            }}
-                                        >
-                                            <div className="var-name" style={{ fontWeight: 700, fontSize: '0.85rem' }}>{v.name}</div>
-                                            <div className="var-meta" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                                {v.dimensions.join(' x ') || 'scalar'} | {v.type}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                            
-                            {selectedVar && chartData && (
-                                <div className="export-actions mt-6">
-                                    <h4 style={{ color: 'var(--primary-500)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', marginBottom: '12px' }}>Export</h4>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                        <button className="btn-secondary" onClick={() => handleExportData('csv')} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
-                                            <Download size={14} /> .CSV
-                                        </button>
-                                        <button className="btn-secondary" onClick={() => handleExportData('txt')} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
-                                            <Download size={14} /> .TXT
-                                        </button>
+                <div className="sidebar-info researcher-tool-container h-full d-flex flex-column gap-6">
+                    <div className="opened-files">
+                        <div className="text-muted text-xs uppercase mb-3 font-bold tracking-wider">Opened Libraries</div>
+                        <div className="d-flex flex-column gap-2">
+                            {files.map(f => (
+                                <div key={f.file.name} 
+                                     className={`file-tab d-flex align-items-center justify-content-between p-2 rounded-lg cursor-pointer transition-all ${currentFile === f.file.name ? 'bg-primary/20 border-primary/30' : 'bg-white/5 border-white/5'}`}
+                                     style={{ border: '1px solid currentColor' }}
+                                     onClick={() => { setCurrentFile(f.file.name); setSelectedVar(null); setChartData(null); }}
+                                >
+                                    <div className="d-flex align-items-center gap-2 overflow-hidden">
+                                        <Layers size={14} className={currentFile === f.file.name ? 'text-primary' : 'text-muted'} />
+                                        <span className="text-xs truncate font-medium">{f.file.name}</span>
                                     </div>
+                                    <button className="p-1 hover:text-danger opacity-50 hover:opacity-100" onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}>
+                                        <Trash2 size={12}/>
+                                    </button>
                                 </div>
-                            )}
-                        </>
+                            ))}
+                        </div>
+                    </div>
+
+                    {activeNc && (
+                        <div className="variable-list-container flex-grow overflow-auto" style={{ maxHeight: 'calc(100vh - 500px)' }}>
+                             <div className="text-secondary text-xs uppercase mb-3 font-bold">Variables & Groups</div>
+                             {activeNc.isHdf5 ? (
+                                 <VarNode name={currentFile} node={activeNc.reader.root} path="/" onSelect={(p, n) => updateView(p, n)} activeVar={selectedVar} isHdf5={true} />
+                             ) : (
+                                 <div className="d-flex flex-column gap-1">
+                                    {activeNc.variables.map(v => (
+                                        <div key={v.name} className={`p-2 rounded-lg cursor-pointer transition-all border ${selectedVar === v.name ? 'bg-primary/10 border-primary/40' : 'bg-black/10 border-white/5'}`} onClick={() => handleSelectVar3(v.name)}>
+                                            <div className="text-xs font-bold truncate text-primary-300">{v.name}</div>
+                                            <div className="text-xs text-muted font-mono">{v.dimensions.join('×') || 'scalar'} | {v.type}</div>
+                                        </div>
+                                    ))}
+                                 </div>
+                             )}
+                        </div>
                     )}
-                    {error && <div className="error-message mt-4" style={{ color: '#ef4444', background: 'rgba(239,68,68,0.1)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</div>}
                 </div>
             }
         >
-            <div className="netcdf-main" style={{ minHeight: '500px' }}>
-                {!ncData ? (
-                    <div className="empty-state text-center p-8">
-                        <Layers size={64} style={{ opacity: 0.1, margin: '0 auto 16px' }} />
-                        <p className="text-muted">Upload a .nc file to view its dimensions and variables.</p>
-                    </div>
+             <div className="netcdf-main researcher-tool-container h-full">
+                {!currentFile ? (
+                    <div className="empty-state text-center p-12"><Layers size={64} className="opacity-10 mx-auto mb-4"/><h3>NetCDF Scientific Hub</h3><p className="text-muted">Analyze NetCDF-3 and NetCDF-4 (HDF5) datasets.</p></div>
+                ) : !selectedVar ? (
+                    <div className="empty-state text-center p-12"><Info size={48} className="opacity-10 mx-auto mb-4"/><p>Select a variable or group from <b>{currentFile}</b> to explore dimensions.</p></div>
                 ) : (
-                    <div className="discovery-view fade-in">
-                        {selectedVar ? (
-                            <div className="variable-analysis">
-                                <div className="panel-header d-flex align-items-center gap-3 mb-6">
-                                    <FileText className="text-primary" />
-                                    <h2 style={{ margin: 0 }}>{selectedVar}</h2>
+                    <div className="dataset-panel fade-in h-full flex-grow">
+                        <div className="dataset-header mb-6">
+                            <div className="d-flex align-items-center justify-content-between">
+                                <div className="breadcrumb-nav d-flex align-items-center gap-2">
+                                    <span className="breadcrumb-part truncate" style={{maxWidth:120}}>{currentFile}</span>
+                                    <span className="opacity-30">/</span>
+                                    <span className="breadcrumb-part">{selectedVar}</span>
                                 </div>
-                                
-                                {chartData ? (
-                                    <div className="chart-wrapper mb-8" style={{ height: '350px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                        <Line 
-                                            data={chartData}
-                                            options={{
-                                                responsive: true,
-                                                maintainAspectRatio: false,
-                                                plugins: {
-                                                    legend: { display: false },
-                                                    title: { display: false }
-                                                },
-                                                scales: {
-                                                    y: { grid: { color: 'rgba(255,255,255,0.05)' } },
-                                                    x: { grid: { display: false } }
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="unsupported-var alert alert-info mb-6">
-                                        Selected variable cannot be plotted. Currently optimized for 1-dimensional numeric arrays.
-                                    </div>
-                                ) }
-                                
-                                <div className="data-preview mt-8">
-                                    <h3 style={{ fontSize: '1.1rem', marginBottom: '16px' }}>Data Values <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>(First 500)</span></h3>
-                                    <div className="data-table-container" style={{ maxHeight: '300px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                                            <thead style={{ position: 'sticky', top: 0, background: 'rgba(255,255,255,0.04)' }}>
-                                                <tr>
-                                                    <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Index</th>
-                                                    <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Value</th>
-                                                </tr>
+                                <span className="badge-pill bg-primary/10 text-primary border border-primary/20">{activeNc.isHdf5 ? 'NetCDF-4 (HDF5)' : 'NetCDF-3 (Legacy)'}</span>
+                            </div>
+                        </div>
+
+                        <div className="custom-tabs d-flex gap-1 mb-6 p-1 bg-black/20 rounded-lg w-fit">
+                            <button className={`tab-pill ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><Activity size={14}/> Visualization</button>
+                            <button className={`tab-pill ${activeTab === 'attributes' ? 'active' : ''}`} onClick={() => setActiveTab('attributes')}><Info size={14}/> Attributes</button>
+                        </div>
+
+                        <div className="tab-content">
+                            {activeTab === 'overview' && (
+                                <div className="analysis-view d-flex flex-column gap-6">
+                                    {chartData ? (
+                                        <div className="chart-container h-80 bg-black/20 p-6 rounded-2xl border border-white/5 shadow-xl">
+                                            <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
+                                        </div>
+                                    ) : (
+                                        <div className="alert alert-info p-4 bg-primary/5 border border-primary/20 rounded-xl text-sm d-flex align-items-center gap-3">
+                                            <Info size={16} className="text-primary"/>
+                                            <span>Variable is {selectedNode.shape?.length || selectedNode.dimensions?.length}-dimensional. Grid-based heatmap visualization coming soon.</span>
+                                        </div>
+                                    )}
+
+                                    <div className="data-table-container scroll-premium max-h-80 overflow-auto bg-black/30 rounded-xl border border-white/5">
+                                        <table className="w-full text-xs font-mono">
+                                            <thead className="sticky top-0 bg-black/80 text-muted uppercase tracking-tighter border-b border-white/10">
+                                                <tr><th className="p-3 text-left">POS</th><th className="p-3 text-left">VALUE</th></tr>
                                             </thead>
-                                            <tbody>
-                                                {chartData?.datasets[0].data.slice(0, 500).map((v, i) => (
-                                                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                                                        <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{i}</td>
-                                                        <td style={{ padding: '8px 12px', fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary-400)' }}>{v}</td>
-                                                    </tr>
+                                            <tbody className="divide-y divide-white/5">
+                                                {chartData?.datasets[0].data.slice(0, 100).map((v, i) => (
+                                                    <tr key={i}><td className="p-2 px-3 text-muted">{i}</td><td className="p-2 px-3 text-primary-300 font-bold">{typeof v === 'number' ? v.toPrecision(5) : String(v)}</td></tr>
                                                 ))}
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="empty-selection p-12 text-center">
-                                <Info size={48} className="text-secondary opacity-25 mb-4 mx-auto" />
-                                <p>Select a variable from the sidebar to inspect its values and metadata.</p>
-                            </div>
-                        )}
+                            )}
+
+                            {activeTab === 'attributes' && (
+                                <div className="attributes-view bg-black/20 border border-white/5 rounded-xl overflow-hidden">
+                                     <table className="w-full text-left font-mono text-sm">
+                                        <thead className="bg-white/5 text-xs text-muted"><tr><th className="p-3">Attribute</th><th className="p-3">Value</th></tr></thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {Object.entries(selectedNode.attributes || selectedNode.attrs || {}).map(([k, v]) => (
+                                                <tr key={k}><td className="p-3 text-primary">{k}</td><td className="p-3 uppercase">{String(v)}</td></tr>
+                                            ))}
+                                        </tbody>
+                                     </table>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
-            </div>
+             </div>
         </ToolWorkspace>
     );
 };

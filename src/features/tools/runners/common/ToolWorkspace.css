@@ -111,6 +111,40 @@
     flex-direction: column;
 }
 
+.layout-research {
+    grid-template-columns: 300px 1fr;
+}
+
+.layout-research .workspace-sidebar {
+    border-radius: 12px 0 0 12px;
+    border-right: none;
+    background: rgba(var(--bg-base-rgb), 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.layout-research .workspace-main {
+    border-radius: 0 12px 12px 0;
+}
+
+.research-mode .workspace-header {
+    background: transparent;
+    border: none;
+    padding: 0 5px 10px 5px;
+}
+
+.research-mode .btn-add-more {
+    border-style: solid;
+    background: var(--primary-500);
+    color: white;
+    font-size: 0.75rem;
+    padding: 4px 12px;
+}
+
+.research-mode .btn-reset-workspace {
+    font-size: 0.75rem;
+    padding: 4px 12px;
+}
+
 .sidebar-inner {
     height: 100%;
     display: flex;

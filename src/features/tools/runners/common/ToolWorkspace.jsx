@@ -31,6 +31,7 @@ function ToolWorkspace({
     multiple = false,
     dropzoneLabel,
     dropzoneHint,
+    layout = 'default', // 'default' or 'research'
     children
 }) {
     const addMoreInputRef = useRef(null);
@@ -44,11 +45,12 @@ function ToolWorkspace({
     };
 
     const hasFiles = files && files.length > 0;
+    const isResearch = layout === 'research';
 
     // ─── STATE 1: No files yet → show the premium uploader ───
     if (!hasFiles) {
         return (
-            <div className="tool-workspace-root fade-in">
+            <div className={`tool-workspace-root fade-in ${isResearch ? 'research-mode' : ''}`}>
                 <FileUploader
                     tool={{ ...tool, name: tool?.name || 'File' }}
                     onFilesSelected={onFilesSelected}
@@ -61,13 +63,13 @@ function ToolWorkspace({
 
     // ─── STATE 2: Files loaded → show workspace ───
     return (
-        <div className="tool-workspace-root fade-in">
+        <div className={`tool-workspace-root fade-in ${isResearch ? 'research-mode' : ''}`}>
             {/* Top Info Bar */}
             <div className="workspace-header">
                 <div className="workspace-file-summary">
-                    <FileText size={20} className="text-primary" />
-                    <span className="summary-text">
-                        <strong>{files.length}</strong> file{files.length !== 1 ? 's' : ''} selected
+                    <FileText size={isResearch ? 16 : 20} className="text-primary" />
+                    <span className="summary-text" style={isResearch ? { fontSize: '0.8rem', opacity: 0.7 } : {}}>
+                        <strong>{files.length}</strong> {isResearch ? 'Loaded Resource' : 'file'}{files.length !== 1 ? 's' : ''}
                     </span>
                 </div>
                 <div className="workspace-header-actions">
@@ -79,7 +81,7 @@ function ToolWorkspace({
                                 onClick={() => addMoreInputRef.current?.click()}
                                 aria-label="Add more files"
                             >
-                                + Add More
+                                + Import
                             </button>
                             <input
                                 type="file"
@@ -94,70 +96,61 @@ function ToolWorkspace({
                         </>
                     )}
                     <button className="btn-reset-workspace" onClick={onReset} aria-label="Reset workspace">
-                        <X size={16} /> Reset
+                        <X size={14} /> Clear
                     </button>
                 </div>
             </div>
 
-            <div className="workspace-layout">
+            <div className={`workspace-layout ${isResearch ? 'layout-research' : ''}`}>
+                {/* Sidebar Controls (Moved to Left in Research Mode) */}
+                {isResearch && (
+                    <div className="workspace-sidebar sidebar-left">
+                        <div className="sidebar-inner">
+                            <h4 className="sidebar-title" style={{ letterSpacing: '2px', fontSize: '0.7rem' }}>
+                                {sidebarTitle === 'Settings' ? 'EXPLORER' : sidebarTitle}
+                            </h4>
+                            {sidebar}
+                        </div>
+                    </div>
+                )}
+
                 {/* Main Content Area */}
                 <div className="workspace-main">
                     {children}
                 </div>
 
-                {/* Sidebar Controls */}
-                <div className="workspace-sidebar">
-                    <div className="sidebar-inner">
-                        {sidebarTitle && <h4 className="sidebar-title">{sidebarTitle}</h4>}
-
-                        {sidebar}
-
-                        {processing && (
-                            <div className="workspace-progress-container mt-4 mb-2">
-                                <div className="progress-info">
-                                    <span>
-                                        {progress >= 100
-                                            ? '✅ Done! Downloading…'
-                                            : progress > 0
-                                                ? 'Processing…'
-                                                : '⏳ Uploading to server…'}
-                                    </span>
-                                    {progress > 0 && progress < 100 && (
-                                        <span>{Math.round(progress)}%</span>
-                                    )}
-                                </div>
-                                <div className="progress-bar-bg">
-                                    {progress > 0 ? (
-                                        <div
-                                            className="progress-bar-fill"
-                                            style={{ width: `${Math.min(progress, 100)}%` }}
-                                        />
-                                    ) : (
-                                        <div className="progress-bar-indeterminate" />
-                                    )}
-                                </div>
-                                {progress >= 100 && (
-                                    <div className="progress-done-banner">
-                                        ✅ Processing complete — your file is downloading!
+                {/* Right Sidebar (Process control for non-research mode) */}
+                {!isResearch && (
+                    <div className="workspace-sidebar">
+                        <div className="sidebar-inner">
+                            {sidebarTitle && <h4 className="sidebar-title">{sidebarTitle}</h4>}
+                            {sidebar}
+                            
+                            {processing && (
+                                <div className="workspace-progress-container mt-4 mb-2">
+                                    <div className="progress-info">
+                                        <span>{progress >= 100 ? '✅ Done!' : 'Processing…'}</span>
+                                        {progress > 0 && progress < 100 && <span>{Math.round(progress)}%</span>}
                                     </div>
-                                )}
-                            </div>
-                        )}
+                                    <div className="progress-bar-bg">
+                                        <div className="progress-bar-fill" style={{ width: `${Math.min(progress, 100)}%` }} />
+                                    </div>
+                                </div>
+                            )}
 
-                        {onProcess && (
-                            <button
-                                className="btn-primary btn-full workspace-action-btn"
-                                onClick={onProcess}
-                                disabled={processing || files.length === 0}
-                            >
-                                {processing ? <Loader className="spinning" size={20} /> : <Download size={20} />}
-                                {processing
-                                    ? (progress >= 100 ? 'Done!' : 'Processing…')
-                                    : (actionLabel || tool?.name || 'Process')}
-                            </button>
-                        )}
+                            {onProcess && (
+                                <button
+                                    className="btn-primary btn-full workspace-action-btn"
+                                    onClick={onProcess}
+                                    disabled={processing || files.length === 0}
+                                >
+                                    {processing ? <Loader className="spinning" size={20} /> : <Download size={20} />}
+                                    {actionLabel || 'Process'}
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
