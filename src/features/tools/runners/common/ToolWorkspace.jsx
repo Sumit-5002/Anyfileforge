@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { X, FileText, Download, Loader, Upload } from 'lucide-react';
+import { X, FileText, Download, Loader2, Upload } from 'lucide-react';
 import FileUploader from '../../../../components/ui/FileUploader';
 import './ToolWorkspace.css';
 
@@ -144,7 +144,7 @@ function ToolWorkspace({
                                     onClick={onProcess}
                                     disabled={processing || files.length === 0}
                                 >
-                                    {processing ? <Loader className="spinning" size={20} /> : <Download size={20} />}
+                                    {processing ? <Loader2 className="spinning" size={20} /> : <Download size={20} />}
                                     {actionLabel || 'Process'}
                                 </button>
                             )}

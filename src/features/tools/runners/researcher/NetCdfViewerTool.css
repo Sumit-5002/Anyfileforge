@@ -1,39 +1,118 @@
-.netcdf-main {
-    flex-grow: 1;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-xl);
-    padding: var(--spacing-6);
+/* ── NetCDF Scientific Viewer Styles ── */
+.netcdf-viewer-container {
+    width: 100%;
 }
 
-.nc-variables-list li.active .var-name {
-    color: var(--primary-400);
+.netcdf-viewer-container .dataset-panel {
+    background: rgba(12, 74, 110, 0.15); /* Deep Sea Blue */
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
 }
 
-.data-table-container::-webkit-scrollbar {
-    width: 6px;
-}
-.data-table-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-.data-table-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-}
-.data-table-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+.netcdf-viewer-container .dataset-header {
+    border-bottom: 1px solid rgba(14, 165, 233, 0.15);
+    padding-bottom: 20px;
 }
 
-.ipynb-output {
-    background: #000;
+.netcdf-viewer-container .tab-pill.active {
+    background: #0ea5e9;
+    color: white;
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+}
+
+/* Sidebar Explorer - Ocean Theme */
+.netcdf-ocean-explorer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
     padding: 10px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    overflow-x: auto;
 }
 
-@media (max-width: 768px) {
-    .netcdf-main {
-        width: 100%;
-    }
+.ocean-section {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(14, 165, 233, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.ocean-title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #0ea5e9;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ocean-var-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 4px;
+    transition: all 0.2s;
+}
+
+.ocean-var-card:hover {
+    background: rgba(14, 165, 233, 0.05);
+    border-color: rgba(14, 165, 233, 0.2);
+}
+
+.ocean-var-card.active {
+    background: rgba(14, 165, 233, 0.12);
+    border-color: rgba(14, 165, 233, 0.4);
+    color: #7dd3fc;
+}
+
+.btn-remove-ocean {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+    opacity: 0.3;
+}
+
+.btn-remove-ocean:hover {
+    background: rgba(14, 165, 233, 0.15);
+    color: #0ea5e9;
+    opacity: 1;
+}
+
+.ocean-loading-badge {
+    padding: 12px 16px;
+    background: rgba(14, 165, 233, 0.08);
+    border: 1px solid rgba(14, 165, 233, 0.25);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px;
+    color: #0ea5e9;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+/* Visualization Overlay */
+.ocean-chart-box {
+    background: #082f49;
+    padding: 24px;
+    border-radius: 20px;
+    border: 1px solid rgba(14, 165, 233, 0.1);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
 }

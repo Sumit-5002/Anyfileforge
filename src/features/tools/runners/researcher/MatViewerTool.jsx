@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as hdf5 from 'jsfive';
-import { Download, Cpu, HardDrive, FileText, ChevronRight, ChevronDown, Database, Activity, Info, Trash2, Layers, Loader2, Maximize2, File as FileIcon } from 'lucide-react';
+import { 
+    Download, Cpu, HardDrive, FileText, ChevronRight, ChevronDown, 
+    Database, Activity, Info, Trash2, Layers, Loader2, Maximize2, 
+    File as FileIcon, Workflow, Network, Boxes
+} from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend,
 } from 'chart.js';
@@ -8,35 +12,34 @@ import { Line } from 'react-chartjs-2';
 import ToolWorkspace from '../common/ToolWorkspace';
 import { useFileList } from '../../../../components/tools/shared/useFileList';
 import { parseMat } from '../../../../services/researcher/matService';
-import './Hdf5ViewerTool.css'; // Reuse the professional researcher styles
+import './MatViewerTool.css'; // Unique specialized styles
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const DatasetNode = ({ name, node, path, onSelect, selectedPath, level = 0 }) => {
-    // MATLAB v7.3 is HDF5 based.
+const VarNode = ({ name, node, path, onSelect, selectedPath, level = 0 }) => {
     const isGroup = node instanceof hdf5.Group;
     const [isExpanded, setIsExpanded] = useState(level < 1);
     const isSelected = selectedPath === path;
 
     return (
-        <div className="tree-node-wrapper">
+        <div className="mat-tree-node">
             <div 
-                className={`tree-node-item ${isSelected ? 'selected' : ''}`}
-                style={{ paddingLeft: `${level * 12 + 8}px` }}
+                className={`mat-tree-item ${isSelected ? 'selected' : ''}`}
+                style={{ marginLeft: `${level * 16}px` }}
                 onClick={isGroup ? () => setIsExpanded(!isExpanded) : () => onSelect(path, node)}
             >
-                <div className={`node-chevron ${isExpanded ? 'expanded' : ''}`}>
+                <div className={`node-chevron ${isExpanded ? 'expanded' : ''}`} style={{ width: 14 }}>
                     {isGroup ? <ChevronRight size={14} /> : null}
                 </div>
                 <div className="node-type-icon">
-                    {isGroup ? <Database size={14} className="text-primary-400" /> : <Activity size={14} className="text-secondary-400" />}
+                    {isGroup ? <Boxes size={14} color="#f97316" /> : <Network size={14} color="#3b82f6" />}
                 </div>
-                <div className="node-label-text">{name}</div>
+                <div className="node-label-text truncate">{name}</div>
             </div>
             {isGroup && isExpanded && (
-                <div className="node-children">
+                <div className="mat-tree-children">
                     {(node.keys || []).map((key) => (
-                        <DatasetNode 
+                        <VarNode 
                             key={path + key} 
                             name={key} 
                             node={node.get(key)} 
@@ -63,7 +66,7 @@ const MatViewerTool = () => {
     const [activeTab, setActiveTab] = useState('overview');
 
     useEffect(() => {
-        const loadMatFiles = async () => {
+        const fetchFiles = async () => {
             const nextLoaded = { ...loadedMat };
             let lastAdded = null;
             for (const f of files) {
@@ -74,8 +77,7 @@ const MatViewerTool = () => {
                         nextLoaded[f.file.name] = data;
                         lastAdded = f.file.name;
                     } catch (e) { 
-                        console.error(e); 
-                        setError(`Failed to load ${f.file.name}`);
+                        setError(`Failed to read ${f.file.name}`);
                     } finally {
                         setIsProcessing(false);
                     }
@@ -84,17 +86,10 @@ const MatViewerTool = () => {
             const currentNames = files.map(f => f.file.name);
             Object.keys(nextLoaded).forEach(name => { if (!currentNames.includes(name)) delete nextLoaded[name]; });
             setLoadedMat(nextLoaded);
-            if (lastAdded) {
-                setCurrentFile(lastAdded);
-                setSelectedPath(null);
-                setSelectedVariable(null);
-            } else if (currentFile && !currentNames.includes(currentFile)) {
-                setCurrentFile(currentNames[0] || null);
-                setSelectedPath(null);
-                setSelectedVariable(null);
-            }
+            if (lastAdded) { setCurrentFile(lastAdded); setSelectedPath(null); setSelectedVariable(null); }
+            else if (currentFile && !currentNames.includes(currentFile)) { setCurrentFile(currentNames[0] || null); setSelectedPath(null); setSelectedVariable(null); }
         };
-        loadMatFiles();
+        fetchFiles();
     }, [files]);
 
     const activeMatData = currentFile ? loadedMat[currentFile] : null;
@@ -124,15 +119,15 @@ const MatViewerTool = () => {
     }, [selectedVariable]);
 
     const chartData = useMemo(() => {
-        if (!selectedVariable || !selectedVariable.data || (selectedVariable.shape && selectedVariable.shape.length > 1 && selectedVariable.shape[1] > 1)) return null;
+        if (!selectedVariable || !selectedVariable.data || (selectedVariable.shape && selectedVariable.shape.length > 1 && (selectedVariable.shape[0] > 1 && selectedVariable.shape[1] > 1))) return null;
         const data = previewData.slice(0, 1000);
         return {
             labels: data.map((_, i) => i + 1),
             datasets: [{
                 label: selectedVariable.name,
                 data,
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderColor: '#f97316',
+                backgroundColor: 'rgba(249, 115, 22, 0.12)',
                 fill: true,
                 tension: 0.1,
                 pointRadius: 0
@@ -142,25 +137,28 @@ const MatViewerTool = () => {
 
     return (
         <ToolWorkspace
-            tool={{ name: 'MATLAB Workspace Viewer' }}
+            tool={{ name: 'MATLAB Workspace' }}
             files={files.map(f => f.file)}
             onFilesSelected={addFiles}
             accept=".mat"
             multiple={true}
             layout="research"
-            onReset={() => { setLoadedMat({}); setCurrentFile(null); setSelectedVariable(null); }}
+            sidebarTitle="MAT Explorer"
             sidebar={
-                <div className="sidebar-info researcher-tool-container h-full d-flex flex-column">
-                    <div className="explorer-section">
-                        <div className="section-header"><Layers size={14}/> LOADED WORKSPACES</div>
-                        <div className="file-tabs-list">
+                <div className="mat-sidebar-explorer">
+                    <div className="mat-section">
+                        <div className="mat-section-title"><Workflow size={14}/> WORKSPACES</div>
+                        <div className="workspace-card-grid">
                             {files.map(f => (
                                 <div key={f.file.name} 
-                                     className={`file-item-tab ${currentFile === f.file.name ? 'active' : ''}`}
+                                     className={`workspace-card ${currentFile === f.file.name ? 'active' : ''}`}
                                      onClick={() => { setCurrentFile(f.file.name); setSelectedPath(null); setSelectedVariable(null); }}
                                 >
-                                    <span className="file-name">{f.file.name}</span>
-                                    <button className="p-1 opacity-40 hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}>
+                                    <div className="workspace-card-info">
+                                        <FileIcon size={14} className={currentFile === f.file.name ? 'text-orange-500' : 'text-slate-400'} />
+                                        <span className="text-xs font-bold font-mono truncate" style={{maxWidth:120}}>{f.file.name}</span>
+                                    </div>
+                                    <button className="btn-remove-file" onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}>
                                         <Trash2 size={12}/>
                                     </button>
                                 </div>
@@ -169,18 +167,18 @@ const MatViewerTool = () => {
                     </div>
 
                     {isProcessing && (
-                        <div className="p-3 m-3 bg-primary/10 border border-primary/20 rounded-xl d-flex align-items-center gap-2">
-                             <Loader2 size={14} className="spinning text-primary"/>
-                             <span className="text-xs font-bold uppercase tracking-widest text-primary">Unpacking MAT...</span>
+                        <div className="mat-loading-badge">
+                             <Loader2 size={14} className="spinning text-orange-500"/>
+                             <span className="text-[10px] font-bold uppercase tracking-widest text-orange-500">Unpacking Workspace...</span>
                         </div>
                     )}
 
                     {activeMatData && activeMatData.isHdf5 && (
-                        <div className="explorer-section flex-grow overflow-hidden d-flex flex-column">
-                            <div className="section-header"><Database size={14}/> WORKSPACE TREE (v7.3)</div>
-                            <div className="tree-explorer flex-grow overflow-auto scroll-premium">
-                                <DatasetNode 
-                                    name="Root" 
+                        <div className="mat-section flex-grow overflow-hidden d-flex flex-column">
+                            <div className="mat-section-title"><Database size={14}/> VARIABLE TREE</div>
+                            <div className="mat-tree-container flex-grow overflow-auto scroll-premium">
+                                <VarNode 
+                                    name="base" 
                                     node={activeMatData.h5file.root} 
                                     path="/" 
                                     onSelect={handleSelectNode} 
@@ -191,114 +189,114 @@ const MatViewerTool = () => {
                     )}
 
                     {activeMatData && !activeMatData.isHdf5 && (
-                        <div className="p-4 m-3 bg-white/5 border border-white/10 rounded-xl">
-                            <div className="text-secondary-400 font-bold text-xs uppercase mb-2">v5 Legacy Info</div>
-                            <p className="text-xs opacity-60 leading-relaxed">
-                                This is a MATLAB v5 file. Direct browsing is optimized for v7.3 (HDF5). 
-                                Header: {activeMatData.status}
+                        <div className="mat-section p-4 bg-orange-500/5 border border-orange-500/10">
+                            <div className="mat-section-title"><Info size={14}/> V5 NOTICE</div>
+                            <p className="text-[10px] opacity-60 leading-relaxed font-mono">
+                                {activeMatData.status}. Browsing optimized for v7.3 (HDF5).
                             </p>
                         </div>
                     )}
                 </div>
             }
         >
-            <div className="researcher-tool-container h-full">
+            <div className="mat-viewer-container h-full p-2">
                 {!currentFile ? (
                     <div className="empty-state text-center p-12">
-                        <FileIcon size={64} className="opacity-10 mx-auto mb-6"/>
-                        <h2 className="mb-2">MATLAB Data Forge</h2>
-                        <p className="text-muted">Load .mat workspaces for local inspection and visualization.</p>
+                        <Boxes size={64} className="opacity-10 mx-auto mb-6 text-orange-500"/>
+                        <h2 className="mb-2 font-mono">MATLAB Data <span className="text-orange-500">Forge</span></h2>
+                        <p className="text-muted text-sm max-w-sm mx-auto">Inspect complex MATLAB workspaces and visualize numerical arrays directly in your secure offline vault.</p>
                     </div>
                 ) : !selectedVariable ? (
                     <div className="empty-state text-center p-12">
-                        <Maximize2 size={48} className="opacity-10 mx-auto mb-4"/>
-                        <p>Select a <b>variable</b> from the workspace tree to inspect contents.</p>
+                        <Activity size={48} className="opacity-10 mx-auto mb-4 text-orange-500"/>
+                        <p className="font-mono text-sm">Workspace <b>{currentFile}</b> is active. Select a variable to inspect.</p>
                     </div>
                 ) : (
-                    <div className="dataset-panel h-full d-flex flex-column">
-                        <div className="dataset-header mb-6">
+                    <div className="dataset-panel h-full d-flex flex-column fade-in">
+                        <div className="dataset-header">
                             <div className="d-flex align-items-center justify-content-between mb-4">
                                 <div className="breadcrumb-nav">
-                                    <span className="breadcrumb-part">{currentFile}</span>
+                                    <span className="breadcrumb-part font-mono text-xs">{currentFile}</span>
                                     <span className="opacity-30">/</span>
-                                    <span className="breadcrumb-part">{selectedVariable.path}</span>
+                                    <span className="breadcrumb-part font-mono text-xs">{selectedVariable.path}</span>
                                 </div>
-                                <span className="badge-pill bg-primary/10 text-primary border border-primary/20">MAT v{activeMatData.version}</span>
+                                <span className="badge-pill bg-orange-500/10 text-orange-500 border border-orange-500/20 font-mono">MAT v{activeMatData.version}</span>
                             </div>
                             
                             <div className="custom-tabs">
-                                <button className={`tab-pill ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><Activity size={14}/> Data View</button>
-                                <button className={`tab-pill ${activeTab === 'metadata' ? 'active' : ''}`} onClick={() => setActiveTab('metadata')}><Info size={14}/> Attributes</button>
+                                <button className={`tab-pill ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><Activity size={14}/> Analysis</button>
+                                <button className={`tab-pill ${activeTab === 'metadata' ? 'active' : ''}`} onClick={() => setActiveTab('metadata')}><Info size={14}/> Properties</button>
                             </div>
                         </div>
 
                         <div className="tab-content flex-grow overflow-auto scroll-premium">
                             {activeTab === 'overview' && (
-                                <div className="overview-tab d-flex flex-column gap-6">
+                                <div className="overview-tab d-flex flex-column gap-6 p-1">
                                     <div className="overview-grid">
                                         <div className="overview-card">
-                                            <div className="card-label">Variable Name</div>
-                                            <div className="card-value font-mono">{selectedVariable.name}</div>
+                                            <div className="card-label">Variable</div>
+                                            <div className="card-value font-mono text-orange-400">{selectedVariable.name}</div>
                                         </div>
                                         <div className="overview-card">
-                                            <div className="card-label">Shape</div>
+                                            <div className="card-label">Dimensions</div>
                                             <div className="card-value font-mono">[{selectedVariable.shape?.join(', ') || '0'}]</div>
                                         </div>
                                         <div className="overview-card">
-                                            <div className="card-label">DType</div>
-                                            <div className="card-value font-mono uppercase text-primary-400">{selectedVariable.dtype}</div>
+                                            <div className="card-label">Class</div>
+                                            <div className="card-value font-mono uppercase text-slate-400">{selectedVariable.dtype || 'MAT-Object'}</div>
                                         </div>
                                     </div>
 
                                     {chartData ? (
-                                        <div className="chart-wrapper bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
+                                        <div className="mat-chart-container shadow-premium">
                                             <div className="h-64">
                                                 <Line data={chartData} options={{ 
                                                     responsive: true, 
                                                     maintainAspectRatio: false, 
                                                     plugins: { legend: { display: false } },
                                                     scales: { 
-                                                        x: { grid: { color: 'rgba(255,255,255,0.05)' } },
-                                                        y: { grid: { color: 'rgba(255,255,255,0.05)' } }
+                                                        x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(255,255,255,0.4)' } },
+                                                        y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(255,255,255,0.4)' } }
                                                     }
                                                 }} />
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="p-6 bg-primary/5 border border-primary/20 rounded-xl text-sm italic opacity-70">
-                                            Multi-dimensional or complex data detected. Detailed grid view active below.
+                                        <div className="p-6 bg-slate-900/50 border border-slate-700/50 rounded-xl text-sm italic opacity-70 font-mono text-orange-200">
+                                            Complex/Multi-dim data block. Inspecting raw grid...
                                         </div>
                                     )}
 
-                                    <div className="data-preview">
-                                         <div className="card-label mb-3">Workspace Values (First 1000)</div>
-                                         <div className="table-container bg-black/30 rounded-xl overflow-hidden border border-white/5 shadow-premium">
-                                            <table className="w-full text-xs font-mono">
-                                                <thead className="bg-white/5 text-muted uppercase tracking-tighter border-b border-white/10">
-                                                    <tr><th className="p-3 text-left">Index</th><th className="p-3 text-left">Value</th></tr>
+                                    <div className="data-preview mt-4">
+                                         <div className="card-label mb-3 ml-2">Numerical Preview (Top 5000)</div>
+                                         <div className="table-container bg-slate-900/80 rounded-xl overflow-hidden border border-slate-700/30">
+                                            <table className="w-full text-[11px] font-mono">
+                                                <thead className="bg-white/5 text-slate-400 uppercase tracking-tighter border-b border-white/5">
+                                                    <tr><th className="p-3 text-left">idx</th><th className="p-3 text-left">value</th></tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-white/5">
                                                     {previewData.slice(0, 50).map((v, i) => (
-                                                        <tr key={i}><td className="p-2 px-3 text-muted">{i}</td><td className="p-2 px-3 text-primary-400 font-bold">{String(v)}</td></tr>
+                                                        <tr key={i} className="hover:bg-white/5 transition-colors"><td className="p-2 px-3 text-slate-500">{i}</td><td className="p-2 px-3 text-orange-400/80 font-bold">{String(v)}</td></tr>
                                                     ))}
                                                 </tbody>
                                             </table>
-                                            {previewData.length > 50 && <div className="p-2 text-center text-xs opacity-40">... and {previewData.length - 50} more items ...</div>}
+                                            {previewData.length > 50 && <div className="p-3 text-center text-[10px] opacity-30 border-t border-white/5 font-mono">Showing 50 of {previewData.length} records.</div>}
+                                            {previewData.length === 0 && <div className="p-12 text-center opacity-30 italic">No numeric data to display.</div>}
                                          </div>
                                     </div>
                                 </div>
                             )}
 
                             {activeTab === 'metadata' && (
-                                <div className="metadata-tab d-flex flex-column gap-6">
-                                    <div className="attributes-table bg-black/20 rounded-xl border border-white/5">
+                                <div className="metadata-tab d-flex flex-column gap-6 p-1">
+                                    <div className="attributes-table bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
                                         <table className="w-full text-sm">
-                                            <thead className="bg-white/5 text-muted uppercase text-xs"><tr><th className="p-3 text-left">MAT Attribute</th><th className="p-3 text-left">Value</th></tr></thead>
+                                            <thead className="bg-white/5 text-slate-500 uppercase text-[10px] tracking-wider"><tr><th className="p-3 text-left">Property Name</th><th className="p-3 text-left">Value</th></tr></thead>
                                             <tbody className="divide-y divide-white/5">
                                                 {Object.entries(selectedVariable.attributes).map(([k, v]) => (
-                                                    <tr key={k}><td className="p-3 font-bold text-primary-400">{k}</td><td className="p-3 font-mono">{String(v)}</td></tr>
+                                                    <tr key={k} className="hover:bg-white/5 transition-colors"><td className="p-3 font-bold text-orange-500/80 font-mono text-xs">{k}</td><td className="p-3 font-mono text-xs text-slate-300">{String(v)}</td></tr>
                                                 ))}
-                                                {Object.keys(selectedVariable.attributes).length === 0 && <tr><td colSpan="2" className="p-6 text-center text-muted">No header attributes found for this variable.</td></tr>}
+                                                {Object.keys(selectedVariable.attributes).length === 0 && <tr><td colSpan="2" className="p-8 text-center text-slate-500 font-mono text-xs">No attribute metadata stored for this node.</td></tr>}
                                             </tbody>
                                         </table>
                                     </div>
