@@ -5,12 +5,37 @@
 
 .simple-content-wrapper {
     background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-premium);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
     padding: clamp(1.5rem, 4vw, 3rem);
     max-width: 900px;
     margin: 0 auto;
     color: var(--text-primary);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+    transition: var(--transition-smooth);
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 99px;
+    border: 1px solid var(--border-subtle);
+}
+
+.back-link:hover {
+    color: var(--primary-500);
+    border-color: var(--primary-500);
+    transform: translateX(-4px);
+    background: rgba(var(--primary-rgb), 0.05);
 }
 
 .simple-header {

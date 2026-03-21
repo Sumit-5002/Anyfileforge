@@ -22,7 +22,7 @@ const applyMode = (groups, defaultAccept = '*/*') => groups.map((group) => ({
     tools: group.tools.map((tool) => ({
         ...tool,
         accept: tool.accept || defaultAccept,
-        mode: SERVER_MODE_TOOL_IDS.has(tool.id) ? 'server' : 'serverless'
+        mode: 'serverless'
     }))
 }));
 

@@ -1,4 +1,4 @@
-import hdf5 from 'jsfive';
+import * as hdf5 from 'jsfive';
 
 export const parseMat = async (file) => {
     const ab = await file.arrayBuffer();

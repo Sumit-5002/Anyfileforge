@@ -11,32 +11,18 @@ import { TOOLS } from '../../data/toolsData';
 import SeoHead from '../../components/meta/SeoHead';
 import { useAuth } from '../../contexts/AuthContext';
 import './HomePage.css';
-
 function HomePage() {
     const { t } = useTranslation();
-    const { userData } = useAuth();
     const navigate = useNavigate();
     const showcaseRef = useRef(null);
-    const [activeTab, setActiveTab] = useState('pdf'); // 'pdf' | 'image' | 'engineer' | 'researcher'
-    const [isOnlineMode, setIsOnlineMode] = useState(() => {
-        if (typeof window === 'undefined') return false;
-        return window.localStorage.getItem('anyfileforge_mode') === 'online';
-    });
-
+    const [activeTab, setActiveTab] = useState('pdf');
 
     const visibleGroups = (TOOLS[activeTab] || [])
         .filter((group) => group.tools.length > 0);
 
-    const handleModeChange = (online) => {
-        setIsOnlineMode(online);
-        if (typeof window !== 'undefined') {
-            window.localStorage.setItem('anyfileforge_mode', online ? 'online' : 'offline');
-            window.dispatchEvent(new Event('anyfileforge-mode-changed'));
-        }
-    };
-
     const handleToolSelect = (id) => {
-        navigate(`/tools/${id}?mode=${isOnlineMode ? 'online' : 'offline'}`);
+        // Enforce 100% Offline Mode for all individual tools
+        navigate(`/tools/${id}?mode=offline`);
     };
 
     return (
@@ -59,85 +45,18 @@ function HomePage() {
                         <p className="hero-subtitle">
                             {t('common.heroSubtitle')}
                         </p>
-                        {/* Mode Toggle */}
-                        <div className="hero-toggle-wrapper">
-                            <div className="mode-toggle-pill" style={{
-                                display: 'inline-flex',
-                                background: 'var(--bg-surface-secondary)',
-                                padding: '4px',
-                                borderRadius: '999px',
-                                border: '1px solid var(--border-bright)'
-                            }}>
-                                <button
-                                    onClick={() => handleModeChange(false)}
-                                    style={{
-                                        padding: '8px 20px',
-                                        borderRadius: '999px',
-                                        border: 'none',
-                                        background: !isOnlineMode ? 'var(--primary-500)' : 'transparent',
-                                        color: !isOnlineMode ? 'white' : 'var(--text-secondary)',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px'
-                                    }}
-                                >
-                                    <Shield size={16} />
-                                    Offline Mode
-                                </button>
-                                <button
-                                    onClick={() => handleModeChange(true)}
-                                    style={{
-                                        padding: '8px 20px',
-                                        borderRadius: '999px',
-                                        border: 'none',
-                                        background: isOnlineMode ? 'var(--accent-yellow)' : 'transparent',
-                                        color: isOnlineMode ? '#482e05' : 'var(--text-secondary)',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px'
-                                    }}
-                                >
-                                    <Zap size={16} />
-                                    {userData?.tier === 'premium' ? 'Online Mode (Premium)' : 'Online Mode (Paid)'}
-                                </button>
-                            </div>
-                        </div>
-
                         <div className="hero-actions">
-                            {!isOnlineMode ? (
-                                <>
-                                    <button
-                                        className="btn btn-primary btn-large"
-                                        onClick={() => showcaseRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                                    >
-                                        {t('common.exploreBtn')}
-                                        <ArrowRight size={20} />
-                                    </button>
-                                    <a href="https://github.com/Sumit-5002/Anyfileforge" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-large">
-                                        <Github size={20} />
-                                        Source Code
-                                    </a>
-                                </>
-                            ) : (
-                                <div className="online-badge" style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    color: 'var(--accent-yellow)',
-                                    fontWeight: '600',
-                                    background: 'rgba(250, 204, 21, 0.1)',
-                                    padding: '10px 20px',
-                                    borderRadius: '12px',
-                                    border: '1px solid rgba(250, 204, 21, 0.2)'
-                                }}>
-                                    <Zap size={18} />
-                                    <span>Online Server Mode Active</span>
-                                </div>
-                            )}
+                            <button
+                                className="btn btn-primary btn-large"
+                                onClick={() => showcaseRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                            >
+                                {t('common.exploreBtn')}
+                                <ArrowRight size={20} />
+                            </button>
+                            <a href="https://github.com/Sumit-5002/Anyfileforge" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-large">
+                                <Github size={20} />
+                                Source Code
+                            </a>
                         </div>
                     </div>
                 </section>
@@ -202,7 +121,7 @@ function HomePage() {
                                             key={tool.id}
                                             tool={{
                                                 ...tool,
-                                                mode: isOnlineMode ? 'server' : tool.mode
+                                                mode: 'serverless'
                                             }}
                                             onClick={() => handleToolSelect(tool.id)}
                                         />
@@ -215,12 +134,12 @@ function HomePage() {
                             <div className="workflow-content">
                                 <Layers size={32} color="var(--primary-500)" />
                                 <div className="workflow-text">
-                                    <h3>Create a custom Workflow</h3>
-                                    <p>Combine multiple tools into one automated pipeline. Perfect for repetitive tasks.</p>
+                                    <h3>Automated Workflows (Premium)</h3>
+                                    <p>Chain multiple tools in a server-side pipeline. Industry-grade speed for large datasets.</p>
                                 </div>
                             </div>
-                            <button className="btn btn-primary">
-                                {t('common.startNow')}
+                            <button className="btn btn-primary" onClick={() => navigate('/pricing')}>
+                                Upgrade to Premium
                                 <Play size={16} />
                             </button>
                         </div>

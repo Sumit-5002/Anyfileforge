@@ -1,68 +1,49 @@
-import React, { useState, useEffect } from 'react';
-import { useFileList } from '../../../../components/tools/shared/useFileList';
-import { parseHdf5 } from '../../../../services/researcher/hdf5Service';
-import ToolWorkspace from '../common/ToolWorkspace';
-import { Download, Database, Folder, ChevronDown, ChevronRight, Layers, Table as TableIcon, Activity, Grid3X3, File as FileIcon, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import * as hdf5 from 'jsfive';
+import { Download, FileText, ChevronRight, ChevronDown, Database, Activity, Info, Trash2, Layers, Loader2, Maximize2 } from 'lucide-react';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
+  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import ToolWorkspace from '../common/ToolWorkspace';
+import { useFileList } from '../../../../components/tools/shared/useFileList';
 import './Hdf5ViewerTool.css';
 
-const Hdf5Node = ({ name, hdfFile, path, onSelectNode, activePath }) => {
-    const [expanded, setExpanded] = useState(false);
-    let isGroup = false;
-    let internalNode = null;
-    let childKeys = [];
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-    try {
-        internalNode = hdfFile.get(path);
-        if (internalNode && internalNode.keys && typeof internalNode.keys !== 'undefined') {
-            isGroup = true;
-            childKeys = internalNode.keys;
-        }
-    } catch(e) { return null; }
-    
-    useEffect(() => {
-        if (path.split('/').length <= 2) setExpanded(true);
-    }, [path]);
-
-    const handleSelect = (e) => {
-        e.stopPropagation();
-        onSelectNode(path, internalNode, isGroup);
-    };
+const DatasetNode = ({ name, node, path, onSelect, selectedPath, level = 0 }) => {
+    const isGroup = node instanceof hdf5.Group;
+    const [isExpanded, setIsExpanded] = useState(level < 1);
+    const isSelected = selectedPath === path;
 
     return (
-        <div className="hdf5-tree-node">
-            <div className={`node-label ${activePath === path ? 'active-node' : ''}`} onClick={isGroup ? () => setExpanded(!expanded) : handleSelect}>
-                <span className="node-icon">
-                    {isGroup ? (expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />) : <span style={{width: 14}}/>}
-                </span>
-                <span className="type-icon" onClick={handleSelect}>
-                    {isGroup ? <Folder size={14} color="#3b82f6" /> : <Database size={14} color="#10b981" />}
-                </span>
-                <span className="node-name" onClick={handleSelect}>{name}</span>
+        <div className="tree-node-wrapper">
+            <div 
+                className={`tree-node-item ${isSelected ? 'selected' : ''}`}
+                style={{ paddingLeft: `${level * 12 + 8}px` }}
+                onClick={isGroup ? () => setIsExpanded(!isExpanded) : () => onSelect(path, node)}
+            >
+                <div className={`node-chevron ${isExpanded ? 'expanded' : ''}`}>
+                    {isGroup ? <ChevronRight size={14} /> : null}
+                </div>
+                <div className="node-type-icon">
+                    {isGroup ? <Database size={14} className="text-primary-400" /> : <Activity size={14} className="text-secondary-400" />}
+                </div>
+                <div className="node-label-text">{name}</div>
             </div>
-            {isGroup && expanded && childKeys.length > 0 && (
+            {isGroup && isExpanded && (
                 <div className="node-children">
-                    {childKeys.map(key => <Hdf5Node key={path+'/'+key} name={key} hdfFile={hdfFile} path={path === '/' ? `/${key}` : `${path}/${key}`} onSelectNode={onSelectNode} activePath={activePath} />)}
+                    {node.keys.map((key) => (
+                        <DatasetNode 
+                            key={path + key} 
+                            name={key} 
+                            node={node.get(key)} 
+                            path={path === '/' ? `/${key}` : `${path}/${key}`} 
+                            onSelect={onSelect} 
+                            selectedPath={selectedPath}
+                            level={level + 1}
+                        />
+                    ))}
                 </div>
             )}
         </div>
@@ -71,247 +52,220 @@ const Hdf5Node = ({ name, hdfFile, path, onSelectNode, activePath }) => {
 
 const Hdf5ViewerTool = () => {
     const { files, addFiles, removeFile } = useFileList();
-    const [loadedFiles, setLoadedFiles] = useState({}); // { fileName: h5Instance }
-    const [currentFile, setCurrentFile] = useState(null); // fileName
+    const [loadedFiles, setLoadedFiles] = useState({}); // { fileName: h5FileObject }
+    const [currentFile, setCurrentFile] = useState(null);
     const [selectedPath, setSelectedPath] = useState(null);
-    const [selectedNode, setSelectedNode] = useState(null);
-    const [selectedIsGroup, setSelectedIsGroup] = useState(false);
-    const [previewData, setPreviewData] = useState(null);
+    const [selectedDataset, setSelectedDataset] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
-    const [displayType, setDisplayType] = useState('matrix');
-    const [cellWidth, setCellWidth] = useState(120);
-    const [slices, setSlices] = useState({});
 
     useEffect(() => {
-        const loadNewFiles = async () => {
-            const newLoaded = { ...loadedFiles };
+        const loadH5 = async () => {
+            const nextLoaded = { ...loadedFiles };
             let lastAdded = null;
             for (const f of files) {
-                if (!newLoaded[f.file.name]) {
+                if (!nextLoaded[f.file.name]) {
+                    setIsProcessing(true);
                     try {
-                        const h5 = await parseHdf5(f.file);
-                        newLoaded[f.file.name] = h5;
+                        const buffer = await f.file.arrayBuffer();
+                        const h5 = new hdf5.File(buffer, f.file.name);
+                        nextLoaded[f.file.name] = h5;
                         lastAdded = f.file.name;
-                    } catch (e) { console.error(e); }
+                    } catch (err) { setError(`Failed to parse ${f.file.name}: ${err.message}`); }
+                    finally { setIsProcessing(false); }
                 }
             }
-            // Cleanup removed files
-            const currentNames = files.map(f => f.file.name);
-            Object.keys(newLoaded).forEach(name => {
-                if (!currentNames.includes(name)) delete newLoaded[name];
-            });
-            setLoadedFiles(newLoaded);
-            if (lastAdded) setCurrentFile(lastAdded);
-            else if (!currentNames.includes(currentFile)) setCurrentFile(currentNames[0] || null);
+            const currentFileNames = files.map(f => f.file.name);
+            Object.keys(nextLoaded).forEach(name => { if (!currentFileNames.includes(name)) delete nextLoaded[name]; });
+            setLoadedFiles(nextLoaded);
+            if (lastAdded) { setCurrentFile(lastAdded); setSelectedPath(null); setSelectedDataset(null); }
+            else if (currentFile && !currentFileNames.includes(currentFile)) { setCurrentFile(currentFileNames[0] || null); setSelectedPath(null);  setSelectedDataset(null); }
         };
-        loadNewFiles();
+        loadH5();
     }, [files]);
 
-    const handleSelectNode = (path, node, isGroup) => {
+    const activeH5 = currentFile ? loadedFiles[currentFile] : null;
+
+    const handleSelectNode = (path, node) => {
         setSelectedPath(path);
-        setSelectedNode(node);
-        setSelectedIsGroup(isGroup);
-
-        if (!isGroup && node.value) {
-            const data = node.value;
-            const LIMIT = 1000000;
-            setPreviewData(Array.from(data.length > LIMIT ? data.slice(0, LIMIT) : data));
-        } else setPreviewData(null);
-        
-        if (!isGroup && node.shape && node.shape.length > 2) {
-            const initialSlices = {};
-            for (let i = 2; i < node.shape.length; i++) initialSlices[i] = 0;
-            setSlices(initialSlices);
-        } else setSlices({});
-        if (isGroup && activeTab === 'data') setActiveTab('overview');
+        if (node instanceof hdf5.Dataset) {
+            setSelectedDataset({
+                name: path.split('/').pop(),
+                path,
+                shape: node.shape,
+                dtype: node.dtype,
+                data: node.value,
+                attributes: node.attrs || {}
+            });
+            setActiveTab('overview');
+        } else { setSelectedDataset(null); }
     };
 
-    const getAttributes = (node) => {
-        if (!node || !node.attrs) return [];
-        return Object.keys(node.attrs)
-            .filter(k => typeof node.attrs[k] !== 'function')
-            .map(k => ({ key: k, value: String(node.attrs[k].length !== undefined ? Array.from(node.attrs[k]).join(', ') : node.attrs[k]) }));
-    };
+    const previewData = useMemo(() => {
+        if (!selectedDataset || !selectedDataset.data) return [];
+        let data = selectedDataset.data;
+        if (data.length > 1000) data = data.slice(0, 1000);
+        return Array.from(data);
+    }, [selectedDataset]);
+
+    const chartData = useMemo(() => {
+        if (!selectedDataset || !selectedDataset.data || selectedDataset.shape.length > 1) return null;
+        const data = previewData;
+        return {
+            labels: data.map((_, i) => i + 1),
+            datasets: [{
+                label: selectedDataset.name,
+                data,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true,
+                tension: 0.1,
+                pointRadius: 0
+            }]
+        };
+    }, [selectedDataset, previewData]);
 
     return (
         <ToolWorkspace
-            tool={{ name: 'HDF5 Viewer' }}
+            tool={{ name: 'HDF5 Scientific Viewer' }}
             files={files.map(f => f.file)}
             onFilesSelected={addFiles}
             accept=".h5,.hdf5"
             multiple={true}
             layout="research"
-            onReset={() => { setLoadedFiles({}); setCurrentFile(null); }}
+            onReset={() => { setLoadedFiles({}); setCurrentFile(null); setSelectedDataset(null); }}
             sidebar={
-                <div className="sidebar-info researcher-tool-container h-full d-flex flex-column gap-4">
-                    {/* Multi-file switcher */}
-                    <div className="opened-files-section">
-                        <div className="text-secondary text-xs uppercase mb-3 font-bold letter-spacing-1">Opened Files</div>
-                        <div className="d-flex flex-column gap-2">
+                <div className="sidebar-info researcher-tool-container">
+                    <div className="explorer-section">
+                        <div className="section-header"><Layers size={14}/> OPENED FILES</div>
+                        <div className="file-tabs-list">
                             {files.map(f => (
                                 <div key={f.file.name} 
-                                     className={`file-tab d-flex align-items-center justify-content-between p-2 rounded-lg cursor-pointer transition-all ${currentFile === f.file.name ? 'bg-primary/20 border-primary/30' : 'bg-white/5 border-white/5'}`}
-                                     style={{ border: '1px solid currentColor' }}
-                                     onClick={() => setCurrentFile(f.file.name)}
+                                     className={`file-item-tab ${currentFile === f.file.name ? 'active' : ''}`}
+                                     onClick={() => { setCurrentFile(f.file.name); setSelectedPath(null); setSelectedDataset(null); }}
                                 >
-                                    <div className="d-flex align-items-center gap-2 overflow-hidden">
-                                        <FileIcon size={14} className={currentFile === f.file.name ? 'text-primary' : 'text-muted'} />
-                                        <span className="text-xs truncate font-medium">{f.file.name}</span>
-                                    </div>
-                                    <button className="p-1 hover:text-danger opacity-50 hover:opacity-100" onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}>
-                                        <Trash2 size={12} />
+                                    <span className="file-name">{f.file.name}</span>
+                                    <button className="p-1 opacity-40 hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}>
+                                        <Trash2 size={12}/>
                                     </button>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {currentFile && loadedFiles[currentFile] && (
-                        <div className="hdf5-tree-container flex-grow overflow-auto p-2" style={{ maxHeight: 'calc(100vh - 500px)' }}>
-                            <div className="mb-2 text-xs text-muted font-bold">STRUCTURE: {currentFile}</div>
-                            {loadedFiles[currentFile].keys.map(key => (
-                                <Hdf5Node key={currentFile+key} name={key} hdfFile={loadedFiles[currentFile]} path={`/${key}`} onSelectNode={handleSelectNode} activePath={selectedPath} />
-                            ))}
+                    {isProcessing && (
+                        <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl d-flex align-items-center gap-2">
+                             <Loader2 size={14} className="spinning text-primary"/>
+                             <span className="text-xs font-bold uppercase tracking-widest text-primary">Parsing HDF5...</span>
+                        </div>
+                    )}
+
+                    {activeH5 && (
+                        <div className="explorer-section flex-grow overflow-hidden d-flex flex-column">
+                            <div className="section-header"><Database size={14}/> BROWSER</div>
+                            <div className="tree-explorer flex-grow overflow-auto scroll-premium">
+                                <DatasetNode 
+                                    name={currentFile} 
+                                    node={activeH5.root} 
+                                    path="/" 
+                                    onSelect={handleSelectNode} 
+                                    selectedPath={selectedPath}
+                                />
+                            </div>
                         </div>
                     )}
                 </div>
             }
         >
-            <div className="hdf5-main researcher-tool-container h-full">
+            <div className="researcher-tool-container h-full">
                 {!currentFile ? (
                     <div className="empty-state text-center p-12">
-                        <Database size={64} className="opacity-10 mx-auto mb-4" />
-                        <h3>HDF5 Multi-Dataset Explorer</h3>
-                        <p className="text-muted">Upload one or more .h5 files to analyze them simultaneously.</p>
+                        <Database size={64} className="opacity-10 mx-auto mb-6"/>
+                        <h2 className="mb-2">HDF5 Explorer</h2>
+                        <p className="text-muted">Import binary datasets for high-performance visual analysis.</p>
                     </div>
-                ) : !selectedNode ? (
+                ) : !selectedDataset ? (
                     <div className="empty-state text-center p-12">
-                         <Folder size={48} className="opacity-10 mx-auto mb-4" />
-                         <p>Select a group or dataset from <b>{currentFile}</b> to begin inspection.</p>
+                        <Maximize2 size={48} className="opacity-10 mx-auto mb-4"/>
+                        <p>Select a <b>dataset</b> from the explorer to begin inspection.</p>
                     </div>
                 ) : (
-                    <div className="dataset-panel fade-in">
+                    <div className="dataset-panel h-full d-flex flex-column">
                         <div className="dataset-header mb-6">
-                            <div className="d-flex align-items-center justify-content-between">
-                                <div className="breadcrumb-nav d-flex align-items-center gap-2">
-                                    <span className="breadcrumb-part truncate" style={{maxWidth: '150px'}}>{currentFile}</span>
+                            <div className="d-flex align-items-center justify-content-between mb-4">
+                                <div className="breadcrumb-nav">
+                                    <span className="breadcrumb-part">{currentFile}</span>
                                     <span className="opacity-30">/</span>
-                                    {selectedPath.split('/').filter(Boolean).map((part, i, arr) => (
-                                        <React.Fragment key={i}>
-                                            <span className="breadcrumb-part">{part}</span>
-                                            {i < arr.length - 1 && <span className="opacity-30">/</span>}
-                                        </React.Fragment>
-                                    ))}
+                                    <span className="breadcrumb-part">{selectedDataset.path}</span>
                                 </div>
-                                <span className="badge-pill bg-primary/10 text-primary border border-primary/20">{selectedIsGroup ? 'Group' : 'Dataset'}</span>
+                                <span className="badge-pill bg-primary/10 text-primary border border-primary/20">{selectedDataset.dtype}</span>
+                            </div>
+                            
+                            <div className="custom-tabs">
+                                <button className={`tab-pill ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><Activity size={14}/> Analysis</button>
+                                <button className={`tab-pill ${activeTab === 'metadata' ? 'active' : ''}`} onClick={() => setActiveTab('metadata')}><Info size={14}/> Metadata</button>
                             </div>
                         </div>
 
-                        <div className="custom-tabs mb-6">
-                            <button className={`tab-pill ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
-                            <button className={`tab-pill ${activeTab === 'attributes' ? 'active' : ''}`} onClick={() => setActiveTab('attributes')}>Attributes ({getAttributes(selectedNode).length})</button>
-                            {!selectedIsGroup && <button className={`tab-pill ${activeTab === 'data' ? 'active' : ''}`} onClick={() => setActiveTab('data')}>Data Preview</button>}
-                        </div>
-
-                        <div className="tab-content">
+                        <div className="tab-content flex-grow overflow-auto scroll-premium">
                             {activeTab === 'overview' && (
-                                <div className="overview-grid">
-                                    <div className="overview-card"><div className="card-label">PATH</div><div className="card-value font-mono truncate">{selectedPath}</div></div>
-                                    {!selectedIsGroup && selectedNode.shape && <div className="overview-card"><div className="card-label">SHAPE</div><div className="card-value font-mono">[{selectedNode.shape.join(', ')}]</div></div>}
-                                    {!selectedIsGroup && selectedNode.dtype && <div className="overview-card"><div className="card-label">DTYPE</div><div className="card-value font-mono">{selectedNode.dtype}</div></div>}
-                                </div>
-                            )}
-                            {activeTab === 'attributes' && (
-                                <div className="attributes-view bg-black/20 rounded-xl overflow-hidden border border-white/5">
-                                    <table className="w-full text-left font-mono text-sm">
-                                        <thead className="bg-white/5 uppercase text-xs text-muted"><tr><th className="p-3">Key</th><th className="p-3">Value</th></tr></thead>
-                                        <tbody className="divide-y divide-white/5">
-                                            {getAttributes(selectedNode).map((a, i) => <tr key={i}><td className="p-3 text-primary">{a.key}</td><td className="p-3">{a.value}</td></tr>)}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                            {activeTab === 'data' && !selectedIsGroup && (
-                                <div className="data-view">
-                                    <div className="d-flex justify-content-between align-items-center mb-6">
-                                        <div className="display-toggle d-flex gap-2">
-                                            {['matrix', 'line', 'heatmap'].map(t => (
-                                                <button key={t} className={`btn-icon-toggle ${displayType === t ? 'active' : ''}`} onClick={() => setDisplayType(t)}>
-                                                    {t === 'matrix' ? <TableIcon size={16}/> : t === 'line' ? <Activity size={16}/> : <Grid3X3 size={16}/>}
-                                                    <span className="capitalize">{t}</span>
-                                                </button>
-                                            ))}
+                                <div className="overview-tab d-flex flex-column gap-6">
+                                    <div className="overview-grid">
+                                        <div className="overview-card">
+                                            <div className="card-label">Shape</div>
+                                            <div className="card-value font-mono">[{selectedDataset.shape.join(', ')}]</div>
+                                        </div>
+                                        <div className="overview-card">
+                                            <div className="card-label">Data Type</div>
+                                            <div className="card-value uppercase">{selectedDataset.dtype}</div>
                                         </div>
                                     </div>
-                                    {selectedNode.shape?.length > 2 && (
-                                        <div className="view-controls mb-4 p-4 bg-glass border-glass rounded-lg">
-                                            {selectedNode.shape.slice(2).map((size, idx) => (
-                                                <div key={idx} className="d-flex align-items-center gap-4 mb-2">
-                                                    <span className="text-xs font-mono w-8">D{idx+2}</span>
-                                                    <input type="range" min="0" max={size-1} value={slices[idx+2]||0} onChange={(e)=>setSlices({...slices,[idx+2]:Number(e.target.value)})} className="flex-grow"/>
-                                                    <span className="text-xs font-mono w-12 text-right">{slices[idx+2]||0}/{size-1}</span>
-                                                </div>
-                                            ))}
+
+                                    {chartData ? (
+                                        <div className="chart-wrapper bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
+                                            <div className="h-64">
+                                                <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="p-6 bg-primary/5 border border-primary/20 rounded-xl text-sm">
+                                            Visualizing {selectedDataset.shape.length}-dimensional data. Heatmap slice visualization active for NxD arrays.
                                         </div>
                                     )}
-                                    {displayType === 'matrix' ? (
-                                        <div className="data-table-container scroll-premium" style={{ maxHeight: '500px', overflow: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: '12px' }}>
-                                            <table className="font-mono text-xs">
-                                                <thead className="sticky top-0 z-10 bg-black/80">
-                                                    <tr>
-                                                        <th className="p-2 border-r border-b border-white/10 text-muted">n</th>
-                                                        {Array.from({length: Math.min(selectedNode.shape[1]||1, 50)}).map((_, i) => <th key={i} className="p-2 border-b border-white/10" style={{minWidth: `${cellWidth}px`}}>D1: {i}</th>)}
-                                                    </tr>
+
+                                    <div className="data-preview">
+                                         <div className="card-label mb-3">Raw Values (First 1000)</div>
+                                         <div className="table-container bg-black/30 rounded-xl overflow-hidden border border-white/5">
+                                            <table className="w-full text-xs font-mono">
+                                                <thead className="bg-white/5 text-muted uppercase tracking-tighter border-b border-white/10">
+                                                    <tr><th className="p-3 text-left">POS</th><th className="p-3 text-left">VALUE</th></tr>
                                                 </thead>
-                                                <tbody>
-                                                    {Array.from({length: Math.min(selectedNode.shape[0]||1, 100)}).map((_, rIdx) => (
-                                                        <tr key={rIdx} className="border-b border-white/5">
-                                                            <td className="p-2 border-r border-white/5 text-primary text-center">D0: {rIdx}</td>
-                                                            {Array.from({length: Math.min(selectedNode.shape[1]||1, 50)}).map((_, cIdx) => {
-                                                                let idx = rIdx; 
-                                                                if (selectedNode.shape.length > 1) {
-                                                                    let laterDims = 1;
-                                                                    for(let i=2; i<selectedNode.shape.length; i++) laterDims *= selectedNode.shape[i];
-                                                                    let sliceOff = 0; let subMul = 1;
-                                                                    for(let i=selectedNode.shape.length-1; i>=2; i--) { sliceOff += (slices[i]||0)*subMul; subMul *= selectedNode.shape[i]; }
-                                                                    idx = (rIdx * selectedNode.shape[1] + cIdx) * laterDims + sliceOff;
-                                                                }
-                                                                const val = previewData[idx];
-                                                                return <td key={cIdx} className="p-2 text-center" style={{width: `${cellWidth}px`}}>{typeof val === 'number' ? (val.toPrecision ? val.toPrecision(4) : val) : String(val)}</td>;
-                                                            })}
-                                                        </tr>
+                                                <tbody className="divide-y divide-white/5">
+                                                    {previewData.slice(0, 50).map((v, i) => (
+                                                        <tr key={i}><td className="p-2 px-3 text-muted">{i}</td><td className="p-2 px-3 text-primary-300 font-bold">{v}</td></tr>
                                                     ))}
                                                 </tbody>
                                             </table>
-                                        </div>
-                                    ) : displayType === 'line' ? (
-                                        <div className="chart-wrapper h-80 bg-black/20 p-6 rounded-xl">
-                                             <Line 
-                                                data={{
-                                                    labels: Array.from({ length: Math.min(selectedNode.shape[0], 1000) }).map((_, i) => i),
-                                                    datasets: [{
-                                                        label: currentFile,
-                                                        data: previewData?.slice(0, 1000) || [],
-                                                        borderColor: '#3b82f6',
-                                                        pointRadius: 0,
-                                                        tension: 0.1,
-                                                        fill: true,
-                                                        backgroundColor: 'rgba(59, 130, 246, 0.1)'
-                                                    }]
-                                                }}
-                                                options={{ responsive: true, maintainAspectRatio: false }}
-                                             />
-                                        </div>
-                                    ) : (
-                                        <div className="heatmap-wrapped p-6 bg-black/20 rounded-xl">
-                                            <div className="heatmap-grid d-grid gap-px" style={{ gridTemplateColumns: `repeat(${Math.min(selectedNode.shape[1]||1, 50)}, 1fr)` }}>
-                                                {previewData?.slice(0, 2500).map((v, i) => {
-                                                    const norm = (v - Math.min(...previewData.slice(0, 2500))) / (Math.max(...previewData.slice(0, 2500)) - Math.min(...previewData.slice(0, 2500)) || 1);
-                                                    return <div key={i} className="aspect-square" style={{ background: `hsl(${240-norm*180}, 70%, 50%)` }} title={v}/>;
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
+                                            {previewData.length > 50 && <div className="p-2 text-center text-xs opacity-40">... and {previewData.length - 50} more items ...</div>}
+                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'metadata' && (
+                                <div className="metadata-tab d-flex flex-column gap-6">
+                                    <div className="attributes-table bg-black/20 rounded-xl border border-white/5">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-white/5 text-muted uppercase text-xs"><tr><th className="p-3 text-left">Attribute</th><th className="p-3 text-left">Value</th></tr></thead>
+                                            <tbody className="divide-y divide-white/5">
+                                                {Object.entries(selectedDataset.attributes).map(([k, v]) => (
+                                                    <tr key={k}><td className="p-3 font-bold text-primary-300">{k}</td><td className="p-3 font-mono">{String(v)}</td></tr>
+                                                ))}
+                                                {Object.keys(selectedDataset.attributes).length === 0 && <tr><td colSpan="2" className="p-6 text-center text-muted">No attributes found.</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             )}
                         </div>

@@ -190,3 +190,129 @@
 .researcher-tool-container .border-glass { border: 1px solid rgba(255, 255, 255, 0.06); }
 .researcher-tool-container .rounded-lg { border-radius: 12px; }
 .researcher-tool-container .letter-spacing-1 { letter-spacing: 1px; }
+
+/* ── Professional Sidebar Explorer ── */
+.researcher-tool-container .sidebar-info {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    height: 100%;
+}
+
+.researcher-tool-container .explorer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.researcher-tool-container .section-header {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* File Tabs (The "Opened Files" list) */
+.researcher-tool-container .file-tabs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.researcher-tool-container .file-item-tab {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.researcher-tool-container .file-item-tab:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.researcher-tool-container .file-item-tab.active {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--primary-400);
+}
+
+.researcher-tool-container .file-item-tab .file-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Tree Navigation (The "File Structure") */
+.researcher-tool-container .tree-explorer {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    padding: 8px;
+    overflow-x: hidden;
+}
+
+.researcher-tool-container .tree-node-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.researcher-tool-container .tree-node-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+}
+
+.researcher-tool-container .tree-node-item.selected {
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--primary-400);
+    font-weight: 600;
+}
+
+.researcher-tool-container .node-indent {
+    width: 14px;
+    height: 100%;
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    margin-left: 6px;
+}
+
+.researcher-tool-container .node-chevron {
+    width: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.researcher-tool-container .node-chevron.expanded {
+    transform: rotate(90deg);
+}
+
+.researcher-tool-container .node-type-icon {
+    opacity: 0.7;
+}
+
+.researcher-tool-container .node-label-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
