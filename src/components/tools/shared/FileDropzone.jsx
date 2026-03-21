@@ -2,13 +2,16 @@ import React, { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import './FileDropzone.css';
 
-function FileDropzone({ label, hint, multiple = false, accept, onFilesAdded }) {
+function FileDropzone({ label, hint, multiple = false, accept, onFilesAdded, onFilesDrop }) {
     const [isDragging, setIsDragging] = useState(false);
     const inputRef = useRef(null);
 
     const handleFiles = (fileList) => {
         if (!fileList || fileList.length === 0) return;
-        onFilesAdded(Array.from(fileList));
+        
+        const filesArray = Array.from(fileList);
+        if (onFilesAdded) onFilesAdded(filesArray);
+        if (onFilesDrop) onFilesDrop(filesArray);
     };
 
     return (

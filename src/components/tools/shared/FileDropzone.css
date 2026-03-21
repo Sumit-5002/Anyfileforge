@@ -1,40 +1,62 @@
 .dropzone {
-    border: 1px dashed var(--border-subtle);
-    border-radius: 14px;
-    padding: 18px;
-    background: var(--bg-deep);
-    transition: var(--transition-smooth);
+    border: 2px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: 48px 40px;
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    cursor: pointer;
+}
+
+.dropzone:hover {
+    border-color: var(--primary-500);
+    background: rgba(var(--primary-rgb), 0.04);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(var(--primary-rgb), 0.1);
 }
 
 .dropzone.dragging {
     border-color: var(--primary-500);
-    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.15);
+    background: rgba(var(--primary-rgb), 0.08);
+    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15), 
+                0 12px 40px rgba(var(--primary-rgb), 0.15);
+    transform: scale(1.02);
 }
 
 .dropzone-inner {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     cursor: pointer;
+    text-align: center;
 }
 
 .dropzone-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(var(--primary-rgb), 0.12);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.05));
     color: var(--primary-500);
+    border: 1px solid rgba(var(--primary-rgb), 0.2);
+    margin-bottom: 8px;
 }
 
 .dropzone h4 {
     color: var(--text-primary);
-    margin-bottom: 4px;
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
 }
 
 .dropzone p {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0;
+    line-height: 1.5;
 }

@@ -1,0 +1,333 @@
+/* ── HDF5 Viewer Dark Theme ── */
+
+.hdf5-tree-container {
+    margin-top: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.hdf5-tree-node {
+    margin-left: 8px;
+    font-size: 0.9rem;
+}
+
+.node-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 6px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s;
+    user-select: none;
+}
+
+.node-label:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.node-label.active-node {
+    background: rgba(59, 130, 246, 0.2) !important;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.node-label.active-node .node-name {
+    color: var(--primary-400);
+}
+
+.node-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.node-name {
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.node-children {
+    margin-left: 14px;
+    border-left: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+/* ── Main Panel ── */
+.hdf5-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 1.05rem;
+}
+
+/* ── Dataset Panel ── */
+.dataset-panel {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.dataset-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+
+.dataset-header h2 {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+/* ── Metadata Grid ── */
+.metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.metadata-item {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.meta-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.meta-value {
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Attributes Panel ── */
+.attrs-list {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 0 16px;
+}
+
+.attr-item {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 12px 0;
+    gap: 16px;
+}
+
+.attr-item:last-child {
+    border-bottom: none;
+}
+
+.attr-key {
+    font-weight: 600;
+    width: 200px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.attr-val {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--primary-400);
+    word-break: break-all;
+    font-size: 0.9rem;
+}
+
+/* ── Tool Tabs ── */
+.tool-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 2px;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 16px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.2s;
+    position: relative;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.tab-btn.active {
+    color: var(--primary-400);
+    border-bottom-color: var(--primary-500);
+}
+
+/* ── Export Actions ── */
+.export-actions h4 {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.data-table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.data-table-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+.data-table-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+.data-table-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.letter-spacing-1 { letter-spacing: 1px; }
+
+/* ── View Selection Toggles ── */
+.display-toggle {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.btn-icon-toggle {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.btn-icon-toggle:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.btn-icon-toggle.active {
+    background: var(--primary-500);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* ── Control Bar ── */
+.view-controls {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+}
+
+/* ── Heatmap ── */
+.heatmap-grid {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* ── Range Input ── */
+input[type="range"] {
+    accent-color: var(--primary-500);
+}
+
+.bg-glass { background: rgba(255, 255, 255, 0.03); }
+.border-glass { border: 1px solid rgba(255, 255, 255, 0.06); }
+.rounded-lg { border-radius: 10px; }
+
+/* ── Breadcrumbs ── */
+.breadcrumb-nav {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    color: var(--primary-400);
+    font-weight: 600;
+}
+
+/* ── Modern Tabs ── */
+.custom-tabs {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tab-pill {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-pill:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.tab-pill.active {
+    background: var(--primary-500);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* ── Overrides ── */
+.dataset-panel {
+    background: rgba(15, 23, 42, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.dataset-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+}

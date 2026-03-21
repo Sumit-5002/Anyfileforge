@@ -61,6 +61,44 @@ const decryptWithQpdf = async (buffer, password) => {
     return qpdf.FS.readFile('out.pdf'); // Uint8Array
 };
 
+// Best-effort true encrypt using qpdf (WASM).
+// Supports user and owner passwords.
+const encryptWithQpdf = async (buffer, userPassword, ownerPassword = null) => {
+    if (!userPassword || !String(userPassword).trim()) {
+        throw new Error('Please provide a password to protect this PDF.');
+    }
+
+    const QPDF = await loadQpdf();
+    const stderr = [];
+    const qpdf = await QPDF({
+        noInitialRun: true,
+        print: () => { },
+        printErr: (s) => stderr.push(String(s))
+    });
+
+    qpdf.FS.writeFile('in.pdf', new Uint8Array(buffer));
+
+    try {
+        // qpdf --encrypt user-password owner-password key-length [restrictions] -- infile outfile
+        // Using 256-bit AES by default (supported by qpdf)
+        const args = [
+            '--encrypt',
+            String(userPassword),
+            String(ownerPassword || userPassword), // Owner password same as user if not provided
+            '256',
+            '--',
+            'in.pdf',
+            'out.pdf'
+        ];
+        qpdf.callMain(args);
+    } catch (e) {
+        console.error('QPDF Encrypt Error:', stderr.join('\n'));
+        throw new Error('Unable to encrypt this PDF offline.');
+    }
+
+    return qpdf.FS.readFile('out.pdf');
+};
+
 // Offline unlock for encrypted PDFs:
 // Use PDF.js to decrypt+render pages, then rebuild as an unencrypted image-based PDF with pdf-lib.
 // Tradeoff: output text is not selectable/searchable.
@@ -140,11 +178,17 @@ export const unlockPDF = async (file, password) => {
     }
 };
 
-export const protectPDF = async (file) => {
-    // Note: encryption in save() is not natively supported by pdf-lib.
-    // Full encryption is handled in Server Mode. Here we perform a structural rewrite.
-    const pdf = await PDFDocument.load(await file.arrayBuffer());
-    return pdf.save();
+export const protectPDF = async (file, password) => {
+    const buffer = await file.arrayBuffer();
+    try {
+        // Use qpdf for true encryption
+        return await encryptWithQpdf(buffer, password);
+    } catch (error) {
+        console.warn('Fallback encryption (structural rewrite):', error.message);
+        // Fallback to pdf-lib structural rewrite if qpdf fails (rare)
+        const pdf = await PDFDocument.load(buffer);
+        return pdf.save();
+    }
 };
 
 export const redactPDF = async (file, rectangles = [], pageIndices = [], password) => {

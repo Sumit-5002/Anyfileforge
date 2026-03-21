@@ -62,7 +62,19 @@ export const TOOL_RUNNERS = {
     'markdown-preview': lazy(() => import('./text/MarkdownPreviewTool')),
     'csv-plotter': lazy(() => import('./text/CsvPlotterTool')),
     'latex-editor': lazy(() => import('./text/LatexEditorTool')),
-    'bibtex-manager': lazy(() => import('./text/BibtexManagerTool'))
+    'bibtex-manager': lazy(() => import('./text/BibtexManagerTool')),
+    
+    // Researcher Tools
+    // Researcher Tools
+    'netcdf-viewer': lazy(() => import('./researcher/NetCdfViewerTool')),
+    'fastq-viewer': lazy(() => import('./researcher/FastqViewerTool')),
+    'fasta-analyzer': lazy(() => import('./researcher/FastaAnalyzerTool')),
+    'ipynb-to-pdf': lazy(() => import('./researcher/IpynbToPdfTool')),
+    'doi-to-bibtex': lazy(() => import('./researcher/DoiToBibtexTool')),
+    'hdf5-viewer': lazy(() => import('./researcher/Hdf5ViewerTool')),
+    'parquet-viewer': lazy(() => import('./researcher/ParquetViewerTool')),
+    'pcap-analyzer': lazy(() => import('./researcher/PcapAnalyzerTool')),
+    'mat-viewer': lazy(() => import('./researcher/MatViewerTool'))
 };
 
 export default TOOL_RUNNERS;

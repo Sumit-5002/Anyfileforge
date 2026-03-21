@@ -1,5 +1,5 @@
 import React, { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import serverProcessingService from '../services/serverProcessingService';
 import Header from '../components/layout/Header';
@@ -30,6 +30,8 @@ const PREMIUM_KEEP_ALIVE_MS = Number(import.meta.env.VITE_PREMIUM_KEEP_ALIVE_MS)
 
 function App() {
   const { userData } = useAuth();
+  const location = useLocation();
+  const isToolView = location.pathname.startsWith('/tools/') && location.pathname !== '/tools';
 
   useEffect(() => {
     if (userData?.tier !== 'premium') return undefined;
@@ -70,7 +72,7 @@ function App() {
   }, [userData?.tier]);
 
   return (
-    <Router>
+    <>
       <ScrollToTop />
       <div className="app-container">
         <Header />
@@ -91,13 +93,12 @@ function App() {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
-
             </Routes>
           </Suspense>
         </main>
-        <Footer />
+        {!isToolView && <Footer />}
       </div>
-    </Router>
+    </>
   );
 }
 

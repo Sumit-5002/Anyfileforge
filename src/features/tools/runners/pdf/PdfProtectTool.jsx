@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
-import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
 import { Lock, ShieldAlert, FileText, CheckCircle } from 'lucide-react';
@@ -24,18 +23,14 @@ function PdfProtectTool({ tool, onFilesAdded }) {
         }
         setProcessing(true);
         try {
-            if (tool.mode === 'server') {
-                const blob = await serverProcessingService.protectPDF(file, password);
-                const baseName = file.name.replace(/\.[^/.]+$/, '');
-                pdfService.downloadBlob(blob, `${baseName}_protected.pdf`);
-            } else {
-                const data = await pdfService.protectPDF(file, password);
-                pdfService.downloadPDF(data, 'protected_document.pdf');
-            }
+            // Favor Offline mode by default for privacy and speed (QPDF WASM)
+            const data = await pdfService.protectPDF(file, password);
+            const baseName = file.name.replace(/\.[^/.]+$/, '');
+            pdfService.downloadPDF(data, `${baseName}_protected.pdf`);
             setDone(true);
         } catch (error) {
             console.error('Protect error:', error);
-            alert('Failed to protect PDF.');
+            alert('Failed to protect PDF: ' + (error.message || 'Unknown error'));
         } finally {
             setProcessing(false);
         }

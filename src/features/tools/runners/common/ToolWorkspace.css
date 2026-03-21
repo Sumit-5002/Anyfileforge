@@ -7,6 +7,15 @@
     animation: fadeIn 0.3s ease-out;
 }
 
+/* When no files are loaded, show a centered dropzone */
+.workspace-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    padding: 40px;
+}
+
 /* Compact Header */
 .workspace-header {
     display: flex;

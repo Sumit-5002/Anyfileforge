@@ -1,14 +1,24 @@
-import React, { useRef } from 'react';
-import { X, FileText, Download, Loader } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { X, FileText, Download, Loader, Upload } from 'lucide-react';
+import FileUploader from '../../../../components/ui/FileUploader';
 import './ToolWorkspace.css';
 
 /**
- * Unified Workspace Layout for all tools
- * Patterns: Header (file info) | Main (Grid/List) | Sidebar (Actions)
+ * Unified Workspace Layout for all tools.
+ * 
+ * TWO STATES:
+ *   1. No files → Shows the premium FileUploader (same as PDF tools).
+ *   2. Has files → Shows the Header + Main + Sidebar workspace layout.
+ * 
+ * Props:
+ *   accept       – file accept string, e.g. ".h5,.hdf5"
+ *   multiple     – allow multiple files (default false)
+ *   dropzoneLabel – label for the dropzone when no files loaded
+ *   dropzoneHint  – hint text for the dropzone
  */
 function ToolWorkspace({
     tool,
-    files,
+    files = [],
     onFilesSelected,
     onReset,
     processing,
@@ -16,8 +26,12 @@ function ToolWorkspace({
     actionLabel,
     sidebar,
     sidebarTitle = 'Settings',
-    progress = 0, // 0 to 100
-    children // This is the main grid or file list area
+    progress = 0,
+    accept,
+    multiple = false,
+    dropzoneLabel,
+    dropzoneHint,
+    children
 }) {
     const addMoreInputRef = useRef(null);
 
@@ -29,6 +43,23 @@ function ToolWorkspace({
         e.target.value = '';
     };
 
+    const hasFiles = files && files.length > 0;
+
+    // ─── STATE 1: No files yet → show the premium uploader ───
+    if (!hasFiles) {
+        return (
+            <div className="tool-workspace-root fade-in">
+                <FileUploader
+                    tool={{ ...tool, name: tool?.name || 'File' }}
+                    onFilesSelected={onFilesSelected}
+                    multiple={multiple}
+                    accept={accept || '*/*'}
+                />
+            </div>
+        );
+    }
+
+    // ─── STATE 2: Files loaded → show workspace ───
     return (
         <div className="tool-workspace-root fade-in">
             {/* Top Info Bar */}
@@ -52,10 +83,10 @@ function ToolWorkspace({
                             </button>
                             <input
                                 type="file"
-                                multiple
+                                multiple={multiple}
                                 hidden
                                 ref={addMoreInputRef}
-                                accept={tool.accept || '*/*'}
+                                accept={accept || tool?.accept || '*/*'}
                                 onChange={handleAddMore}
                                 tabIndex="-1"
                                 aria-hidden="true"
@@ -81,7 +112,6 @@ function ToolWorkspace({
 
                         {sidebar}
 
-                        {/* ── Progress Block ── shown whenever processing is true ── */}
                         {processing && (
                             <div className="workspace-progress-container mt-4 mb-2">
                                 <div className="progress-info">
@@ -103,7 +133,6 @@ function ToolWorkspace({
                                             style={{ width: `${Math.min(progress, 100)}%` }}
                                         />
                                     ) : (
-                                        /* Indeterminate sweep — server upload phase has no real % */
                                         <div className="progress-bar-indeterminate" />
                                     )}
                                 </div>
@@ -115,16 +144,18 @@ function ToolWorkspace({
                             </div>
                         )}
 
-                        <button
-                            className="btn-primary btn-full workspace-action-btn"
-                            onClick={onProcess}
-                            disabled={processing || files.length === 0}
-                        >
-                            {processing ? <Loader className="spinning" size={20} /> : <Download size={20} />}
-                            {processing
-                                ? (progress >= 100 ? 'Done!' : 'Processing…')
-                                : (actionLabel || tool.name)}
-                        </button>
+                        {onProcess && (
+                            <button
+                                className="btn-primary btn-full workspace-action-btn"
+                                onClick={onProcess}
+                                disabled={processing || files.length === 0}
+                            >
+                                {processing ? <Loader className="spinning" size={20} /> : <Download size={20} />}
+                                {processing
+                                    ? (progress >= 100 ? 'Done!' : 'Processing…')
+                                    : (actionLabel || tool?.name || 'Process')}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
