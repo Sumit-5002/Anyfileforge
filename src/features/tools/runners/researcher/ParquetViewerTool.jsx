@@ -5,28 +5,31 @@ import ToolWorkspace from '../common/ToolWorkspace';
 import { Download, Table, Info } from 'lucide-react';
 
 const ParquetViewerTool = () => {
-    const { files, addFiles } = useFileList();
+    const { files, addFiles, removeFile } = useFileList();
     const [pqData, setPqData] = useState(null);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (files.length > 0) {
-            loadFile(files[0].file);
-        } else {
+        let cancelled = false;
+        queueMicrotask(async () => {
+            if (cancelled) return;
+            if (files.length > 0) {
+                try {
+                    setError('');
+                    const data = await parseParquet(files[0].file);
+                    if (!cancelled) setPqData(data);
+                } catch (err) {
+                    if (!cancelled) setError(err.message);
+                }
+                return;
+            }
             setPqData(null);
             setError('');
-        }
+        });
+        return () => {
+            cancelled = true;
+        };
     }, [files]);
-
-    const loadFile = async (fileObj) => {
-        try {
-            setError('');
-            const data = await parseParquet(fileObj);
-            setPqData(data);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
 
     const handleExportMetadata = () => {
         if (!pqData) return;

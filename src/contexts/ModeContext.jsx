@@ -2,23 +2,26 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ModeContext = createContext();
 
+const detectStandalone = () =>
+    window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
 export const ModeProvider = ({ children }) => {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
-    const [isPwa, setIsPwa] = useState(false);
+    const [isPwa, setIsPwa] = useState(() => detectStandalone());
 
     useEffect(() => {
         const handleStatusChange = () => setIsOnline(navigator.onLine);
+        const mediaQuery = window.matchMedia('(display-mode: standalone)');
+        const handleDisplayModeChange = () => setIsPwa(detectStandalone());
+
         window.addEventListener('online', handleStatusChange);
         window.addEventListener('offline', handleStatusChange);
-
-        // Detect PWA / Installed mode
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            setIsPwa(true);
-        }
+        mediaQuery.addEventListener?.('change', handleDisplayModeChange);
 
         return () => {
             window.removeEventListener('online', handleStatusChange);
             window.removeEventListener('offline', handleStatusChange);
+            mediaQuery.removeEventListener?.('change', handleDisplayModeChange);
         };
     }, []);
 
@@ -33,4 +36,5 @@ export const ModeProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useMode = () => useContext(ModeContext);

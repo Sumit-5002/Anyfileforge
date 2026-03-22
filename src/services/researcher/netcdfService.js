@@ -29,7 +29,7 @@ export const parseNetCDF = async (buffer) => {
             variables,
             globalAttributes: reader.globalAttributes
         };
-    } catch (error) {
+    } catch {
         console.log("Not a NetCDF-3 file, attempting NetCDF-4 (HDF5) parsing...");
         
         // Attempt 2: NetCDF-4 / HDF5 (using jsfive)

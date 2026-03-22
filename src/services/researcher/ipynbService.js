@@ -14,10 +14,10 @@ export const parseIpynb = async (file) => {
         
         // If it got double-stringified (common PowerShell artifact)
         if (typeof notebook === 'string') {
-            try { notebook = JSON.parse(notebook); } catch (e) {}
+            notebook = JSON.parse(notebook);
         }
         
-    } catch (err) {
+    } catch {
         throw new Error("Invalid .ipynb file. Could not parse JSON. Is the text encoding correct?");
     }
 

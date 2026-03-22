@@ -1,5 +1,4 @@
 import { parseIpynb } from './src/services/researcher/ipynbService.js';
-import fs from 'fs';
 
 const mockFile = {
     text: async () => '{"cells":[{"cell_type":"markdown","source":["# Hello\\n","World"]}]}'

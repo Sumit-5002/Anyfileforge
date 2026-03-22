@@ -186,9 +186,6 @@ const MatViewerTool = ({ tool }) => {
     const [activeTab, setActiveTab] = useState('overview');
     const [viewMode, setViewMode] = useState('time'); // 'time' or 'freq'
 
-    const toolName = tool?.name || 'MATLAB Workspace';
-    const isMatTool = tool?.id === 'mat-viewer' || (currentFile && currentFile.endsWith('.mat'));
-
     useEffect(() => {
         const fetchFiles = async () => {
             const nextLoaded = { ...loadedMat };
@@ -325,7 +322,7 @@ const MatViewerTool = ({ tool }) => {
             layout="research"
             onReset={() => {
                 files.forEach(f => removeFile(f.id));
-                setLoadedMats({});
+                setLoadedMat({});
                 setCurrentFile(null);
                 setSelectedPath(null);
                 setSelectedVariable(null);

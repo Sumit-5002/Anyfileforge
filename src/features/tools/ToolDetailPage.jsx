@@ -70,7 +70,6 @@ function ToolDetailPage() {
 
     if (!tool || loading) return null;
 
-    const isLoggedIn = Boolean(user);
     const Runner = TOOL_RUNNERS[effectiveTool.id];
 
     const handleFilesAdded = (files) => {

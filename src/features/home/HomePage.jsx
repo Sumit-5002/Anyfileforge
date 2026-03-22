@@ -9,7 +9,6 @@ import {
 import ToolCard from '../../components/ui/ToolCard';
 import { TOOLS } from '../../data/toolsData';
 import SeoHead from '../../components/meta/SeoHead';
-import { useAuth } from '../../contexts/AuthContext';
 import './HomePage.css';
 function HomePage() {
     const { t } = useTranslation();

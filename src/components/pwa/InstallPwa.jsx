@@ -20,13 +20,20 @@ const detectIosSafari = () => {
 const InstallPwa = () => {
     const [promptInstall, setPromptInstall] = useState(() => window[DEFERRED_PROMPT_KEY] || null);
     const [isInstalled, setIsInstalled] = useState(() => (typeof window !== 'undefined' ? isStandalone() : false));
-    const [isBannerVisible, setIsBannerVisible] = useState(false);
+    const [isBannerVisible, setIsBannerVisible] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        const dismissed = window.localStorage.getItem('pwa_banner_dismissed');
+        return !isStandalone() && !dismissed;
+    });
     const [notification, setNotification] = useState(null);
     
     const isIosInstallable = detectIosSafari() && !isStandalone();
-    const canUseServiceWorker = typeof window !== 'undefined' && 'serviceWorker' in navigator;
-    const isSecure = typeof window !== 'undefined' ? window.isSecureContext : false;
     const shouldShowManualInstall = !isStandalone();
+
+    const showNotification = (msg) => {
+        setNotification(msg);
+        setTimeout(() => setNotification(null), 5000);
+    };
 
     useEffect(() => {
         const handler = (e) => {
@@ -52,22 +59,11 @@ const InstallPwa = () => {
         window.addEventListener('beforeinstallprompt', handler);
         window.addEventListener('appinstalled', onInstalled);
 
-        // Check if app is NOT installed and was not dismissed
-        const dismissed = localStorage.getItem('pwa_banner_dismissed');
-        if (!isStandalone() && !dismissed) {
-            setIsBannerVisible(true);
-        }
-
         return () => {
             window.removeEventListener('beforeinstallprompt', handler);
             window.removeEventListener('appinstalled', onInstalled);
         };
     }, []);
-
-    const showNotification = (msg) => {
-        setNotification(msg);
-        setTimeout(() => setNotification(null), 5000);
-    };
 
     const onDismiss = () => {
         setIsBannerVisible(false);

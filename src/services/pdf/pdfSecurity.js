@@ -91,7 +91,7 @@ const encryptWithQpdf = async (buffer, userPassword, ownerPassword = null) => {
             'out.pdf'
         ];
         qpdf.callMain(args);
-    } catch (e) {
+    } catch {
         console.error('QPDF Encrypt Error:', stderr.join('\n'));
         throw new Error('Unable to encrypt this PDF offline.');
     }

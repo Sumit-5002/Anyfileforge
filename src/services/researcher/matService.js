@@ -20,12 +20,12 @@ export const parseMat = async (file) => {
                     let innerPos = pos + 8;
 
                     // 1. Array Flags
-                    let flagsType = view.getUint32(innerPos, true);
+                    view.getUint32(innerPos, true);
                     let flagsBytes = view.getUint32(innerPos + 4, true);
                     innerPos += 8 + flagsBytes;
 
                     // 2. Dimensions
-                    let dimsType = view.getUint32(innerPos, true);
+                    view.getUint32(innerPos, true);
                     let dimsBytes = view.getUint32(innerPos + 4, true);
                     const shape = [];
                     for (let i = 0; i < dimsBytes / 4; i++) {
@@ -85,7 +85,7 @@ export const parseMat = async (file) => {
                 pos += 8 + bytes;
                 // Align pos to 8 bytes if needed (MAT v5 tags are 8-byte aligned)
                 if (pos % 8 !== 0) pos += (8 - (pos % 8));
-            } catch (e) {
+            } catch {
                 break;
             }
         }
@@ -109,7 +109,7 @@ export const parseMat = async (file) => {
             isHdf5: true,
             h5file
         };
-    } catch (e) {
+    } catch {
         return {
             status: "Unknown format or CORRUPTED.",
             version: 'Unknown',
