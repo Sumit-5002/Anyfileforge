@@ -4,7 +4,7 @@ import {
     RotateCw, Hash, ShieldAlert, FileClock,
     Search, FileCheck, Layers, Layout, Image,
     Maximize, Crop, RefreshCcw, Type, Smile,
-    Eraser, EyeOff, Globe, Wand2
+    Eraser, EyeOff, Globe, Wand2, FileCode, Boxes, Music, Database, Activity
 } from 'lucide-react';
 import ENGINEER_TOOLS from '../tools/engineer';
 import RESEARCHER_TOOLS from '../tools/researcher';
@@ -122,5 +122,22 @@ export const TOOLS = {
         }
     ], 'image/*'),
     engineer: applyMode(ENGINEER_TOOLS),
-    researcher: applyMode(RESEARCHER_TOOLS)
+    researcher: applyMode(RESEARCHER_TOOLS),
+    
+    // ── CONSOLIDATED UNIVERSAL ──
+    media: applyMode([
+        { category: 'Document & Ebooks', tools: [
+            { id: 'epub-to-pdf', name: 'Ebook to PDF', description: 'Convert EPUB/MOBI to printable PDF.', icon: FileText, color: '#2b5797' },
+            { id: 'markup-render', name: 'Markup Engine', description: 'Render MD/HTML to clean paper.', icon: FileCode, color: '#f59e0b' }
+        ]},
+        { category: 'Data & Matrix Tools', tools: [
+            { id: 'csv-to-excel', name: 'CSV to Excel', description: 'Transform flat data to XLSX.', icon: FileSpreadsheet, color: '#1e7145' },
+            { id: 'excel-audit', name: 'Matrix Auditor', description: 'Validate spreadsheet integrity.', icon: Database, color: '#14b8a6' }
+        ]},
+        { category: 'Audio & 3D Engineering', tools: [
+            { id: 'audio-trim', name: 'Sonic Trimmer', description: 'Cut and snip audio segments.', icon: Music, color: '#ec4899' },
+            { id: 'audio-sampler', name: 'Wave Sampler', description: 'Inspect audio metadata/bitrate.', icon: Activity, color: '#8b5cf6' },
+            { id: 'obj-viewer', name: '3D Mesh Forge', description: 'Inspect STL/OBJ spatial meshes.', icon: Boxes, color: '#3b82f6' }
+        ]}
+    ])
 };

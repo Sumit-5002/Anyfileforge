@@ -86,14 +86,46 @@
 }
 
 .ipynb-cell {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+}
+
+/* Flexbox layouts for classic Jupyter Interface */
+.ipynb-code-flex-container, .ipynb-output-flex-container {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    margin-bottom: 8px;
+    min-width: 0;
+}
+
+.ipynb-prompt {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 80px;
+    text-align: right;
+    white-space: nowrap;
+    padding-top: 10px;
+}
+
+.in-prompt {
+    color: #3b82f6; /* Blue for 'In' */
+}
+
+.out-prompt {
+    color: #ef4444; /* Red for 'Out' */
 }
 
 /* Code cells */
 .cell-code {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+}
+
+.ipynb-code-cell {
+    flex-grow: 1;
+    min-width: 0;
+    max-width: calc(100% - 95px);
 }
 
 .ipynb-code-cell pre {
@@ -101,25 +133,35 @@
     background: #f6f8fa;
     border: 1px solid #e1e4e8;
     border-radius: 6px;
-    padding: 12px;
+    padding: 10px 15px;
     overflow-x: auto;
+    max-width: 100%;
 }
 
 .ipynb-code-cell code {
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", monospace;
     font-size: 13px;
 }
 
 /* Outputs */
 .ipynb-outputs {
+    flex-grow: 1;
+    min-width: 0;
+    max-width: calc(100% - 95px);
     display: flex;
     flex-direction: column;
     gap: 8px;
+    overflow-x: auto;
+}
+
+.ipynb-outputs svg {
+    max-width: 100%;
+    height: auto;
 }
 
 .ipynb-output {
     margin: 0;
-    padding: 10px;
+    padding: 10px 15px;
     background: #ffffff;
     border: 1px solid #e1e4e8;
     border-radius: 6px;
@@ -131,7 +173,7 @@
 
 .ipynb-error {
     margin: 0;
-    padding: 10px;
+    padding: 10px 15px;
     background: #ffebe9;
     color: #cf222e;
     border: 1px solid #ff818266;
@@ -142,10 +184,18 @@
 }
 
 /* Markdown typography matching Jupyter/GitHub */
+.cell-markdown {
+    padding-left: 95px; /* Aligns smoothly with code block in flex layout */
+    padding-right: 15px;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    word-wrap: break-word;
+}
 .cell-markdown h1 { font-size: 2em; margin-bottom: 16px; font-weight: 600; line-height: 1.25; padding-bottom: 0.3em; border-bottom: 1px solid #eaecef; }
 .cell-markdown h2 { font-size: 1.5em; margin-bottom: 16px; font-weight: 600; line-height: 1.25; padding-bottom: 0.3em; border-bottom: 1px solid #eaecef; }
 .cell-markdown h3 { font-size: 1.25em; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
-.cell-markdown p { margin-top: 0; margin-bottom: 16px; }
+.cell-markdown p { margin-top: 0; margin-bottom: 16px; max-width: 100%; }
 .cell-markdown pre { background: #f6f8fa; border-radius: 6px; padding: 16px; overflow: auto; margin-bottom: 16px; }
 .cell-markdown code { padding: 0.2em 0.4em; background: rgba(27,31,35,0.05); border-radius: 3px; font-family: SFMono-Regular,Consolas,monospace; font-size: 85%; }
 .cell-markdown pre code { background: transparent; padding: 0; font-size: 100%; white-space: pre; }

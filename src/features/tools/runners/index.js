@@ -65,16 +65,17 @@ export const TOOL_RUNNERS = {
     'bibtex-manager': lazy(() => import('./text/BibtexManagerTool')),
     
     // Researcher Tools
-    // Researcher Tools
     'netcdf-viewer': lazy(() => import('./researcher/NetCdfViewerTool')),
     'fastq-viewer': lazy(() => import('./researcher/FastqViewerTool')),
     'fasta-analyzer': lazy(() => import('./researcher/FastaAnalyzerTool')),
-    'ipynb-to-pdf': lazy(() => import('./researcher/IpynbToPdfTool')),
-    'doi-to-bibtex': lazy(() => import('./researcher/DoiToBibtexTool')),
     'hdf5-viewer': lazy(() => import('./researcher/Hdf5ViewerTool')),
+    'mat-viewer': lazy(() => import('./researcher/MatViewerTool')),
     'parquet-viewer': lazy(() => import('./researcher/ParquetViewerTool')),
     'pcap-analyzer': lazy(() => import('./researcher/PcapAnalyzerTool')),
-    'mat-viewer': lazy(() => import('./researcher/MatViewerTool'))
+    
+    // Remaining Specialized Researcher Tools
+    'ipynb-to-pdf': lazy(() => import('./researcher/IpynbToPdfTool')),
+    'doi-to-bibtex': lazy(() => import('./researcher/DoiToBibtexTool'))
 };
 
 export default TOOL_RUNNERS;

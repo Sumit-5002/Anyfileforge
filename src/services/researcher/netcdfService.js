@@ -6,12 +6,20 @@ export const parseNetCDF = async (buffer) => {
     try {
         const reader = new NetCDFReader(buffer);
         const dimensions = reader.dimensions;
+        const dimNameById = new Map(
+            dimensions.map((d, idx) => [idx, d?.name ?? String(idx)])
+        );
         const variables = reader.variables.map(v => ({
             name: v.name,
-            dimensions: v.dimensions,
+            dimensions: Array.isArray(v.dimensions)
+                ? v.dimensions.map((d) => (typeof d === 'number' ? (dimNameById.get(d) ?? d) : d))
+                : [],
             type: v.type,
             size: v.size,
-            attributes: reader.getVariableAttributes(v.name)
+            // netcdfjs@4 exposes attributes directly on each variable object.
+            attributes: Array.isArray(v.attributes)
+                ? Object.fromEntries(v.attributes.map((a) => [a.name, a.value]))
+                : (v.attributes || {})
         }));
         
         return {
@@ -30,8 +38,16 @@ export const parseNetCDF = async (buffer) => {
             
             // Map HDF5 structure to a NetCDF-like structure
             const variables = [];
+            const getGroupKeys = (group) => {
+                if (!group) return [];
+                if (typeof group.keys === 'function') return group.keys();
+                if (Array.isArray(group.keys)) return group.keys;
+                if (group._links) return Object.keys(group._links);
+                return [];
+            };
             const collectVariables = (group, path = '') => {
-                for (const key of group.keys) {
+                const keys = getGroupKeys(group);
+                for (const key of keys) {
                     const item = group.get(key);
                     const itemPath = path === '/' ? `/${key}` : `${path}/${key}`;
                     

@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: anyfileforge-api
+    env: node
+    rootDir: server
+    plan: free
+    autoDeploy: true
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        sync: false
+      - key: CLIENT_URLS
+        sync: false
+      - key: MAX_FILE_SIZE
+        value: "52428800"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "100"
+      - key: FILE_RETENTION_MINUTES
+        value: "30"
+      - key: CLEANUP_INTERVAL_MS
+        value: "300000"
+      - key: JSON_BODY_LIMIT
+        value: 1mb

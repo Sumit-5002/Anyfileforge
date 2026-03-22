@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { X, FileText, Download, Loader2, Upload } from 'lucide-react';
 import FileUploader from '../../../../components/ui/FileUploader';
 import './ToolWorkspace.css';
@@ -21,6 +21,7 @@ function ToolWorkspace({
     files = [],
     onFilesSelected,
     onReset,
+    showHeaderActions = true,
     processing,
     onProcess,
     actionLabel,
@@ -29,8 +30,6 @@ function ToolWorkspace({
     progress = 0,
     accept,
     multiple = false,
-    dropzoneLabel,
-    dropzoneHint,
     layout = 'default', // 'default' or 'research'
     children
 }) {
@@ -73,7 +72,7 @@ function ToolWorkspace({
                     </span>
                 </div>
                 <div className="workspace-header-actions">
-                    {onFilesSelected && (
+                    {showHeaderActions && onFilesSelected && (
                         <>
                             <button
                                 type="button"
@@ -95,9 +94,11 @@ function ToolWorkspace({
                             />
                         </>
                     )}
-                    <button className="btn-reset-workspace" onClick={onReset} aria-label="Reset workspace">
-                        <X size={14} /> Clear
-                    </button>
+                    {showHeaderActions && onReset && (
+                        <button className="btn-reset-workspace" onClick={onReset} aria-label="Reset workspace">
+                            <X size={14} /> Clear
+                        </button>
+                    )}
                 </div>
             </div>
 

@@ -1,46 +1,58 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as hdf5 from 'jsfive';
-import { Download, FileText, ChevronRight, ChevronDown, Database, Activity, Info, Trash2, Layers, Loader2, Maximize2 } from 'lucide-react';
+import { 
+    Download, FileText, ChevronRight, ChevronDown, Database, 
+    Activity, Info, Trash2, Layers, Loader2, Maximize2,
+    FileJson, FileSpreadsheet as CSVIcon, Search, Workflow, Boxes, Network,
+    Sigma, Calculator, Code2, Compare, GitCompare
+} from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import ToolWorkspace from '../common/ToolWorkspace';
 import { useFileList } from '../../../../components/tools/shared/useFileList';
-import './Hdf5ViewerTool.css';
+import './Hdf5ViewerTool.css'; 
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const DatasetNode = ({ name, node, path, onSelect, selectedPath, level = 0 }) => {
+const DatasetNode = ({ name, node, path, onSelect, selectedPaths, level = 0 }) => {
     const isGroup = node instanceof hdf5.Group;
     const [isExpanded, setIsExpanded] = useState(level < 1);
-    const isSelected = selectedPath === path;
+    const isSelected = selectedPaths.includes(path);
+
+    let keys = [];
+    if (isGroup) {
+        if (typeof node.keys === 'function') keys = node.keys();
+        else if (Array.isArray(node.keys)) keys = node.keys;
+        else if (node._links) keys = Object.keys(node._links);
+    }
 
     return (
         <div className="tree-node-wrapper">
             <div 
                 className={`tree-node-item ${isSelected ? 'selected' : ''}`}
-                style={{ paddingLeft: `${level * 12 + 8}px` }}
+                style={{ paddingLeft: `${level * 16 + 10}px` }}
                 onClick={isGroup ? () => setIsExpanded(!isExpanded) : () => onSelect(path, node)}
             >
-                <div className={`node-chevron ${isExpanded ? 'expanded' : ''}`}>
+                <div className={`node-chevron ${isExpanded ? 'expanded' : ''}`} style={{ width: 14 }}>
                     {isGroup ? <ChevronRight size={14} /> : null}
                 </div>
                 <div className="node-type-icon">
-                    {isGroup ? <Database size={14} className="text-primary-400" /> : <Activity size={14} className="text-secondary-400" />}
+                    {isGroup ? <Boxes size={14} color="#8b5cf6" /> : <Network size={14} color="#3b82f6" />}
                 </div>
-                <div className="node-label-text">{name}</div>
+                <div className="node-label-text font-mono text-[11px] font-bold tracking-tight truncate">{name}</div>
             </div>
             {isGroup && isExpanded && (
                 <div className="node-children">
-                    {node.keys.map((key) => (
+                    {keys.map((key) => (
                         <DatasetNode 
                             key={path + key} 
                             name={key} 
                             node={node.get(key)} 
                             path={path === '/' ? `/${key}` : `${path}/${key}`} 
                             onSelect={onSelect} 
-                            selectedPath={selectedPath}
+                            selectedPaths={selectedPaths}
                             level={level + 1}
                         />
                     ))}
@@ -50,14 +62,13 @@ const DatasetNode = ({ name, node, path, onSelect, selectedPath, level = 0 }) =>
     );
 };
 
-const Hdf5ViewerTool = () => {
+const Hdf5ViewerTool = ({ tool }) => {
     const { files, addFiles, removeFile } = useFileList();
-    const [loadedFiles, setLoadedFiles] = useState({}); // { fileName: h5FileObject }
+    const [loadedFiles, setLoadedFiles] = useState({}); 
     const [currentFile, setCurrentFile] = useState(null);
-    const [selectedPath, setSelectedPath] = useState(null);
-    const [selectedDataset, setSelectedDataset] = useState(null);
+    const [selectedPaths, setSelectedPaths] = useState([]);
+    const [selectedDatasets, setSelectedDatasets] = useState([]); // Array of dataset objects
     const [isProcessing, setIsProcessing] = useState(false);
-    const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
 
     useEffect(() => {
@@ -72,15 +83,13 @@ const Hdf5ViewerTool = () => {
                         const h5 = new hdf5.File(buffer, f.file.name);
                         nextLoaded[f.file.name] = h5;
                         lastAdded = f.file.name;
-                    } catch (err) { setError(`Failed to parse ${f.file.name}: ${err.message}`); }
-                    finally { setIsProcessing(false); }
+                    } catch (err) { console.error(err); } finally { setIsProcessing(false); }
                 }
             }
             const currentFileNames = files.map(f => f.file.name);
             Object.keys(nextLoaded).forEach(name => { if (!currentFileNames.includes(name)) delete nextLoaded[name]; });
             setLoadedFiles(nextLoaded);
-            if (lastAdded) { setCurrentFile(lastAdded); setSelectedPath(null); setSelectedDataset(null); }
-            else if (currentFile && !currentFileNames.includes(currentFile)) { setCurrentFile(currentFileNames[0] || null); setSelectedPath(null);  setSelectedDataset(null); }
+            if (lastAdded) { setCurrentFile(lastAdded); setSelectedPaths([]); setSelectedDatasets([]); }
         };
         loadH5();
     }, [files]);
@@ -88,186 +97,164 @@ const Hdf5ViewerTool = () => {
     const activeH5 = currentFile ? loadedFiles[currentFile] : null;
 
     const handleSelectNode = (path, node) => {
-        setSelectedPath(path);
         if (node instanceof hdf5.Dataset) {
-            setSelectedDataset({
+            const isMulti = window.event && window.event.shiftKey;
+            const ds = {
                 name: path.split('/').pop(),
                 path,
                 shape: node.shape,
                 dtype: node.dtype,
                 data: node.value,
                 attributes: node.attrs || {}
-            });
+            };
+
+            if (isMulti) {
+                setSelectedPaths(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]);
+                setSelectedDatasets(prev => prev.some(d => d.path === path) ? prev.filter(d => d.path !== path) : [...prev, ds]);
+            } else {
+                setSelectedPaths([path]);
+                setSelectedDatasets([ds]);
+            }
             setActiveTab('overview');
-        } else { setSelectedDataset(null); }
+        } else {
+            setSelectedPaths([]);
+            setSelectedDatasets([]);
+        }
     };
 
     const previewData = useMemo(() => {
-        if (!selectedDataset || !selectedDataset.data) return [];
-        let data = selectedDataset.data;
-        if (data.length > 1000) data = data.slice(0, 1000);
-        return Array.from(data);
-    }, [selectedDataset]);
+        if (selectedDatasets.length === 0) return [];
+        return Array.from(selectedDatasets[0].data).slice(0, 1000);
+    }, [selectedDatasets]);
 
     const chartData = useMemo(() => {
-        if (!selectedDataset || !selectedDataset.data || selectedDataset.shape.length > 1) return null;
-        const data = previewData;
-        return {
-            labels: data.map((_, i) => i + 1),
-            datasets: [{
-                label: selectedDataset.name,
-                data,
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true,
+        if (selectedDatasets.length === 0) return null;
+        
+        const datasets = selectedDatasets.map((ds, idx) => {
+            const data = Array.from(ds.data).slice(0, 1000);
+            const colors = ['#8b5cf6', '#3b82f6', '#f97316', '#10b981'];
+            return {
+                label: ds.name,
+                data: data.map(v => typeof v === 'number' ? v : 0),
+                borderColor: colors[idx % colors.length],
+                backgroundColor: `${colors[idx % colors.length]}11`,
+                fill: selectedDatasets.length === 1,
                 tension: 0.1,
                 pointRadius: 0
-            }]
+            };
+        });
+
+        const maxPoints = Math.max(...selectedDatasets.map(ds => Math.min(ds.data.length, 1000)));
+
+        return {
+            labels: Array.from({ length: maxPoints }, (_, i) => i + 1),
+            datasets
         };
-    }, [selectedDataset, previewData]);
+    }, [selectedDatasets]);
+
+    const stats = useMemo(() => {
+        if (selectedDatasets.length === 0 || typeof selectedDatasets[0].data[0] !== 'number') return null;
+        const data = selectedDatasets[0].data;
+        const n = data.length;
+        if (n === 0) return null;
+        let sum = 0, min = data[0], max = data[0];
+        for (let v of data) { sum += v; if (v < min) min = v; if (v > max) max = v; }
+        return { mean: sum/n, min, max, count: n };
+    }, [selectedDatasets]);
 
     return (
         <ToolWorkspace
-            tool={{ name: 'HDF5 Scientific Viewer' }}
+            tool={tool}
             files={files.map(f => f.file)}
             onFilesSelected={addFiles}
             accept=".h5,.hdf5"
             multiple={true}
             layout="research"
-            onReset={() => { setLoadedFiles({}); setCurrentFile(null); setSelectedDataset(null); }}
+            sidebarTitle="HDF5 Voyager"
+            onReset={() => {
+                files.forEach(f => removeFile(f.id));
+                setLoadedFiles({});
+                setCurrentFile(null);
+                setSelectedPaths([]);
+                setSelectedDatasets([]);
+            }}
             sidebar={
-                <div className="sidebar-info researcher-tool-container">
+                <div className="sidebar-info researcher-tool-container h-full flex flex-col">
                     <div className="explorer-section">
-                        <div className="section-header"><Layers size={14}/> OPENED FILES</div>
+                        <div className="section-header"><Layers size={14}/> LOADED ARCHIVES</div>
                         <div className="file-tabs-list">
                             {files.map(f => (
-                                <div key={f.file.name} 
-                                     className={`file-item-tab ${currentFile === f.file.name ? 'active' : ''}`}
-                                     onClick={() => { setCurrentFile(f.file.name); setSelectedPath(null); setSelectedDataset(null); }}
-                                >
-                                    <span className="file-name">{f.file.name}</span>
-                                    <button className="p-1 opacity-40 hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}>
-                                        <Trash2 size={12}/>
-                                    </button>
+                                <div key={f.file.name} className={`file-item-tab ${currentFile === f.file.name ? 'active' : ''}`} onClick={() => { setCurrentFile(f.file.name); setSelectedPaths([]); setSelectedDatasets([]); }}>
+                                    <div className="flex items-center gap-2 overflow-hidden"><Database size={13} className={currentFile === f.file.name ? 'text-primary-400' : 'text-slate-500'} /><span className="file-name font-mono text-[11px] font-bold">{f.file.name}</span></div>
+                                    <button className="btn-remove-ocean" style={{opacity:0.6}} onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}><Trash2 size={12}/></button>
                                 </div>
                             ))}
                         </div>
                     </div>
-
-                    {isProcessing && (
-                        <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl d-flex align-items-center gap-2">
-                             <Loader2 size={14} className="spinning text-primary"/>
-                             <span className="text-xs font-bold uppercase tracking-widest text-primary">Parsing HDF5...</span>
-                        </div>
-                    )}
-
+                    {isProcessing && (<div className="ocean-loading-badge" style={{borderColor: 'rgba(139, 92, 246, 0.4)', color: '#a78bfa'}}><Loader2 size={14} className="spinning"/><span className="text-[10px] uppercase font-bold text-primary-400">Parsing...</span></div>)}
                     {activeH5 && (
-                        <div className="explorer-section flex-grow overflow-hidden d-flex flex-column">
-                            <div className="section-header"><Database size={14}/> BROWSER</div>
-                            <div className="tree-explorer flex-grow overflow-auto scroll-premium">
-                                <DatasetNode 
-                                    name={currentFile} 
-                                    node={activeH5.root} 
-                                    path="/" 
-                                    onSelect={handleSelectNode} 
-                                    selectedPath={selectedPath}
-                                />
+                        <div className="explorer-section flex-grow overflow-hidden flex flex-col">
+                            <div className="section-header flex justify-between"><span><Search size={14}/> BROWSER</span><span className="text-[9px] opacity-40">Shift/Double for Multi</span></div>
+                            <div className="tree-explorer flex-grow overflow-auto scroll-premium pr-1">
+                                <DatasetNode name="root" node={activeH5.root} path="/" onSelect={handleSelectNode} selectedPaths={selectedPaths} />
                             </div>
                         </div>
                     )}
                 </div>
             }
         >
-            <div className="researcher-tool-container h-full">
+            <div className="researcher-tool-container h-full p-4 pb-8 overflow-hidden">
                 {!currentFile ? (
-                    <div className="empty-state text-center p-12">
-                        <Database size={64} className="opacity-10 mx-auto mb-6"/>
-                        <h2 className="mb-2">HDF5 Explorer</h2>
-                        <p className="text-muted">Import binary datasets for high-performance visual analysis.</p>
-                    </div>
-                ) : !selectedDataset ? (
-                    <div className="empty-state text-center p-12">
-                        <Maximize2 size={48} className="opacity-10 mx-auto mb-4"/>
-                        <p>Select a <b>dataset</b> from the explorer to begin inspection.</p>
-                    </div>
+                    <div className="empty-state text-center p-12"><Database size={64} className="opacity-10 mx-auto mb-6 text-primary-500"/><h2 className="mb-2 font-mono">HDF5 Scientific <span className="text-secondary-400">Voyager</span></h2><p className="text-muted text-sm max-w-sm mx-auto">Explore high-dimensional hierarchical data structures with system-level speed and precision.</p></div>
+                ) : selectedDatasets.length === 0 ? (
+                    <div className="empty-state text-center p-12"><Maximize2 size={48} className="opacity-10 mx-auto mb-4 text-primary-400"/><p className="font-mono text-sm opacity-60">Archive <b>{currentFile}</b> mounted. Select dataset(s).</p></div>
                 ) : (
-                    <div className="dataset-panel h-full d-flex flex-column">
+                    <div className="dataset-panel h-full flex flex-col fade-in overflow-hidden gap-2">
                         <div className="dataset-header mb-6">
-                            <div className="d-flex align-items-center justify-content-between mb-4">
-                                <div className="breadcrumb-nav">
-                                    <span className="breadcrumb-part">{currentFile}</span>
-                                    <span className="opacity-30">/</span>
-                                    <span className="breadcrumb-part">{selectedDataset.path}</span>
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="breadcrumb-nav"><span className="breadcrumb-part font-mono text-[10px]">{currentFile}</span><span className="opacity-30">/</span><span className="breadcrumb-part font-mono text-[10px] text-primary-400">{selectedDatasets[0].path}</span>{selectedDatasets.length > 1 && <span className="text-secondary-400 font-bold ml-2"> (+{selectedDatasets.length-1} Comparative)</span>}</div>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => {}} className="btn btn-secondary p-2"><CSVIcon size={14}/></button>
+                                    <button onClick={() => {}} className="btn btn-secondary p-2"><FileJson size={14}/></button>
+                                    <span className="badge-pill bg-primary/10 text-primary border border-primary/20 font-mono text-[10px]">HDF-Binary</span>
                                 </div>
-                                <span className="badge-pill bg-primary/10 text-primary border border-primary/20">{selectedDataset.dtype}</span>
                             </div>
-                            
                             <div className="custom-tabs">
-                                <button className={`tab-pill ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><Activity size={14}/> Analysis</button>
-                                <button className={`tab-pill ${activeTab === 'metadata' ? 'active' : ''}`} onClick={() => setActiveTab('metadata')}><Info size={14}/> Metadata</button>
+                                <button className={`tab-pill ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><Activity size={14}/> Dual Plot</button>
+                                <button className={`tab-pill ${activeTab === 'analysis' ? 'active' : ''}`} onClick={() => setActiveTab('analysis')}><Calculator size={14}/> Stats</button>
+                                <button className={`tab-pill ${activeTab === 'metadata' ? 'active' : ''}`} onClick={() => setActiveTab('metadata')}><Info size={14}/> Meta</button>
                             </div>
                         </div>
-
-                        <div className="tab-content flex-grow overflow-auto scroll-premium">
-                            {activeTab === 'overview' && (
-                                <div className="overview-tab d-flex flex-column gap-6">
+                        <div className="tab-content flex-grow overflow-y-auto scroll-premium pr-2 pb-6">
+                             {activeTab === 'overview' && (
+                                <div className="overview-tab flex flex-col gap-6 p-1">
                                     <div className="overview-grid">
-                                        <div className="overview-card">
-                                            <div className="card-label">Shape</div>
-                                            <div className="card-value font-mono">[{selectedDataset.shape.join(', ')}]</div>
-                                        </div>
-                                        <div className="overview-card">
-                                            <div className="card-label">Data Type</div>
-                                            <div className="card-value uppercase">{selectedDataset.dtype}</div>
-                                        </div>
+                                        {selectedDatasets.slice(0, 2).map((ds, idx) => (
+                                            <div key={idx} className="overview-card"><div className="card-label">{idx === 0 ? 'Primary' : 'Secondary'} Dataset</div><div className="card-value font-mono text-primary-400">{ds.name} [{ds.shape.join(',')}]</div></div>
+                                        ))}
                                     </div>
-
-                                    {chartData ? (
-                                        <div className="chart-wrapper bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
-                                            <div className="h-64">
-                                                <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="p-6 bg-primary/5 border border-primary/20 rounded-xl text-sm">
-                                            Visualizing {selectedDataset.shape.length}-dimensional data. Heatmap slice visualization active for NxD arrays.
-                                        </div>
-                                    )}
-
-                                    <div className="data-preview">
-                                         <div className="card-label mb-3">Raw Values (First 1000)</div>
-                                         <div className="table-container bg-black/30 rounded-xl overflow-hidden border border-white/5">
-                                            <table className="w-full text-xs font-mono">
-                                                <thead className="bg-white/5 text-muted uppercase tracking-tighter border-b border-white/10">
-                                                    <tr><th className="p-3 text-left">POS</th><th className="p-3 text-left">VALUE</th></tr>
-                                                </thead>
+                                    <div className="chart-wrapper bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
+                                        <div className="h-64"><Line data={chartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: selectedDatasets.length > 1, labels: { color: 'rgba(255,255,255,0.4)', boxWidth: 10 } } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: 'rgba(255,255,255,0.3)' } }, y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: 'rgba(255,255,255,0.3)' } } } }} /></div>
+                                    </div>
+                                    <div className="data-preview mt-4">
+                                         <div className="card-label mb-3 ml-2 text-primary-400 font-bold uppercase tracking-widest text-[9px]">Comparative Buffer Analysis</div>
+                                         <div className="table-container bg-black/40 rounded-xl overflow-hidden border border-white/5">
+                                            <table className="w-full text-[11px] font-mono">
+                                                <thead className="bg-white/5 text-muted border-b border-white/10"><tr><th className="p-3 text-left">pos</th>{selectedDatasets.map(ds => <th key={ds.path} className="p-3 text-left">{ds.name}</th>)}</tr></thead>
                                                 <tbody className="divide-y divide-white/5">
                                                     {previewData.slice(0, 50).map((v, i) => (
-                                                        <tr key={i}><td className="p-2 px-3 text-muted">{i}</td><td className="p-2 px-3 text-primary-300 font-bold">{v}</td></tr>
+                                                        <tr key={i} className="hover:bg-white/5"><td className="p-2 px-3 text-muted">{i}</td>{selectedDatasets.map(ds => <td key={ds.path} className="p-2 px-3 text-primary-300">{(ds.data[i] !== undefined ? (typeof ds.data[i] === 'number' ? ds.data[i].toFixed(4) : String(ds.data[i])) : '-')}</td>)}</tr>
                                                     ))}
                                                 </tbody>
                                             </table>
-                                            {previewData.length > 50 && <div className="p-2 text-center text-xs opacity-40">... and {previewData.length - 50} more items ...</div>}
                                          </div>
                                     </div>
                                 </div>
-                            )}
-
-                            {activeTab === 'metadata' && (
-                                <div className="metadata-tab d-flex flex-column gap-6">
-                                    <div className="attributes-table bg-black/20 rounded-xl border border-white/5">
-                                        <table className="w-full text-sm">
-                                            <thead className="bg-white/5 text-muted uppercase text-xs"><tr><th className="p-3 text-left">Attribute</th><th className="p-3 text-left">Value</th></tr></thead>
-                                            <tbody className="divide-y divide-white/5">
-                                                {Object.entries(selectedDataset.attributes).map(([k, v]) => (
-                                                    <tr key={k}><td className="p-3 font-bold text-primary-300">{k}</td><td className="p-3 font-mono">{String(v)}</td></tr>
-                                                ))}
-                                                {Object.keys(selectedDataset.attributes).length === 0 && <tr><td colSpan="2" className="p-6 text-center text-muted">No attributes found.</td></tr>}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
+                             )}
+                             {activeTab === 'analysis' && (<div className="analysis-tab p-1 fade-in">
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-primary-400 mb-6 flex items-center gap-2"><Calculator size={14}/> Mathematical Synthesis</h3>
+                                {stats ? (<div className="stats-grid grid grid-cols-2 gap-4"><div className="stat-box bg-black/40 p-6 rounded-2xl border border-white/5"><div className="card-label">Primary Mean</div><div className="text-2xl font-mono text-primary-300">{stats.mean.toFixed(8)}</div></div><div className="stat-box bg-black/40 p-6 rounded-2xl border border-white/5"><div className="card-label">Primary Peak</div><div className="text-2xl font-mono text-primary-300">{stats.max.toFixed(4)}</div></div></div>) : <div className="p-12 text-center opacity-40 font-mono">Select numeric nodes to synthesize.</div>}
+                             </div>)}
                         </div>
                     </div>
                 )}

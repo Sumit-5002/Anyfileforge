@@ -8,7 +8,9 @@
   <meta name="description"
     content="AnyFileForge - Free, open-source cross-platform file sharing and processing system for engineers and researchers" />
   <meta name="keywords" content="file sharing, PDF tools, file conversion, open source, privacy-focused" />
-  <meta name="theme-color" content="#6366f1" />
+  <meta name="theme-color" content="#020617" />
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icon-192.png">
   <title>AnyFileForge - Free File Processing & Sharing Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,6 +22,13 @@
         lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
       }
     })();
+  </script>
+  <script>
+    // Capture PWA install prompt as early as possible
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window['__anyfileforgeDeferredInstallPrompt'] = e;
+    });
   </script>
 </head>
 

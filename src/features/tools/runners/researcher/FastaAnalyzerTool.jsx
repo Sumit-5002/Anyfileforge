@@ -10,9 +10,9 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import FileDropzone from '../../../../components/tools/shared/FileDropzone';
 import { useFileList } from '../../../../components/tools/shared/useFileList';
 import { parseFASTAStream } from '../../../../services/researcher/fastaService';
+import ToolWorkspace from '../common/ToolWorkspace';
 import './FastaAnalyzerTool.css'; // Will reuse similar classes
 
 ChartJS.register(
@@ -24,8 +24,8 @@ ChartJS.register(
   Legend
 );
 
-const FastaAnalyzerTool = () => {
-    const { files, addFiles } = useFileList();
+const FastaAnalyzerTool = ({ tool, onFilesAdded }) => {
+    const { files, addFiles, removeFile } = useFileList();
     const [stats, setStats] = useState(null);
     const [progress, setProgress] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -57,6 +57,11 @@ const FastaAnalyzerTool = () => {
             setIsProcessing(false);
             setProgress(100);
         }
+    };
+
+    const handleFilesSelected = (newFiles) => {
+        addFiles(newFiles);
+        if (typeof onFilesAdded === 'function') onFilesAdded(newFiles);
     };
 
     const handleExportData = (format) => {
@@ -120,22 +125,31 @@ const FastaAnalyzerTool = () => {
     };
 
     return (
-        <div className="custom-tool-wrapper fade-in" style={{ height: '100%' }}>
-            <div className="fasta-workspace">
+        <ToolWorkspace
+            tool={tool || { name: 'FASTA Analyzer' }}
+            files={files.map((f) => f.file)}
+            onFilesSelected={handleFilesSelected}
+            accept=".fasta,.fa,.fna"
+            multiple={false}
+            layout="research"
+            sidebarTitle="FASTA Analyzer"
+            sidebar={
                 <div className="fasta-sidebar">
-                    <h3>Input File</h3>
-                    <FileDropzone
-                        onFilesDrop={addFiles}
-                        accept=".fasta,.fa,.fna"
-                        multiple={false}
-                        maxSize={2048 * 1024 * 1024} // up to 2GB!
-                    />
-
-                    {error && (
-                        <div className="error-message">
-                            {error}
+                    {files[0] && (
+                        <div className="stat-card d-flex align-items-center justify-content-between">
+                            <div className="d-flex flex-column" style={{ minWidth: 0 }}>
+                                <span className="stat-label">Loaded File</span>
+                                <span className="stat-value" style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {files[0].file.name}
+                                </span>
+                            </div>
+                            <button className="btn-remove-ocean" onClick={() => removeFile(files[0].id)} aria-label="Remove file">
+                                ×
+                            </button>
                         </div>
                     )}
+
+                    {error && <div className="error-message">{error}</div>}
 
                     {isProcessing && (
                         <div className="processing-indicator">
@@ -161,7 +175,6 @@ const FastaAnalyzerTool = () => {
                                 <span className="stat-label">GC Content</span>
                                 <span className="stat-value">{stats.gcContent.toFixed(2)}%</span>
                             </div>
-                            
                             <div className="export-actions" style={{ marginTop: '20px' }}>
                                 <h4>Export Report</h4>
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
@@ -176,35 +189,34 @@ const FastaAnalyzerTool = () => {
                         </div>
                     )}
                 </div>
-                
-                <div className="fasta-main">
-                    {!stats && !isProcessing && (
-                        <div className="empty-state">
-                            <p>Upload a .fasta, .fa, or .fna file to generate analysis.</p>
+            }
+        >
+            <div className="fasta-main" style={{ height: '100%' }}>
+                {!stats && !isProcessing && (
+                    <div className="empty-state">
+                        <p>Upload a .fasta, .fa, or .fna file to generate analysis.</p>
+                    </div>
+                )}
+                {stats && !isProcessing && (
+                    <div className="visualization-container">
+                        <div className="chart-wrapper">
+                            <Bar
+                                data={getLengthChartData()}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: { title: { display: true, text: 'Sequence Length Distribution' } },
+                                    scales: {
+                                        y: { beginAtZero: true, title: { display: true, text: 'Count' } },
+                                        x: { title: { display: true, text: 'Sequence Length (bp)' } }
+                                    }
+                                }}
+                            />
                         </div>
-                    )}
-                    
-                    {stats && !isProcessing && (
-                        <div className="visualization-container">
-                            <div className="chart-wrapper">
-                                <Bar 
-                                    data={getLengthChartData()}
-                                    options={{
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        plugins: { title: { display: true, text: 'Sequence Length Distribution' } },
-                                        scales: {
-                                            y: { beginAtZero: true, title: { display: true, text: 'Count' } },
-                                            x: { title: { display: true, text: 'Sequence Length (bp)' } }
-                                        }
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
-        </div>
+        </ToolWorkspace>
     );
 };
 

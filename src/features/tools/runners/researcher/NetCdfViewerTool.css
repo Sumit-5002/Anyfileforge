@@ -1,50 +1,251 @@
-/* ── NetCDF Scientific Viewer Styles ── */
+/* NetCDF Panoply-style Browser UI (scoped) */
 .netcdf-viewer-container {
     width: 100%;
-}
-
-.netcdf-viewer-container .dataset-panel {
-    background: rgba(12, 74, 110, 0.15); /* Deep Sea Blue */
-    border: 1px solid rgba(14, 165, 233, 0.2);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-}
-
-.netcdf-viewer-container .dataset-header {
-    border-bottom: 1px solid rgba(14, 165, 233, 0.15);
-    padding-bottom: 20px;
-}
-
-.netcdf-viewer-container .tab-pill.active {
-    background: #0ea5e9;
-    color: white;
-    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
-}
-
-/* Sidebar Explorer - Ocean Theme */
-.netcdf-ocean-explorer {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
     height: 100%;
-    padding: 10px;
+    min-width: 0;
 }
 
-.ocean-section {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(14, 165, 233, 0.1);
+.netcdf-viewer-container .nc-dataset-panel {
+    background: linear-gradient(180deg, rgba(8, 23, 42, 0.95), rgba(5, 16, 30, 0.96));
+    border: 1px solid rgba(96, 165, 250, 0.2);
     border-radius: 12px;
+    padding: 24px;
+    min-width: 0;
+    margin-bottom: 24px;
+}
+
+.netcdf-viewer-container .nc-dataset-header {
+    border: 1px solid rgba(71, 85, 105, 0.55);
+    background: rgba(15, 23, 42, 0.72);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 12px;
+}
+
+.pan-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.45);
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+}
+
+.pan-toolbar-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    color: #93c5fd;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.netcdf-viewer-container .nc-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+    margin-right: 12px;
+}
+
+.netcdf-viewer-container .nc-breadcrumb-part {
+    display: inline-block;
+    max-width: 42%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(71, 85, 105, 0.8);
+    color: #cbd5e1;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.netcdf-viewer-container .nc-breadcrumb-active {
+    color: #bfdbfe;
+    border-color: rgba(96, 165, 250, 0.65);
+}
+
+.netcdf-viewer-container .nc-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.netcdf-viewer-container .nc-tab-pill {
+    background: #0b1220;
+    border: 1px solid rgba(71, 85, 105, 0.8);
+    color: rgba(226, 232, 240, 0.85);
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.netcdf-viewer-container .nc-tab-pill:hover {
+    border-color: rgba(96, 165, 250, 0.9);
+}
+
+.netcdf-viewer-container .nc-tab-pill.active {
+    background: linear-gradient(180deg, #0ea5e9, #0284c7);
+    color: #ffffff;
+    border-color: #38bdf8;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.netcdf-viewer-container .nc-tab-content {
+    min-width: 0;
+}
+
+.netcdf-viewer-container .nc-visual-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.nc-plot-panel {
+    flex: 1 1 400px;
+    min-width: 0;
+}
+
+.netcdf-viewer-container .nc-overview-grid {
+    flex: 1 1 250px;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Default to 2 columns on wrap */
+    gap: 12px;
+    min-width: 0;
+}
+
+@media (max-width: 768px) {
+    .netcdf-viewer-container .nc-overview-grid {
+        grid-template-columns: 1fr; 
+    }
+}
+
+.netcdf-viewer-container .nc-overview-card {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(71, 85, 105, 0.75);
+    border-radius: 6px;
+    padding: 10px;
+    min-width: 0;
+}
+
+.netcdf-viewer-container .nc-card-label {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(147, 197, 253, 0.9);
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+
+.netcdf-viewer-container .nc-card-value {
+    font-size: 1rem;
+    color: #e2e8f0;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ocean-chart-box {
+    background: linear-gradient(180deg, rgba(7, 19, 35, 0.95), rgba(2, 10, 23, 0.95));
+    border: 1px solid rgba(71, 85, 105, 0.75);
+    border-radius: 6px;
+    min-width: 0;
     padding: 12px;
 }
 
+.netcdf-viewer-container .nc-chart-frame {
+    min-width: 0;
+}
+
+.netcdf-viewer-container .nc-data-preview {
+    border: 1px solid rgba(71, 85, 105, 0.6);
+    border-radius: 8px;
+    padding: 8px;
+    background: rgba(2, 6, 23, 0.7);
+}
+
+.netcdf-viewer-container .nc-table-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.netcdf-viewer-container .nc-table-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.netcdf-viewer-container .nc-table-container thead {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+}
+
+.netcdf-viewer-container .nc-table-container th,
+.netcdf-viewer-container .nc-table-container td {
+    padding: 8px 10px;
+}
+
+.netcdf-viewer-container .nc-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.netcdf-viewer-container .nc-stat-box {
+    border-radius: 6px;
+    min-width: 0;
+}
+
+.netcdf-viewer-container .nc-attributes-table {
+    min-width: 0;
+    border-radius: 8px;
+}
+
+.netcdf-viewer-container .nc-attributes-table td,
+.netcdf-viewer-container .nc-attributes-table th {
+    word-break: break-word;
+}
+
+/* Sidebar (browser list) */
+.netcdf-ocean-explorer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    padding: 6px;
+    min-width: 0;
+}
+
+.ocean-section {
+    background: rgba(2, 6, 23, 0.74);
+    border: 1px solid rgba(71, 85, 105, 0.7);
+    border-radius: 8px;
+    padding: 10px;
+    min-width: 0;
+}
+
 .ocean-title {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    color: #0ea5e9;
-    margin-bottom: 12px;
+    letter-spacing: 1.8px;
+    color: #38bdf8;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -54,24 +255,167 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.03);
+    gap: 8px;
+    padding: 7px 8px;
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid rgba(71, 85, 105, 0.5);
     border-radius: 6px;
     cursor: pointer;
-    margin-bottom: 4px;
-    transition: all 0.2s;
+    margin-bottom: 6px;
+    transition: all 0.15s ease;
+    min-width: 0;
+}
+
+.ocean-var-main {
+    min-width: 0;
+    flex: 1;
+}
+
+.ocean-var-name {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.ocean-var-meta {
+    display: block;
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.2;
 }
 
 .ocean-var-card:hover {
-    background: rgba(14, 165, 233, 0.05);
-    border-color: rgba(14, 165, 233, 0.2);
+    border-color: rgba(96, 165, 250, 0.8);
 }
 
 .ocean-var-card.active {
-    background: rgba(14, 165, 233, 0.12);
-    border-color: rgba(14, 165, 233, 0.4);
-    color: #7dd3fc;
+    background: rgba(2, 132, 199, 0.2);
+    border-color: rgba(56, 189, 248, 0.9);
+    color: #e0f2fe;
+}
+
+.ocean-var-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(71, 85, 105, 0.75);
+    background: rgba(15, 23, 42, 0.7);
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+}
+
+.ocean-var-search input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e2e8f0;
+    font-size: 12px;
+}
+
+.ocean-var-search input::placeholder {
+    color: rgba(148, 163, 184, 0.8);
+}
+
+.ocean-var-count {
+    font-size: 10px;
+    font-weight: 700;
+    color: #bae6fd;
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    background: rgba(2, 132, 199, 0.2);
+    border-radius: 999px;
+    padding: 1px 7px;
+}
+
+.ocean-var-empty {
+    font-size: 11px;
+    color: rgba(148, 163, 184, 0.9);
+    padding: 10px 6px;
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+}
+
+.ocean-var-manager {
+    min-width: 0;
+}
+
+.nc-var-list-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 74px;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.95);
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.5);
+    margin-bottom: 6px;
+}
+
+.nc-var-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 74px;
+    gap: 8px;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(71, 85, 105, 0.45);
+    border-radius: 6px;
+    color: #cbd5e1;
+    text-align: left;
+    padding: 7px 8px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 11px;
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+}
+
+.nc-var-item:hover {
+    border-color: rgba(96, 165, 250, 0.85);
+}
+
+.nc-var-item.active {
+    border-color: rgba(56, 189, 248, 0.95);
+    background: rgba(2, 132, 199, 0.24);
+    color: #e0f2fe;
+}
+
+.nc-var-item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.nc-var-item-name,
+.nc-var-item-dims,
+.nc-var-item-type {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nc-var-item-name {
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.nc-var-item-dims {
+    font-size: 10px;
+    color: rgba(148, 163, 184, 0.95);
+}
+
+.nc-var-item-type {
+    align-self: center;
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #93c5fd;
+    max-width: 100%;
 }
 
 .btn-remove-ocean {
@@ -83,36 +427,93 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition-smooth);
-    opacity: 0.3;
+    transition: all 0.2s ease;
+    opacity: 0.35;
+    flex-shrink: 0;
 }
 
 .btn-remove-ocean:hover {
-    background: rgba(14, 165, 233, 0.15);
-    color: #0ea5e9;
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
     opacity: 1;
 }
 
 .ocean-loading-badge {
-    padding: 12px 16px;
-    background: rgba(14, 165, 233, 0.08);
-    border: 1px solid rgba(14, 165, 233, 0.25);
-    border-radius: 12px;
+    padding: 8px 10px;
+    background: rgba(2, 132, 199, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 8px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin: 12px;
-    color: #0ea5e9;
+    gap: 8px;
+    margin: 2px 0;
+    color: #7dd3fc;
     font-weight: 700;
-    font-size: 0.75rem;
-    letter-spacing: 1px;
+    font-size: 0.7rem;
+    letter-spacing: 0.8px;
 }
 
-/* Visualization Overlay */
-.ocean-chart-box {
-    background: #082f49;
-    padding: 24px;
-    border-radius: 20px;
-    border: 1px solid rgba(14, 165, 233, 0.1);
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+.ocean-export-section {
+    margin-top: auto;
+}
+
+.ocean-export-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+}
+
+.ocean-export-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    background: linear-gradient(135deg, rgba(8, 23, 42, 0.9), rgba(15, 23, 42, 0.8));
+    color: #bae6fd;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.ocean-export-btn:hover {
+    border-color: rgba(56, 189, 248, 0.8);
+    color: #ffffff;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(2, 132, 199, 0.3));
+    box-shadow: 0 6px 16px rgba(14, 165, 233, 0.2);
+    transform: translateY(-2px);
+}
+
+.nc-plot-empty {
+    padding: 20px;
+    border: 1px solid rgba(71, 85, 105, 0.75);
+    border-radius: 6px;
+    background: rgba(2, 6, 23, 0.7);
+    text-align: center;
+}
+
+@media (max-width: 1400px) {
+    .ocean-export-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1100px) {
+    .netcdf-viewer-container .nc-visual-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .netcdf-viewer-container .nc-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .netcdf-viewer-container .nc-breadcrumb-part {
+        max-width: 38%;
+    }
 }

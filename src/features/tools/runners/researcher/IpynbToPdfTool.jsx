@@ -8,8 +8,8 @@ import { jsPDF } from 'jspdf';
 import 'highlight.js/styles/github.css';
 import './IpynbToPdfTool.css';
 
-const IpynbToPdfTool = () => {
-    const { files, addFiles } = useFileList();
+const IpynbToPdfTool = ({ tool }) => {
+    const { files, addFiles, removeFile } = useFileList();
     const [notebookData, setNotebookData] = useState(null);
     const [isExporting, setIsExporting] = useState(false);
     const [error, setError] = useState('');
@@ -35,38 +35,44 @@ const IpynbToPdfTool = () => {
     };
 
     const handleExportPdf = async () => {
-        if (!previewRef.current || !notebookData) return;
+        if (!previewRef.current || !notebookData || files.length === 0) return;
         setIsExporting(true);
         setError('');
 
         try {
-            await new Promise(r => setTimeout(r, 100));
+            // Ensure the DOM has fully rendered the notebook cells
+            await new Promise(r => setTimeout(r, 300));
+            
             const canvas = await html2canvas(previewRef.current, {
-                scale: 2,
+                scale: 1.5, // Reduced scale for better memory management on large notebooks
                 useCORS: true,
                 logging: false,
-                windowWidth: previewRef.current.scrollWidth
+                backgroundColor: '#ffffff' // Ensure background is white for PDF
             });
+            
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight();
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-            const ratio = imgWidth / pdfWidth;
-            const scaledHeight = imgHeight / ratio;
+            const ratio = canvas.width / pdfWidth;
+            const scaledHeight = canvas.height / ratio;
+            
             let heightLeft = scaledHeight;
             let position = 0;
+            
             pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, scaledHeight);
             heightLeft -= pdfHeight;
+            
             while (heightLeft > 0) {
-                position = heightLeft - scaledHeight;
+                position -= pdfHeight;
                 pdf.addPage();
                 pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, scaledHeight);
                 heightLeft -= pdfHeight;
             }
+            
             pdf.save(`${files[0].file.name.replace('.ipynb', '')}.pdf`);
         } catch (err) {
+            console.error(err);
             setError('Failed to generate PDF: ' + err.message);
         } finally {
             setIsExporting(false);
@@ -75,13 +81,18 @@ const IpynbToPdfTool = () => {
 
     return (
         <ToolWorkspace
-            tool={{ name: 'IPYNB to PDF' }}
+            tool={tool}
             files={files.map(f => f.file)}
             onFilesSelected={addFiles}
             accept=".ipynb"
+            multiple={false}
             dropzoneLabel="Drop your .ipynb notebook here"
             dropzoneHint="Convert Jupyter Notebooks to high-quality PDF"
-            onReset={() => { setParsedCells(null); setError(''); }}
+            onReset={() => { 
+                files.forEach(f => removeFile(f.id));
+                setNotebookData(null); 
+                setError(''); 
+            }}
             sidebar={
                 <div className="sidebar-info">
                     {notebookData && (
@@ -107,10 +118,37 @@ const IpynbToPdfTool = () => {
                                 className={`btn-primary w-full mt-3 ${isExporting ? 'opacity-75 cursor-not-allowed' : ''}`}
                                 onClick={handleExportPdf}
                                 disabled={isExporting}
-                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    gap: '10px',
+                                    padding: '14px',
+                                    fontSize: '1.05rem',
+                                    fontWeight: '700',
+                                    letterSpacing: '0.5px',
+                                    borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%)',
+                                    boxShadow: '0 8px 20px rgba(var(--primary-rgb), 0.3)',
+                                    border: 'none',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    textTransform: 'uppercase'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if(!isExporting) {
+                                        e.currentTarget.style.transform = 'translateY(-3px)';
+                                        e.currentTarget.style.boxShadow = '0 12px 25px rgba(var(--primary-rgb), 0.4)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if(!isExporting) {
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.boxShadow = '0 8px 20px rgba(var(--primary-rgb), 0.3)';
+                                    }
+                                }}
                             >
-                                {isExporting ? <Loader2 size={18} className="spin" /> : <Download size={18} />}
-                                {isExporting ? 'Generating...' : 'Download PDF'}
+                                {isExporting ? <Loader2 size={24} className="spin" /> : <Download size={22} />}
+                                {isExporting ? 'Compiling PDF...' : 'Download PDF'}
                             </button>
                         </div>
                     )}
@@ -118,7 +156,7 @@ const IpynbToPdfTool = () => {
                 </div>
             }
         >
-            <div className="ipynb-main" style={{ minHeight: '600px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '16px' }}>
+            <div className="ipynb-main" style={{ minHeight: '600px', background: 'rgba(var(--bg-base-rgb), 0.5)', borderRadius: '12px', padding: '16px' }}>
                 {!notebookData ? (
                     <div className="text-center p-8">
                         <FileCode size={64} style={{ opacity: 0.1, margin: '0 auto 16px' }} />
@@ -127,7 +165,7 @@ const IpynbToPdfTool = () => {
                     </div>
                 ) : (
                     <div className="preview-container">
-                        <div className="preview-document" ref={previewRef} style={{ background: 'var(--bg-surface)', padding: '40px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div className="preview-document" ref={previewRef}>
                             {notebookData.cells.map((cell, idx) => (
                                 <div 
                                     key={idx} 

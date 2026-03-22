@@ -10,35 +10,7 @@ import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import serverProcessingService from '../../services/serverProcessingService';
 import './ToolDetailPage.css';
 
-const AccessModal = ({ isOpen, onClose, onConfirm, error }) => {
-    const [key, setKey] = React.useState("");
-    if (!isOpen) return null;
-    return (
-        <div className="access-modal-overlay fade-in">
-            <div className="access-modal-content slide-up">
-                <div className="modal-header">
-                    <Lock size={24} className="text-primary" />
-                    <h3>Developer Access Required</h3>
-                </div>
-                <p>Please enter your developer project key to unlock Premium Online Mode on the frontend.</p>
-                <div className="modal-body">
-                    <input 
-                        type="password" 
-                        placeholder="Enter Project Key..." 
-                        value={key} 
-                        onChange={(e) => setKey(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && onConfirm(key)}
-                    />
-                    {error && <div className="modal-error">{error}</div>}
-                </div>
-                <div className="modal-actions">
-                    <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                    <button className="btn btn-primary" onClick={() => onConfirm(key)}>Unlock Access</button>
-                </div>
-            </div>
-        </div>
-    );
-};
+
 
 function ToolDetailPage() {
     const { t } = useTranslation();
@@ -48,12 +20,6 @@ function ToolDetailPage() {
 
     const [hasFiles, setHasFiles] = React.useState(false);
     const [serverAvailable, setServerAvailable] = React.useState(true);
-    
-    const DEV_KEY = "AF-PROJECT-DEV-2026";
-    const [isDev, setIsDev] = React.useState(() => typeof window !== 'undefined' && localStorage.getItem('anyfileforge_dev_access') === 'true');
-    const [showDevConsole, setShowDevConsole] = React.useState(false);
-    const [showAccessModal, setShowAccessModal] = React.useState(false);
-    const [modalError, setModalError] = React.useState("");
 
     const tool = useMemo(() => {
         let found = null;
@@ -79,8 +45,9 @@ function ToolDetailPage() {
     const effectiveTool = useMemo(() => forceOnlineMode ? { ...tool, mode: 'server' } : tool, [forceOnlineMode, tool]);
     
     // Bypass auth check if user is a Developer
+    // Server Mode Check
     const isServerMode = effectiveTool?.mode === 'server';
-    const canAccessOnline = isServerMode && (Boolean(user) || isDev);
+    const canAccessOnline = isServerMode && Boolean(user);
 
     React.useEffect(() => {
         const checkHealth = async () => {
@@ -172,7 +139,7 @@ function ToolDetailPage() {
                                             className="btn btn-primary"
                                             onClick={() => {
                                                 window.localStorage.setItem('anyfileforge_mode', 'online');
-                                                setShowAccessModal(true);
+                                                window.location.reload();
                                             }}
                                         >
                                             Try Online Mode
@@ -247,98 +214,7 @@ function ToolDetailPage() {
                 )}
             </div>
             
-            <AccessModal 
-                isOpen={showAccessModal} 
-                onClose={() => setShowAccessModal(false)}
-                error={modalError}
-                onConfirm={(key) => {
-                    if (key === DEV_KEY) {
-                        localStorage.setItem('anyfileforge_dev_access', 'true');
-                        setIsDev(true);
-                        setShowAccessModal(false);
-                        window.location.reload();
-                    } else {
-                        setModalError("Invalid Developer Project Key.");
-                    }
-                }}
-            />
 
-            {/* Developer Hub (Sumit's Console) */}
-            {isDev && (
-                <>
-                    <button 
-                        className="dev-toggle-bubble"
-                        onClick={() => setShowDevConsole(!showDevConsole)}
-                        style={{
-                            position: 'fixed', bottom: '24px', right: '24px', 
-                            background: '#1e293b', color: '#60a5fa', border: '1px solid #334155',
-                            borderRadius: '16px', padding: '0 12px', height: '44px', cursor: 'pointer', zIndex: 1001,
-                            boxShadow: '0 8px 16px rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', gap: '8px',
-                            fontWeight: 600, fontSize: '13px'
-                        }}
-                    >
-                         <Terminal size={18} />
-                         DEV HUB
-                    </button>
-                    
-                    {showDevConsole && (
-                        <div className="dev-status-panel fade-in slide-up" style={{
-                            position: 'fixed', bottom: '80px', right: '24px', 
-                            background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)',
-                            color: '#e2e8f0', padding: '20px', borderRadius: '16px',
-                            width: '280px', zIndex: 1001, border: '1px solid rgba(255,255,255,0.1)',
-                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
-                        }}>
-                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
-                                <Activity size={18} className="text-primary" />
-                                <h4 style={{ margin: 0, fontSize: '15px', color: 'white' }}>System Diagnostics</h4>
-                             </div>
-
-                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <div className="dev-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ opacity: 0.7 }}>Tool ID:</span>
-                                    <code style={{ background: '#0f172a', padding: '2px 6px', borderRadius: '4px' }}>{toolId}</code>
-                                </div>
-                                <div className="dev-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ opacity: 0.7 }}>Service:</span>
-                                    <span style={{ color: isServerMode ? '#fbbf24' : '#10b981', fontWeight: 600 }}>
-                                        {isServerMode ? 'ONLINE' : 'OFFLINE'}
-                                    </span>
-                                </div>
-                                <div className="dev-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ opacity: 0.7 }}>Health Check:</span>
-                                    <span style={{ color: serverAvailable ? '#10b981' : '#ef4444' }}>
-                                        {serverAvailable ? 'PASS' : 'FAIL'}
-                                    </span>
-                                </div>
-                             </div>
-
-                             <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                <button 
-                                    className="btn-secondary" 
-                                    style={{ padding: '6px', fontSize: '11px' }}
-                                    onClick={() => {
-                                        localStorage.removeItem('anyfileforge_mode');
-                                        window.location.reload();
-                                    }}
-                                >
-                                    Reset Mode
-                                </button>
-                                <button 
-                                    style={{ background: '#ef4444', border: 'none', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '11px', cursor: 'pointer' }}
-                                    onClick={() => {
-                                        localStorage.removeItem('anyfileforge_dev_access');
-                                        setIsDev(false);
-                                        window.location.reload();
-                                    }}
-                                >
-                                    Exit Dev
-                                </button>
-                             </div>
-                        </div>
-                    )}
-                </>
-            )}
         </div>
     );
 }

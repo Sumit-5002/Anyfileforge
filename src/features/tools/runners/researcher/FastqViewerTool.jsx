@@ -104,12 +104,12 @@ const FastqViewerTool = () => {
             accept=".fastq,.fq"
             multiple={true}
             layout="research"
-            onReset={() => { setLoadedStats({}); setCurrentFile(null); }}
+            onReset={() => { files.forEach(f => removeFile(f.id)); setLoadedStats({}); setCurrentFile(null); }}
             sidebar={
-                <div className="sidebar-info researcher-tool-container h-full d-flex flex-column gap-6">
+                <div className="sidebar-info researcher-tool-container h-full flex flex-col gap-6">
                     <div className="opened-files shadow-sm">
                         <div className="text-muted text-xs uppercase mb-3 font-bold tracking-wider">Sequencing Libraries</div>
-                        <div className="d-flex flex-column gap-2">
+                        <div className="flex flex-col gap-2">
                             {files.map(f => (
                                 <div key={f.file.name} 
                                      className={`file-tab d-flex align-items-center justify-content-between p-2 rounded-lg cursor-pointer transition-all ${currentFile === f.file.name ? 'bg-primary/20 border-primary/30' : 'bg-white/5 border-white/5'}`}
@@ -143,7 +143,7 @@ const FastqViewerTool = () => {
                     {activeStats && (
                         <div className="quick-stats-card p-4 bg-black/20 border border-white/5 rounded-xl">
                             <h5 className="text-xs uppercase font-bold text-muted mb-4">Library Summary</h5>
-                            <div className="d-flex flex-column gap-3">
+                            <div className="flex flex-col gap-3">
                                 <div className="d-flex justify-content-between text-sm"><span className="text-muted">Sequences:</span><span className="font-mono">{activeStats.totalSequences.toLocaleString()}</span></div>
                                 <div className="d-flex justify-content-between text-sm"><span className="text-muted">Bases:</span><span className="font-mono">{activeStats.totalBases.toLocaleString()}</span></div>
                                 <div className="d-flex justify-content-between text-sm"><span className="text-muted">GC Content:</span><span className="font-mono text-primary font-bold">{activeStats.gcContent.toFixed(2)}%</span></div>
@@ -171,7 +171,7 @@ const FastqViewerTool = () => {
                         <p>Processing genomic data... {progress}%</p>
                     </div>
                 ) : (
-                    <div className="dataset-panel fade-in h-full d-flex flex-column">
+                    <div className="dataset-panel fade-in h-full flex flex-col">
                         <div className="dataset-header mb-6">
                             <div className="d-flex align-items-center justify-content-between">
                                 <div className="breadcrumb-nav d-flex align-items-center gap-2">

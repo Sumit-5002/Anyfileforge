@@ -48,7 +48,7 @@ const ParquetViewerTool = () => {
             accept=".parquet"
             dropzoneLabel="Drop your .parquet file here"
             dropzoneHint="Columnar data analysis with HyParquet engine"
-            onReset={() => { setPqData(null); setError(''); }}
+            onReset={() => { files.forEach(f => removeFile(f.id)); setPqData(null); setError(''); }}
             sidebar={
                 <div className="sidebar-info">
                     {pqData && (

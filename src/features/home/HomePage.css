@@ -114,6 +114,19 @@
     border-color: var(--border-bright);
 }
 
+.mode-btn.tab-switcher {
+    display: flex;
+    background: var(--bg-surface);
+    padding: 8px;
+    border-radius: 99px;
+    border: 1px solid var(--border-subtle);
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1000px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
 .mode-btn.active {
     background: var(--primary-500);
     color: white;
@@ -124,17 +137,22 @@
 .tab-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 28px;
+    gap: 12px;
+    padding: 10px 24px;
     background: transparent;
     border: none;
     border-radius: 99px;
     color: var(--text-secondary);
     font-family: var(--font-heading);
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.95rem;
     cursor: pointer;
     transition: var(--transition-smooth);
+    white-space: nowrap;
+}
+
+.tab-btn svg {
+    flex-shrink: 0;
 }
 
 .tab-btn:hover {

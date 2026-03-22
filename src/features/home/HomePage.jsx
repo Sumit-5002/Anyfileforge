@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
     Star, ArrowRight, Github, Zap, Shield, Lock,
     FileText, Image as ImageIcon, Play, Layers,
-    Code, FlaskConical, Linkedin
+    Code, FlaskConical, Linkedin, FileSpreadsheet, Music, Boxes, FileCode
 } from 'lucide-react';
 import ToolCard from '../../components/ui/ToolCard';
 import { TOOLS } from '../../data/toolsData';
@@ -92,7 +92,14 @@ function HomePage() {
                                     onClick={() => setActiveTab('researcher')}
                                 >
                                     <FlaskConical size={20} />
-                                    Data Researcher
+                                    Researcher
+                                </button>
+                                <button
+                                    className={`tab-btn ${activeTab === 'media' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('media')}
+                                >
+                                    <Layers size={20} />
+                                    Universal
                                 </button>
                             </div>
 
@@ -107,6 +114,7 @@ function HomePage() {
                                 {activeTab === 'image' && 'Optimize, Resize, Crop and Transform your images with ease.'}
                                 {activeTab === 'engineer' && 'Format, validate, and convert code and data structures.'}
                                 {activeTab === 'researcher' && 'Analyze data, manage citations, and generate plots instantly.'}
+                                {activeTab === 'media' && 'Universal suite for documents, spreadsheets, audio, and 3D models.'}
                             </p>
                         </div>
 

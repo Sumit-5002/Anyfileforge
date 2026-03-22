@@ -160,7 +160,7 @@ function Footer() {
                 </div>
 
                 <div className="footer-bottom">
-                    <p>© {new Date().getFullYear()} AnyFileForge. Built by <span style={{ color: 'var(--primary-500)', fontWeight: 'bold' }}>Group 35</span> with <Heart size={14} fill="var(--primary-500)" color="var(--primary-500)" /> for the research community.</p>
+                    <p>© {new Date().getFullYear()} AnyFileForge. Built by <span style={{ color: 'var(--primary-500)', fontWeight: 'bold' }}>Group 36</span> with <Heart size={14} fill="var(--primary-500)" color="var(--primary-500)" /> for the research community.</p>
                 </div>
             </div>
         </footer>
