@@ -27,12 +27,16 @@ router.post('/csv-to-json', async (req, res) => {
                 }
 
                 const headers = lines[0].split(',').map(h => h.trim());
+                // Filter out prototype pollution sensitive keys
+                const sanitizedHeaders = headers.filter(h => h !== '__proto__' && h !== 'constructor');
                 const data = [];
 
                 for (let i = 1; i < lines.length; i++) {
                     const values = lines[i].split(',').map(v => v.trim());
                     const obj = {};
                     headers.forEach((header, index) => {
+                        // Skip prototype pollution sensitive keys
+                        if (header === '__proto__' || header === 'constructor') return;
                         obj[header] = values[index] || '';
                     });
                     data.push(obj);
@@ -42,7 +46,8 @@ router.post('/csv-to-json', async (req, res) => {
                     success: true,
                     data,
                     rowCount: data.length,
-                    columnCount: headers.length
+                    columnCount: sanitizedHeaders.length,
+                    headers: sanitizedHeaders
                 });
             } catch (error) {
                 console.error('CSV to JSON error:', error);
@@ -156,6 +161,8 @@ router.post('/bibtex-parse', (req, res) => {
 
             while ((fieldMatch = fieldRegex.exec(fields)) !== null) {
                 const [, fieldName, fieldValue] = fieldMatch;
+                // Skip prototype pollution sensitive keys
+                if (fieldName === '__proto__' || fieldName === 'constructor') continue;
                 entry.fields[fieldName] = fieldValue.trim();
             }
 
