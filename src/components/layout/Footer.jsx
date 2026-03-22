@@ -110,18 +110,18 @@ function Footer() {
 
                 <div className="footer-content">
                     <div className="footer-section">
-                        <h4 className="footer-heading">AnyFileForge</h4>
+                        <h3 className="footer-heading">AnyFileForge</h3>
                         <p className="footer-text">The ultimate local-first file utility for engineers and researchers. Privacy guaranteed by mathematics.</p>
                         <div className="social-links">
-                            <a href="https://github.com/Sumit-5002" target="_blank" rel="noopener noreferrer" className="social-link"><Github size={20} /></a>
-                            <a href="https://linkedin.com/in/sumit-prasad-bce2005" target="_blank" rel="noopener noreferrer" className="social-link"><Linkedin size={20} /></a>
-                            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-link"><Twitter size={20} /></a>
-                            <a href="mailto:sumitboy2005@gmail.com" className="social-link"><Mail size={20} /></a>
+                            <a href="https://github.com/Sumit-5002" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Visit AnyFileForge on GitHub"><Github size={20} /></a>
+                            <a href="https://linkedin.com/in/sumit-prasad-bce2005" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Visit AnyFileForge on LinkedIn"><Linkedin size={20} /></a>
+                            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Visit AnyFileForge on X (Twitter)"><Twitter size={20} /></a>
+                            <a href="mailto:sumitboy2005@gmail.com" className="social-link" aria-label="Send email to AnyFileForge"><Mail size={20} /></a>
                         </div>
                     </div>
 
                     <div className="footer-section">
-                        <h4 className="footer-heading">Solutions</h4>
+                        <h3 className="footer-heading">Solutions</h3>
                         <ul className="footer-links">
                             <li><Link to="/tools">PDF Suite</Link></li>
                             <li><Link to="/tools">Image Engine</Link></li>
@@ -132,7 +132,7 @@ function Footer() {
                     </div>
 
                     <div className="footer-section">
-                        <h4 className="footer-heading">Legal</h4>
+                        <h3 className="footer-heading">Legal</h3>
                         <ul className="footer-links">
                             <li><Link to="/privacy">Privacy Policy</Link></li>
                             <li><Link to="/terms">Terms of Use</Link></li>
@@ -143,10 +143,12 @@ function Footer() {
 
                     {/* Language Switcher */}
                     <div className="footer-section">
-                        <h4 className="footer-heading">Localization</h4>
+                        <h3 className="footer-heading">Localization</h3>
                         <div className="lang-switcher">
                             <Globe size={18} className="lang-icon" />
+                            <label htmlFor="footer-lang-select" className="sr-only">Select language</label>
                             <select
+                                id="footer-lang-select"
                                 onChange={(e) => changeLanguage(e.target.value)}
                                 value={i18n.language}
                                 className="lang-select"

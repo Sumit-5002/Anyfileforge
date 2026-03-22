@@ -6,10 +6,10 @@ import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ScrollToTop from './ScrollToTop';
+import HomePage from '../features/home/HomePage';
 import './App.css';
 
 // Lazy load components for performance optimization (Bolt ⚡)
-const HomePage = lazy(() => import('../features/home/HomePage'));
 const ToolsPage = lazy(() => import('../features/tools/ToolsPage'));
 const ToolDetailPage = lazy(() => import('../features/tools/ToolDetailPage'));
 const PricingPage = lazy(() => import('../features/pricing/PricingPage'));

@@ -1,9 +1,8 @@
 import { registerSW } from 'virtual:pwa-register';
 
 registerSW({
-    immediate: true,
+    immediate: false,
     onRegisterError(error) {
         console.error('SW registration failed:', error);
     }
 });
-

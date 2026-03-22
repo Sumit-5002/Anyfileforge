@@ -19,22 +19,37 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        let isMounted = true;
+
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (!isMounted) return;
+
             if (firebaseUser) {
                 setUser(firebaseUser);
-                // Sync user profile to Firestore
-                await userService.syncUserProfile(firebaseUser);
-                // Get extra data (tier, etc.)
-                const data = await userService.getUserData(firebaseUser.uid);
-                setUserData(data);
+                setUserData(null);
+                setLoading(false);
+
+                // Do profile sync in background so first paint is not blocked by network calls.
+                (async () => {
+                    try {
+                        await userService.syncUserProfile(firebaseUser);
+                        const data = await userService.getUserData(firebaseUser.uid);
+                        if (isMounted) setUserData(data);
+                    } catch (error) {
+                        console.error('Auth profile sync error:', error);
+                    }
+                })();
             } else {
                 setUser(null);
                 setUserData(null);
+                setLoading(false);
             }
-            setLoading(false);
         });
 
-        return unsubscribe;
+        return () => {
+            isMounted = false;
+            unsubscribe();
+        };
     }, []);
 
     const loginWithEmail = (email, password) => {
@@ -77,7 +92,7 @@ export function AuthProvider({ children }) {
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 }

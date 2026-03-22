@@ -11,7 +11,14 @@ import './Header.css';
 const Logo = ({ onClick }) => (
     <Link to="/" className="logo-container" onClick={onClick}>
         <div className="logo-icon-wrapper">
-            <img src="/logo.png" alt="AnyFileForge" className="logo-img" />
+            <img
+                src="/icon-192.png"
+                alt=""
+                aria-hidden="true"
+                width="192"
+                height="192"
+                className="logo-img"
+            />
         </div>
         <span className="logo-text">ANYFILE<span className="forge-text">FORGE</span></span>
     </Link>
