@@ -27,6 +27,8 @@ router.post('/csv-to-json', async (req, res) => {
                 }
 
                 const headers = lines[0].split(',').map(h => h.trim());
+                // Filter out prototype pollution sensitive keys
+                const sanitizedHeaders = headers.filter(h => h !== '__proto__' && h !== 'constructor');
                 const data = [];
 
                 for (let i = 1; i < lines.length; i++) {
@@ -44,7 +46,8 @@ router.post('/csv-to-json', async (req, res) => {
                     success: true,
                     data,
                     rowCount: data.length,
-                    columnCount: headers.length
+                    columnCount: sanitizedHeaders.length,
+                    headers: sanitizedHeaders
                 });
             } catch (error) {
                 console.error('CSV to JSON error:', error);
