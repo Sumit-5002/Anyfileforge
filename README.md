@@ -304,5 +304,3 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 ---
 
 **Built with ❤️ by [Sumit Prasad](https://github.com/Sumit-5002) — for engineers and researchers worldwide**
-
-AF-PROJECT-DEV-2026
