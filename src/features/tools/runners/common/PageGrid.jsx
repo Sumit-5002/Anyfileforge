@@ -30,14 +30,21 @@ function PageGrid({
 
         try {
             const arrayBuffer = await file.arrayBuffer();
+            if (abortController.signal.aborted || loadId !== currentLoadIdRef.current) return;
+
             const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
 
             // Allow cancelling the loading task itself
-            abortController.signal.addEventListener('abort', () => {
+            const onAbort = () => loadingTask.destroy();
+            abortController.signal.addEventListener('abort', onAbort);
+
+            if (abortController.signal.aborted || loadId !== currentLoadIdRef.current) {
                 loadingTask.destroy();
-            });
+                return;
+            }
 
             const pdf = await loadingTask.promise;
+            abortController.signal.removeEventListener('abort', onAbort);
             const pageCount = pdf.numPages;
 
             // Render pages in parallel chunks for better speed and incremental UX (Bolt ⚡)
