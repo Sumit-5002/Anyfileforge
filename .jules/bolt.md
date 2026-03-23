@@ -17,3 +17,7 @@
 ## 2026-02-19 - Parallelizing Image Conversion in Generic Tools
 **Learning:** Tools handling multiple files sequentially (like the original `ImageToJpgTool`) create a major bottleneck for users. Implementing chunked parallel processing with `Promise.allSettled` and a concurrency limit (e.g., 5) significantly improves throughput. Additionally, using unique IDs for files and memoizing derived file lists for child components prevents UI flickering and redundant renders during high-concurrency operations.
 **Action:** Always parallelize batch file operations in new or refactored tools, using unique IDs for state tracking and `useMemo` for passed-down file arrays.
+
+## 2026-03-22 - Incremental and Parallel PDF Thumbnail Generation
+**Learning:** Sequential page rendering for PDF thumbnails creates a linear bottleneck where the user sees a blank screen or a loader until *all* pages are processed. Parallelizing rendering in small chunks (e.g., 4) and updating state incrementally allows the UI to populate immediately, drastically improving perceived speed. Furthermore, using `AbortController` is critical to prevent race conditions and memory leaks when the user switches files or unmounts the component during processing.
+**Action:** Use chunked `Promise.all` for multi-page rendering and update the page state after each chunk completes. Always wrap long-running async tasks in `useEffect` with an `AbortController` for safe cleanup.

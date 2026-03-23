@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader, Check, RotateCw, X } from 'lucide-react';
 import './ToolWorkspace.css';
 import * as pdfjs from 'pdfjs-dist';
@@ -19,40 +19,80 @@ function PageGrid({
 }) {
     const [pageData, setPageData] = useState([]); // Array of { pageNumber, thumbnail }
     const [loading, setLoading] = useState(false);
+    const currentLoadIdRef = useRef(0);
 
-    const loadPages = useCallback(async () => {
+    const loadPages = useCallback(async (abortController) => {
         if (!file) return;
+
+        const loadId = ++currentLoadIdRef.current;
         setLoading(true);
+        setPageData([]); // Reset for new file selection
+
         try {
             const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+            if (abortController.signal.aborted || loadId !== currentLoadIdRef.current) return;
+
+            const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+
+            // Allow cancelling the loading task itself
+            const onAbort = () => loadingTask.destroy();
+            abortController.signal.addEventListener('abort', onAbort);
+
+            if (abortController.signal.aborted || loadId !== currentLoadIdRef.current) {
+                loadingTask.destroy();
+                return;
+            }
+
+            const pdf = await loadingTask.promise;
+            abortController.signal.removeEventListener('abort', onAbort);
             const pageCount = pdf.numPages;
 
-            const thumbnails = [];
-            for (let i = 1; i <= pageCount; i++) {
-                const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 0.25 });
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
+            // Render pages in parallel chunks for better speed and incremental UX (Bolt ⚡)
+            const CHUNK_SIZE = 4;
+            for (let i = 1; i <= pageCount; i += CHUNK_SIZE) {
+                if (abortController.signal.aborted) return;
 
-                await page.render({ canvasContext: context, viewport: viewport }).promise;
-                thumbnails.push({
-                    pageNumber: i,
-                    thumbnail: canvas.toDataURL('image/webp', 0.8) // Use WebP for better performance
-                });
+                const chunkIndices = [];
+                for (let j = i; j < i + CHUNK_SIZE && j <= pageCount; j++) {
+                    chunkIndices.push(j);
+                }
+
+                const chunkThumbnails = await Promise.all(chunkIndices.map(async (pageNum) => {
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 0.25 });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    return {
+                        pageNumber: pageNum,
+                        thumbnail: canvas.toDataURL('image/webp', 0.8)
+                    };
+                }));
+
+                if (abortController.signal.aborted || loadId !== currentLoadIdRef.current) return;
+
+                // Append chunk results incrementally
+                setPageData(prev => [...prev, ...chunkThumbnails]);
+
+                // Hide main loader after the first chunk to show progress
+                if (i === 1) setLoading(false);
             }
-            setPageData(thumbnails);
         } catch (err) {
+            if (err.name === 'AbortError' || err.message?.includes('cancelled')) return;
             console.error('Failed to load PDF pages:', err);
+            if (loadId === currentLoadIdRef.current) setLoading(false);
         } finally {
-            setLoading(false);
+            if (loadId === currentLoadIdRef.current) setLoading(false);
         }
     }, [file]);
 
     useEffect(() => {
-        loadPages();
+        const abortController = new AbortController();
+        loadPages(abortController);
+        return () => abortController.abort();
     }, [loadPages]);
 
     const [draggedItem, setDraggedItem] = useState(null);
