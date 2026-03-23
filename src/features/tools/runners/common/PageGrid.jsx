@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader, Check, RotateCw, X } from 'lucide-react';
 import './ToolWorkspace.css';
 import * as pdfjs from 'pdfjs-dist';
@@ -19,11 +19,15 @@ function PageGrid({
 }) {
     const [pageData, setPageData] = useState([]); // Array of { pageNumber, thumbnail }
     const [loading, setLoading] = useState(false);
+    const currentLoadIdRef = useRef(0);
 
     const loadPages = useCallback(async (abortController) => {
         if (!file) return;
+
+        const loadId = ++currentLoadIdRef.current;
         setLoading(true);
         setPageData([]); // Reset for new file selection
+
         try {
             const arrayBuffer = await file.arrayBuffer();
             const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
@@ -61,7 +65,7 @@ function PageGrid({
                     };
                 }));
 
-                if (abortController.signal.aborted) return;
+                if (abortController.signal.aborted || loadId !== currentLoadIdRef.current) return;
 
                 // Append chunk results incrementally
                 setPageData(prev => [...prev, ...chunkThumbnails]);
@@ -72,9 +76,9 @@ function PageGrid({
         } catch (err) {
             if (err.name === 'AbortError' || err.message?.includes('cancelled')) return;
             console.error('Failed to load PDF pages:', err);
-            setLoading(false);
+            if (loadId === currentLoadIdRef.current) setLoading(false);
         } finally {
-            setLoading(false);
+            if (loadId === currentLoadIdRef.current) setLoading(false);
         }
     }, [file]);
 
