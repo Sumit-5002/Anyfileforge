@@ -20,9 +20,10 @@ const setCache = (doi, bibtex) => {
 
 export const fetchBibtexFromDoi = async (doi) => {
     let cleanDoi = doi.trim();
-    if (cleanDoi.startsWith('http://doi.org/')) cleanDoi = cleanDoi.replace('http://doi.org/', '');
-    if (cleanDoi.startsWith('https://doi.org/')) cleanDoi = cleanDoi.replace('https://doi.org/', '');
-    if (cleanDoi.startsWith('doi:')) cleanDoi = cleanDoi.replace('doi:', '');
+    // Aggressive cleaning
+    cleanDoi = cleanDoi.replace(/^(https?:\/\/)?(www\.)?doi\.org\//i, '');
+    cleanDoi = cleanDoi.replace(/^doi:/i, '');
+    cleanDoi = cleanDoi.trim();
     
     // Check Cache
     const cache = getCache();
@@ -32,12 +33,25 @@ export const fetchBibtexFromDoi = async (doi) => {
     }
 
     try {
-        const response = await fetch(`https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}/transform/application/x-bibtex`);
+        // Using standard DOI Content Negotiation (Works for Crossref, DataCite, mEDRA, etc.)
+        const response = await fetch(`https://doi.org/${encodeURIComponent(cleanDoi)}`, {
+            headers: {
+                'Accept': 'application/x-bibtex'
+            }
+        });
+
         if (!response.ok) {
             if (response.status === 404) throw new Error(`DOI not found: ${cleanDoi}`);
-            throw new Error(`API returned ${response.status} for ${cleanDoi}`);
+            throw new Error(`Registry returned ${response.status} for ${cleanDoi}`);
         }
+
         const text = await response.text();
+        
+        // Basic validation that we actually got BibTeX (should start with @)
+        if (!text.trim().startsWith('@')) {
+            throw new Error(`Invalid BibTeX format returned for ${cleanDoi}`);
+        }
+
         setCache(cleanDoi, text);
         return text;
     } catch (err) {

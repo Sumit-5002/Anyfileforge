@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
-    Download, FileText, Share2, Search, 
-    FileCode, Check, Copy, Activity, FileStack, 
-    Type, Edit3, Trash2, Layout, Maximize2, Split
+    Download, FileText, FileCode, Check, Copy, 
+    Type, Edit3, Layout, Split
 } from 'lucide-react';
 import ToolWorkspace from '../common/ToolWorkspace';
 import { jsPDF } from 'jspdf';
+import { BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 import './LatexEditorTool.css';
 
 const DEFAULT_LATEX = `\\documentclass{article}
@@ -13,19 +14,16 @@ const DEFAULT_LATEX = `\\documentclass{article}
 
 \\title{Scientific Analysis Report}
 \\author{Researcher Engine}
-\\date{\\today}
 
 \\begin{document}
-
 \\maketitle
 
 \\section{Introduction}
-This is a high-fidelity LaTeX document generated locally.
-No servers were used in the creation of this manuscript.
+This is a mixed-media compilation test. The Engine now correctly parses preamble boilerplates and text boundaries, while preserving the raw mathematical equations enclosed in double dollar signs:
 
-\\section{Equations}
-Analysis follows the standard model:
-E = mc^2
+$$
+f(x) = \\int_{-\\infty}^\\infty \\hat f(\\xi)\\,e^{2 \\pi i \\xi x} \\,d\\xi
+$$
 
 \\end{document}`;
 
@@ -33,7 +31,64 @@ function LatexEditorTool({ tool }) {
     const [code, setCode] = useState(DEFAULT_LATEX);
     const [results, setResults] = useState([]);
     const [copied, setCopied] = useState(false);
-    const [layout, setLayout] = useState('split'); // 'split', 'editor', 'preview'
+    const [layout, setLayout] = useState('split');
+
+    const handleFileLoad = (files) => {
+        if (!files || files.length === 0) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setCode(e.target.result);
+        };
+        reader.readAsText(files[0]);
+    };
+
+    const renderDocument = (text) => {
+        if (!text) return <span style={{ color: '#94a3b8', fontStyle: 'italic', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>KaTeX Engine Ready...</span>;
+        
+        let cleaned = text;
+        const bodyMatch = text.match(/\\begin\{document\}([\s\S]*?)\\end\{document\}/);
+        if (bodyMatch) {
+            cleaned = bodyMatch[1];
+        } else {
+            cleaned = cleaned.replace(/\\documentclass(\[.*?\])?\{.*?\}/g, '');
+            cleaned = cleaned.replace(/\\usepackage(\[.*?\])?\{.*?\}/g, '');
+        }
+
+        // Strip LaTeX comments
+        cleaned = cleaned.replace(/%.*$/gm, '');
+
+        cleaned = cleaned.replace(/\\title\{.*?\}/g, '');
+        cleaned = cleaned.replace(/\\author\{.*?\}/g, '');
+        cleaned = cleaned.replace(/\\date\{.*?\}/g, '');
+        cleaned = cleaned.replace(/\\maketitle/g, '');
+
+        const parts = cleaned.split('$$');
+        return parts.map((part, index) => {
+            if (index % 2 === 1) {
+                return (
+                    <div key={index} className="math-rendering-box" style={{ margin: '24px 0' }}>
+                        <BlockMath math={part} renderError={(e) => <span style={{color:'#ef4444', fontSize:'12px', fontWeight:'bold'}}>[KaTeX Error]: {e.message}</span>} />
+                    </div>
+                );
+            }
+            
+            // Protect standard HTML tags and parse basic LaTeX text elements
+            let safeText = part.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            safeText = safeText.replace(/\\section\{(.*?)\}/g, '<h2 style="font-size:1.3rem; font-weight:800; margin-top:24px; margin-bottom: 8px; color:#0f172a; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">$1</h2>');
+            safeText = safeText.replace(/\\subsection\{(.*?)\}/g, '<h3 style="font-size:1.1rem; font-weight:700; margin-top:16px; margin-bottom: 6px; color:#1e293b;">$1</h3>');
+            safeText = safeText.replace(/\\textbf\{(.*?)\}/g, '<strong>$1</strong>');
+            safeText = safeText.replace(/\\textit\{(.*?)\}/g, '<em>$1</em>');
+            safeText = safeText.replace(/\\underline\{(.*?)\}/g, '<u>$1</u>');
+
+            return (
+                <div 
+                    key={index} 
+                    style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#334155', marginBottom: '16px' }}
+                    dangerouslySetInnerHTML={{ __html: safeText.trim() }}
+                />
+            );
+        });
+    };
 
     const handleCopy = () => {
         navigator.clipboard.writeText(code);
@@ -42,7 +97,7 @@ function LatexEditorTool({ tool }) {
     };
 
     const exportFile = async (format) => {
-        let fileName = `document_${Date.now()}.${format}`;
+        let fileName = `equation_${Date.now()}.${format}`;
         let blob;
 
         if (format === 'tex') {
@@ -58,109 +113,113 @@ function LatexEditorTool({ tool }) {
             });
             blob = doc.output('blob');
         } else if (format === 'html') {
-            const html = `<!DOCTYPE html><html><body style="font-family:serif;white-space:pre-wrap;padding:40px">${code.replace(/</g, '&lt;')}</body></html>`;
+            const html = `<!DOCTYPE html><html><head><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.42/dist/katex.min.css"></head><body style="padding:40px;text-align:center;"><div style="font-size:24px;">$$${code}$$</div><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.42/dist/katex.min.js"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.42/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script></body></html>`;
             blob = new Blob([html], { type: 'text/html' });
         }
 
-        setResults(prev => [...prev, {
-            id: `latex-${Date.now()}`,
-            name: fileName,
-            data: blob,
-            type: format === 'pdf' ? 'pdf' : 'data'
-        }]);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
 
     return (
         <ToolWorkspace
             tool={tool}
+            allowEmpty={true}
             layout="research"
             results={results}
-            onReset={() => { setCode(DEFAULT_LATEX); setResults([]); }}
-            sidebarTitle="ENGINE_EDITOR"
+            onReset={() => { setCode(''); setResults([]); }}
+            onFilesSelected={handleFileLoad}
+            accept=".tex,.txt"
+            sidebarTitle="LATEX_ENGINE"
             sidebar={
-                <div className="latex-sidebar flex flex-col gap-10 p-2">
-                    <div className="section">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2.5 bg-primary-500/10 rounded-xl"><FileCode size={18} className="text-primary-400"/></div>
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-white leading-none">Manuscript_Control</h4>
+                <div className="latex-sidebar">
+                    <div className="latex-section">
+                        <div className="latex-section-header">
+                            <div className="latex-icon-box"><FileCode size={18} /></div>
+                            <h4 className="latex-section-title">Engine_Control</h4>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
-                            <button className={`p-4 rounded-2xl flex flex-col items-center gap-2 transition-all border ${layout === 'editor' ? 'bg-primary-500 border-primary-400 text-white' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'}`} onClick={() => setLayout('editor')}>
+                        <div className="latex-grid">
+                            <button className={`latex-btn ${layout === 'editor' ? 'active' : ''}`} onClick={() => setLayout('editor')}>
                                 <Edit3 size={16}/>
-                                <span className="text-[8px] font-black uppercase">Source</span>
+                                <span>Source</span>
                             </button>
-                            <button className={`p-4 rounded-2xl flex flex-col items-center gap-2 transition-all border ${layout === 'split' ? 'bg-primary-500 border-primary-400 text-white' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'}`} onClick={() => setLayout('split')}>
+                            <button className={`latex-btn ${layout === 'split' ? 'active' : ''}`} onClick={() => setLayout('split')}>
                                 <Split size={16}/>
-                                <span className="text-[8px] font-black uppercase">Diff</span>
+                                <span>Diff</span>
                             </button>
-                            <button className={`p-4 rounded-2xl flex flex-col items-center gap-2 transition-all border ${layout === 'preview' ? 'bg-primary-500 border-primary-400 text-white' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'}`} onClick={() => setLayout('preview')}>
+                            <button className={`latex-btn ${layout === 'preview' ? 'active' : ''}`} onClick={() => setLayout('preview')}>
                                 <Layout size={16}/>
-                                <span className="text-[8px] font-black uppercase">Render</span>
+                                <span>Render</span>
                             </button>
                         </div>
                     </div>
 
-                    <div className="section mt-auto">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2.5 bg-emerald-500/10 rounded-xl"><Download size={18} className="text-emerald-400"/></div>
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500 leading-none">Compile_Artifact</h4>
+                    <div className="latex-section" style={{ marginTop: 'auto' }}>
+                        <div className="latex-section-header">
+                            <div className="latex-icon-box emerald"><Download size={18} /></div>
+                            <h4 className="latex-section-title" style={{ color: '#34d399' }}>Compile_Artifact</h4>
                         </div>
-                        <div className="flex flex-col gap-3">
-                            <button className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all text-xs font-bold text-slate-300 group" onClick={() => exportFile('tex')}>
-                                <span className="flex items-center gap-3"><FileCode size={16} className="text-primary-400"/> Source (.tex)</span>
-                                <Download size={14} className="opacity-0 group-hover:opacity-100"/>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <button className="latex-export-btn" onClick={() => exportFile('tex')}>
+                                <span><FileCode size={16} color="#60a5fa" /> Source (.tex)</span>
+                                <Download size={14} className="icon"/>
                             </button>
-                            <button className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all text-xs font-bold text-slate-300 group" onClick={() => exportFile('pdf')}>
-                                <span className="flex items-center gap-3"><FileText size={16} className="text-red-400"/> Paper (.pdf)</span>
-                                <Download size={14} className="opacity-0 group-hover:opacity-100"/>
+                            <button className="latex-export-btn" onClick={() => exportFile('pdf')}>
+                                <span><FileText size={16} color="#f87171" /> Paper (.pdf)</span>
+                                <Download size={14} className="icon"/>
                             </button>
-                            <button className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all text-xs font-bold text-slate-300 group" onClick={() => exportFile('html')}>
-                                <span className="flex items-center gap-3"><Type size={16} className="text-emerald-400"/> Web (.html)</span>
-                                <Download size={14} className="opacity-0 group-hover:opacity-100"/>
+                            <button className="latex-export-btn" onClick={() => exportFile('html')}>
+                                <span><Type size={16} color="#34d399" /> Web (.html)</span>
+                                <Download size={14} className="icon"/>
                             </button>
                         </div>
                     </div>
                 </div>
             }
         >
-            <div className={`latex-container h-full flex flex-col p-4 gap-6 animate-in fade-in ${layout}-layout`}>
-                <div className="editor-nav flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 bg-slate-900 border border-white/10 rounded-full px-6 py-3">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status: Syntactic_Valid</span>
+            <div className="latex-container">
+                <div className="latex-editor-nav">
+                    <div className="latex-status">
+                        <div className="latex-status-dot"></div>
+                        <span>Status: Syntactic_Valid</span>
                     </div>
-                    <button className="flex items-center gap-3 px-8 py-3 bg-white/5 hover:bg-primary-500 rounded-full border border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-200 transition-all shadow-xl group" onClick={handleCopy}>
-                        {copied ? <Check size={14} className="text-emerald-400"/> : <Copy size={14}/>}
+                    <button className="latex-copy-btn" onClick={handleCopy}>
+                        {copied ? <Check size={14} color="#34d399" /> : <Copy size={14}/>}
                         {copied ? 'CACHED' : 'Copy_Source'}
                     </button>
                 </div>
 
-                <div className={`editor-mainframe flex-grow flex flex-col md:flex-row gap-6 min-h-0`}>
+                <div className="latex-mainframe">
                     {(layout === 'editor' || layout === 'split') && (
-                        <div className="editor-pane flex-grow flex flex-col min-h-0 bg-slate-900/60 rounded-[40px] border border-white/5 shadow-2xl relative overflow-hidden group">
-                             <div className="pane-header p-4 px-8 border-b border-white/5 flex items-center gap-3">
-                                 <Edit3 size={14} className="text-primary-500"/>
-                                 <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Buffer_Stream</span>
+                        <div className="latex-pane editor">
+                             <div className="latex-pane-header">
+                                 <Edit3 size={14} />
+                                 <span>Buffer_Stream</span>
                              </div>
                              <textarea 
-                                className="flex-grow bg-transparent p-10 text-sm font-mono text-primary-200 resize-none outline-none leading-relaxed no-scrollbar"
+                                className="latex-textarea"
                                 value={code}
                                 onChange={(e) => setCode(e.target.value)}
                                 spellCheck={false}
+                                placeholder="Enter LaTeX math here... e.g., \frac{1}{2}"
                              />
                         </div>
                     )}
 
                     {(layout === 'preview' || layout === 'split') && (
-                        <div className="preview-pane flex-grow flex flex-col min-h-0 bg-white rounded-[40px] shadow-2xl overflow-hidden group">
-                             <div className="pane-header p-4 px-8 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
-                                 <Layout size={14} className="text-slate-400"/>
-                                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Rendered_View (Draft)</span>
+                        <div className="latex-pane preview">
+                             <div className="latex-pane-header">
+                                 <Layout size={14} />
+                                 <span>Rendered_View</span>
                              </div>
-                             <div className="flex-grow p-12 overflow-auto font-serif text-slate-900 leading-normal no-scrollbar selection:bg-primary-100">
-                                 <div className="max-w-3xl mx-auto whitespace-pre-wrap">
-                                     {code}
-                                 </div>
+                             <div className="latex-preview-content" style={{ display: 'block', textAlign: 'left' }}>
+                                 {renderDocument(code)}
                              </div>
                         </div>
                     )}

@@ -120,26 +120,67 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                         <label>Output Format</label>
                     </div>
                     <div className="tool-field mt-2">
-                        <select value={format} onChange={e => setFormat(e.target.value)}>
-                            <option value="image/jpeg">JPG</option>
-                            <option value="image/png">PNG</option>
-                            <option value="image/webp">WebP</option>
+                        <select className="p-3 bg-slate-900 border border-white/10 rounded-xl text-white font-mono text-xs w-full" value={format} onChange={e => setFormat(e.target.value)}>
+                            <option value="image/jpeg">JPG Output</option>
+                            <option value="image/png">PNG Lossless</option>
+                            <option value="image/webp">WebP Progressive</option>
                         </select>
+                    </div>
+
+                    <div className="sidebar-preflight mt-10 p-5 bg-primary-500/5 rounded-2xl border border-primary-500/10">
+                        <h5 className="text-[10px] font-black uppercase tracking-[0.15em] text-primary-400 mb-4 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse"></div>
+                            Pre-Flight Check
+                        </h5>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex justify-between items-center text-xs font-mono">
+                                <span className="text-slate-500 uppercase">Input</span>
+                                <span className="text-slate-300 font-bold">1st Image</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs font-mono">
+                                <span className="text-slate-500 uppercase">Target</span>
+                                <span className="text-primary-400 font-bold">
+                                    {unit === 'percent' ? `${width}% Scale` : `${width} × ${height} px`}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs font-mono">
+                                <span className="text-slate-500 uppercase">Aspect</span>
+                                <span className={keepAspect ? 'text-green-500 font-bold' : 'text-slate-500'}>
+                                    {keepAspect ? 'Locked' : 'Unlocked'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             }
         >
-            <div className="files-list-view">
+            <div className="workspace-files-grid" style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                gap: '20px',
+                width: '100%'
+            }}>
                 {files.map(({ id, file }) => (
-                    <div key={id} className="file-item-horizontal p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all mb-4">
-                        <FileThumbnail file={file} />
-                        <div className="file-item-info">
-                            <div className="file-item-name">{file.name}</div>
-                            <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
+                    <div key={id} className="file-item-card-compact bg-slate-900/50 border border-white/5 rounded-2xl p-4 flex flex-col gap-4 group hover:border-primary-500/30 transition-all">
+                        <div className="flex items-center gap-4">
+                            <FileThumbnail file={file} className="w-16 h-16 rounded-xl shadow-lg" />
+                            <div className="flex-1 min-w-0">
+                                <div className="text-xs font-bold text-slate-100 truncate mb-1">{file.name}</div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">{(file.size / 1024).toFixed(1)} KB</div>
+                            </div>
                         </div>
-                        {completedIds.has(id) && <div className="status-badge"><Check size={14} /> Done</div>}
-                        {failedIds.has(id) && <div className="status-badge error">Error</div>}
-                        <button className="btn-icon-danger" onClick={() => removeFile(id)} disabled={processing}>×</button>
+                        <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                            <div className="flex items-center gap-2">
+                                {completedIds.has(id) ? (
+                                    <div className="flex items-center gap-1.5 text-green-500 text-[10px] font-black uppercase tracking-widest"><Check size={12} /> Done</div>
+                                ) : failedIds.has(id) ? (
+                                    <div className="text-red-500 text-[10px] font-black uppercase tracking-widest">Error</div>
+                                ) : (
+                                    <div className="text-slate-600 text-[10px] font-black uppercase tracking-widest">Queued</div>
+                                )}
+                            </div>
+                            <button className="text-slate-500 hover:text-red-500 p-1 rounded-lg hover:bg-red-500/10 transition-colors" onClick={() => removeFile(id)} disabled={processing}>x</button>
+                        </div>
                     </div>
                 ))}
             </div>

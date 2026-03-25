@@ -33,3 +33,23 @@ export const addWatermarkText = async (file, options = {}, password) => {
     });
     return pdf.save();
 };
+
+export const addTextToPdf = async (file, options = {}) => {
+    const { text = '', pageNum = 1, x = 50, y = 50, fontSize = 12 } = options;
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await PDFDocument.load(arrayBuffer);
+    const pages = pdf.getPages();
+    const pageIndex = Math.max(0, Math.min(pageNum - 1, pages.length - 1));
+    const page = pages[pageIndex];
+    const font = await pdf.embedFont(StandardFonts.Helvetica);
+    
+    page.drawText(text, {
+        x,
+        y,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0)
+    });
+    
+    return pdf.save();
+};

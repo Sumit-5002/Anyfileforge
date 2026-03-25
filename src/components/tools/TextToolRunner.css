@@ -56,14 +56,16 @@
 }
 
 .icon-box {
-    background: rgba(var(--primary-rgb, 14, 165, 233), 0.15);
-    color: var(--primary-400, #38bdf8);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.1));
+    color: #60a5fa;
     width: 48px;
     height: 48px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 1px solid rgba(var(--primary-rgb), 0.25);
+    box-shadow: 0 0 16px rgba(var(--primary-rgb), 0.15);
 }
 
 .text-tool-header h3 {
@@ -141,8 +143,9 @@
 }
 
 .toggle-btn.active {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary, #fff);
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.35);
 }
 
 .text-tool-split-view {
@@ -186,6 +189,16 @@
     letter-spacing: 0.05em;
 }
 
+.input-pane .pane-header {
+    border-left: 3px solid rgba(var(--primary-rgb), 0.6);
+    color: #93c5fd;
+}
+
+.output-pane .pane-header {
+    border-left: 3px solid rgba(16, 185, 129, 0.6);
+    color: #6ee7b7;
+}
+
 .error-badge {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
@@ -199,21 +212,25 @@
 }
 
 .copy-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary, #94a3b8);
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
     display: flex;
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: all 0.2s ease;
     font-size: 0.85rem;
     text-transform: none;
-    padding: 0;
+    padding: 5px 12px;
+    border-radius: 8px;
 }
 
 .copy-btn:hover:not(:disabled) {
-    color: var(--text-primary, #fff);
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #34d399;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
 }
 
 .copy-btn:disabled {
@@ -284,11 +301,13 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--primary-rgb), 0.12);
+    border: 1px solid rgba(var(--primary-rgb), 0.25);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted, #64748b);
+    color: #60a5fa;
+    box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.12);
 }
 
 .markdown-preview-content {

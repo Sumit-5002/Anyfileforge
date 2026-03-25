@@ -1,9 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
 import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { FileText, ArrowUpDown } from 'lucide-react';
+import { FileText, ArrowUpDown, ChevronUp, ChevronDown, Eye } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
 function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
@@ -16,6 +16,7 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
     };
 
+
     const handleReorder = (dragIdx, targetIdx) => {
         if (dragIdx === targetIdx) return;
         setFiles(prev => {
@@ -24,6 +25,22 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             newFiles.splice(targetIdx, 0, moved);
             return newFiles;
         });
+    };
+
+    const handleMove = (index, direction) => {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= files.length) return;
+        const newFiles = [...files];
+        const [moved] = newFiles.splice(index, 1);
+        newFiles.splice(newIndex, 0, moved);
+        setFiles(newFiles);
+    };
+
+    const handlePreview = (file) => {
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank');
+        // Note: URL.revokeObjectURL(url) should ideally be called later, 
+        // but for a preview in a new tab, it's safer to let browser gc it or just leave it.
     };
 
     const handleMerge = async () => {
@@ -91,12 +108,40 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <div className="file-item-name">{file.name}</div>
                             <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
                         </div>
-                        <button
-                            className="btn-icon-danger"
-                            onClick={() => setFiles(files.filter((_, idx) => idx !== i))}
-                        >
-                            ×
-                        </button>
+                        <div className="file-item-actions" style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                className="btn-icon"
+                                onClick={() => handlePreview(file)}
+                                title="Preview PDF"
+                            >
+                                <Eye size={16} />
+                            </button>
+                            <div className="reorder-buttons" style={{ display: 'flex', flexDirection: 'column' }}>
+                                <button
+                                    className="btn-icon"
+                                    onClick={() => handleMove(i, -1)}
+                                    disabled={i === 0}
+                                    title="Move Up"
+                                >
+                                    <ChevronUp size={14} />
+                                </button>
+                                <button
+                                    className="btn-icon"
+                                    onClick={() => handleMove(i, 1)}
+                                    disabled={i === files.length - 1}
+                                    title="Move Down"
+                                >
+                                    <ChevronDown size={14} />
+                                </button>
+                            </div>
+                            <button
+                                className="btn-icon-danger"
+                                onClick={() => setFiles(files.filter((_, idx) => idx !== i))}
+                                title="Remove File"
+                            >
+                                ×
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>

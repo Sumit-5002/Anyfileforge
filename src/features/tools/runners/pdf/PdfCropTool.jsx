@@ -20,6 +20,8 @@ function PdfCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const canvasRef = useRef(null);
     const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
     const [scale, setScale] = useState(1);
+    const [isDrawing, setIsDrawing] = React.useState(false);
+    const [startPos, setStartPos] = React.useState({ x: 0, y: 0 });
 
     const handleFilesSelected = (files) => {
         if (files[0]) setFile(files[0]);
@@ -66,6 +68,36 @@ function PdfCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
 
         return () => { active = false; };
     }, [file]);
+
+    const handleMouseDown = (e) => {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        setIsDrawing(true);
+        setStartPos({ x, y });
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isDrawing) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+        const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+        
+        const tx = Math.min(startPos.x, x);
+        const ty = Math.min(startPos.y, y);
+        const bx = Math.max(startPos.x, x);
+        const by = Math.max(startPos.y, y);
+
+        // Convert pixels back to points
+        setMargins({
+            top: Math.round(ty / scale),
+            left: Math.round(tx / scale),
+            bottom: Math.round((rect.height - by) / scale),
+            right: Math.round((rect.width - bx) / scale)
+        });
+    };
+
+    const handleMouseUp = () => setIsDrawing(false);
 
     const handleProcess = async () => {
         setProcessing(true);
@@ -145,25 +177,35 @@ function PdfCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 </div>
             }
         >
-            <div className="crop-preview-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <h4 style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>Visual Preview (Page 1)</h4>
+            <div className="crop-preview-wrapper flex flex-col items-center">
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-6 bg-white/5 px-6 py-2 rounded-full border border-white/5 animate-pulse">
+                    Drag on the page to define crop box
+                </div>
                 
-                <div style={{ position: 'relative', display: 'inline-block', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
+                <div 
+                    className="relative cursor-crosshair shadow-2xl rounded-lg overflow-hidden border border-white/10"
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    style={{ userSelect: 'none' }}
+                >
                     <canvas ref={canvasRef} style={{ display: 'block', background: '#fff' }} />
                     
-                    {/* Render visual semi-transparent crop overlay over the canvas */}
                     {pdfDimensions.width > 0 && (
-                        <div style={{
-                            position: 'absolute',
-                            top: `${Number(margins.top) * scale}px`,
-                            left: `${Number(margins.left) * scale}px`,
-                            right: `${Number(margins.right) * scale}px`,
-                            bottom: `${Number(margins.bottom) * scale}px`,
-                            border: '2px solid #ef4444',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            pointerEvents: 'none',
-                            boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' // Dim the outer uncropped area
-                        }} />
+                        <div 
+                            className="absolute border-2 border-primary-500 bg-primary-500/10 pointer-events-none transition-shadow"
+                            style={{
+                                top: `${Number(margins.top) * scale}px`,
+                                left: `${Number(margins.left) * scale}px`,
+                                right: `${Number(margins.right) * scale}px`,
+                                bottom: `${Number(margins.bottom) * scale}px`,
+                                boxShadow: '0 0 0 9999px rgba(0,0,0,0.6)'
+                            }} 
+                        >
+                            <div className="absolute -top-6 left-0 bg-primary-500 text-white text-[8px] font-black uppercase px-2 py-1 rounded">
+                                Selection_Area: {Math.round(pdfDimensions.width - Number(margins.left) - Number(margins.right))} x {Math.round(pdfDimensions.height - Number(margins.top) - Number(margins.bottom))} pt
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>

@@ -2,31 +2,46 @@ import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { Lock, ShieldAlert, FileText, CheckCircle } from 'lucide-react';
+import { Lock, ShieldAlert, FileText, CheckCircle, Eye, ChevronUp, ChevronDown } from 'lucide-react';
 
 function PdfProtectTool({ tool, onFilesAdded }) {
-    const [file, setFile] = useState(null);
+    const [files, setFiles] = useState([]);
     const [password, setPassword] = useState('');
     const [processing, setProcessing] = useState(false);
     const [done, setDone] = useState(false);
 
-    const handleFilesSelected = (files) => {
-        setFile(files[0]);
+    const handleFilesSelected = (newFiles) => {
+        setFiles(prev => [...prev, ...newFiles]);
         setDone(false);
-        if (onFilesAdded) onFilesAdded(files);
+        if (onFilesAdded) onFilesAdded(newFiles);
+    };
+
+    const handleMove = (index, direction) => {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= files.length) return;
+        const newFiles = [...files];
+        const [moved] = newFiles.splice(index, 1);
+        newFiles.splice(newIndex, 0, moved);
+        setFiles(newFiles);
+    };
+
+    const handlePreview = (file) => {
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank');
     };
 
     const handleProcess = async () => {
-        if (!file || !password) {
-            alert('Please enter a password.');
+        if (files.length === 0 || !password) {
+            alert('Please select files and enter a password.');
             return;
         }
         setProcessing(true);
         try {
-            // Favor Offline mode by default for privacy and speed (QPDF WASM)
-            const data = await pdfService.protectPDF(file, password);
-            const baseName = file.name.replace(/\.[^/.]+$/, '');
-            pdfService.downloadPDF(data, `${baseName}_protected.pdf`);
+            for (const file of files) {
+                const data = await pdfService.protectPDF(file, password);
+                const baseName = file.name.replace(/\.[^/.]+$/, '');
+                pdfService.downloadPDF(data, `${baseName}_protected.pdf`);
+            }
             setDone(true);
         } catch (error) {
             console.error('Protect error:', error);
@@ -36,18 +51,19 @@ function PdfProtectTool({ tool, onFilesAdded }) {
         }
     };
 
-    if (!file) {
-        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} />;
+    if (files.length === 0) {
+        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={true} />;
     }
 
     return (
         <ToolWorkspace
             tool={tool}
-            files={[file]}
-            onReset={() => { setFile(null); setDone(false); }}
+            files={files}
+            onFilesSelected={handleFilesSelected}
+            onReset={() => { setFiles([]); setDone(false); }}
             processing={processing}
             onProcess={handleProcess}
-            actionLabel="Protect PDF Now"
+            actionLabel={files.length > 1 ? `Protect All (${files.length})` : "Protect PDF Now"}
             sidebarTitle="Security Settings"
             sidebar={
                 <div className="sidebar-settings">
@@ -64,21 +80,33 @@ function PdfProtectTool({ tool, onFilesAdded }) {
                 </div>
             }
         >
-            <div className="files-list-view" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="files-list-view">
                 {done ? (
-                    <div className="fade-in text-center">
-                        <CheckCircle size={64} className="text-success mb-3" />
-                        <h3>PDF Protected!</h3>
-                        <p className="text-muted">Your document has been encrypted with your password.</p>
+                    <div className="fade-in text-center py-5">
+                        <CheckCircle size={64} className="text-success mb-3 mx-auto" strokeWidth={3} />
+                        <h3>Batch Protection Complete!</h3>
+                        <p className="text-muted">All documents have been encrypted with your password.</p>
                     </div>
                 ) : (
-                    <div className="file-item-horizontal w-full" style={{ maxWidth: '500px' }}>
-                        <FileText size={24} className="text-danger" />
-                        <div className="file-item-info">
-                            <div className="file-item-name">{file.name}</div>
-                            <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                    files.map((file, i) => (
+                        <div key={i} className="file-item-horizontal">
+                            <FileText size={24} className="text-danger" />
+                            <div className="file-item-info">
+                                <div className="file-item-name">{file.name}</div>
+                                <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                            </div>
+                            <div className="file-item-actions">
+                                <button className="btn-icon" onClick={() => handlePreview(file)} title="Preview source">
+                                    <Eye size={16} />
+                                </button>
+                                <div className="reorder-buttons">
+                                    <button className="btn-icon" onClick={() => handleMove(i, -1)} disabled={i === 0}><ChevronUp size={14} /></button>
+                                    <button className="btn-icon" onClick={() => handleMove(i, 1)} disabled={i === files.length - 1}><ChevronDown size={14} /></button>
+                                </div>
+                                <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} title="Remove file">×</button>
+                            </div>
                         </div>
-                    </div>
+                    ))
                 )}
             </div>
         </ToolWorkspace>

@@ -42,34 +42,35 @@ const ResultItem = ({ res, idx }) => {
     };
 
     return (
-        <div className="result-artifact-card bg-slate-900 border border-white/5 rounded-3xl overflow-hidden group hover:border-primary-500/30 transition-all shadow-2xl relative">
-            {isImg && itemUrl ? (
-                <div className="relative aspect-[4/3] bg-black/40 flex items-center justify-center overflow-hidden">
-                    <img src={itemUrl} alt={res.name} className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-700" />
-                    <div className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-md">
-                        <button className="p-4 bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-xl" onClick={() => window.open(itemUrl, '_blank')} title="Inspect Full Resolution"><Eye size={24}/></button>
-                        <button className="p-4 bg-primary-500 text-white rounded-full hover:scale-110 active:scale-95 transition-all shadow-xl" onClick={handleDownload} title="Commence Download"><Download size={24}/></button>
+        <div className="result-artifact-card">
+            <div className="artifact-preview-area">
+                {isImg && itemUrl ? (
+                    <>
+                        <img src={itemUrl} alt={res.name} className="artifact-img" />
+                        <div className="artifact-overlay">
+                            <button className="artifact-btn artifact-btn-view" onClick={() => window.open(itemUrl, '_blank')} title="Inspect Full Resolution"><Eye size={20}/></button>
+                            <button className="artifact-btn artifact-btn-download" onClick={handleDownload} title="Commence Download"><Download size={20}/></button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="binary-stream-placeholder">
+                        <FileText size={48} />
+                        <span className="binary-label">{isImg ? 'Preparing' : 'Result File'}</span>
+                        <div className="artifact-overlay">
+                            <button className="artifact-btn artifact-btn-download" onClick={handleDownload}>
+                                <Download size={20}/>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            ) : (
-                <div className="aspect-[4/3] bg-white/5 flex flex-col items-center justify-center gap-4 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-primary-500/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <FileText size={48} className="text-slate-700 relative z-10"/>
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest relative z-10">{isImg ? 'Preparing Preview' : 'Binary Stream'}</span>
-                    <div className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-md">
-                        <button className="p-4 bg-primary-500 text-white rounded-full hover:scale-110 active:scale-95 transition-all shadow-xl" onClick={handleDownload}>
-                            <Download size={24}/>
-                        </button>
+                )}
+            </div>
+            <div className="artifact-footer">
+                <div className="artifact-meta">
+                    <div className="artifact-label-row">
+                        <div className="artifact-dot"></div>
+                        <span className="artifact-id">Result_0{idx + 1}</span>
                     </div>
-                </div>
-            )}
-            <div className="p-6 flex items-center justify-between bg-white/[0.02] border-t border-white/5">
-                <div className="flex flex-col truncate max-w-[75%]">
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse"></span>
-                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">Artifact_0{idx + 1}</span>
-                    </div>
-                    <span className="text-xs font-mono font-bold text-slate-300 truncate">{res.name || 'unnamed'}</span>
+                    <div className="artifact-filename">{res.name || 'unnamed'}</div>
                 </div>
             </div>
         </div>
@@ -96,10 +97,11 @@ function ToolWorkspace({
     showHeaderActions = true,
     sidebarTitle = 'Settings',
     layout = 'default',
+    allowEmpty = false,
     children
 }) {
     const isResearch = layout === 'research' || tool?.category === 'Data Analysis' || tool?.category === 'Engineering Hub';
-    const hasFiles = files && files.length > 0;
+    const hasFiles = (files && files.length > 0) || (results && results.length > 0);
     const addMoreInputRef = useRef(null);
 
     const handleAddMore = (e) => {
@@ -112,22 +114,21 @@ function ToolWorkspace({
     const renderResults = () => {
         if (!results || results.length === 0) return null;
         return (
-            <div className="workspace-results-gallery mt-16 mb-12 fade-in">
-                <div className="gallery-header flex flex-col md:flex-row items-center justify-between mb-10 px-2 gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-primary-500/20 rounded-2xl border border-primary-500/20"><Zap size={20} className="text-primary-400"/></div>
+            <div className="workspace-results-gallery fade-in">
+                <div className="gallery-header">
+                    <div className="gallery-title-area">
+                        <div className="gallery-icon-bg"><Zap size={20} /></div>
                         <div>
-                            <h4 className="text-lg font-black italic tracking-tighter text-white uppercase">Engine_Artifacts</h4>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Local Temporary Buffers</p>
+                            <h4 className="gallery-title-main">Result Gallery</h4>
+                            <p className="gallery-subtitle">Ready for Download</p>
                         </div>
                     </div>
-                    <div className="hidden md:block h-[1px] flex-grow mx-8 bg-white/5"></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary-500 bg-primary-500/10 px-4 py-2 rounded-full border border-primary-500/20 whitespace-nowrap">
+                    <div className="gallery-badge">
                         {results.length} Snapshot{results.length !== 1 ? 's' : ''} Ready
-                    </span>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+                <div className="results-grid">
                     {results.map((res, idx) => (
                         <ResultItem key={idx} res={res} idx={idx} />
                     ))}
@@ -136,7 +137,7 @@ function ToolWorkspace({
         );
     };
 
-    if (!hasFiles) {
+    if (!hasFiles && !allowEmpty) {
         return (
             <div className={`tool-workspace-root fade-in ${isResearch ? 'research-mode' : ''}`}>
                 <FileUploader
@@ -162,7 +163,7 @@ function ToolWorkspace({
                 <div className="workspace-header-actions flex gap-2">
                     {showHeaderActions && onFilesSelected && (
                         <>
-                            <button className="btn-add-more bg-primary-500 hover:bg-primary-600 text-white rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95" onClick={() => addMoreInputRef.current?.click()}>+ New</button>
+                            <button className="btn-add-more bg-primary-500 hover:bg-primary-600 text-white rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95" onClick={() => addMoreInputRef.current?.click()}>+ Add Files</button>
                             <input type="file" multiple={multiple} hidden ref={addMoreInputRef} accept={accept || tool?.accept || '*/*'} onChange={handleAddMore} />
                         </>
                     )}

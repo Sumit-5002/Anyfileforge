@@ -157,12 +157,14 @@ const NetCdfViewerTool = ({ tool, onFilesAdded }) => {
         }
 
         const blob = new Blob([content], { type: format === 'python' ? 'text/plain' : (format === 'csv' ? 'text/csv' : 'application/json') });
-        setResults(prev => [...prev, {
-            id: `nc-var-${Date.now()}`,
-            name: fileName,
-            data: blob,
-            type: 'data'
-        }]);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
 
     const exportAllToCsv = () => {
@@ -191,12 +193,14 @@ const NetCdfViewerTool = ({ tool, onFilesAdded }) => {
 
         const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
         const outName = `${currentFile.split('.')[0]}_all_vars.csv`;
-        setResults(prev => [...prev, {
-            id: `nc-all-${Date.now()}`,
-            name: outName,
-            data: blob,
-            type: 'data'
-        }]);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = outName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
     const selectedVarShort = selectedVar ? selectedVar.name.split('/').pop() : '';
     const selectedVarDimsText = selectedVar?.dimensions?.length ? `[${selectedVar.dimensions.join(', ')}]` : '[]';

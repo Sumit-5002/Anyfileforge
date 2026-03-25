@@ -1,0 +1,281 @@
+.latex-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0;
+    flex: 1;
+}
+
+/* Sidebar Layout */
+.latex-sidebar {
+    background: transparent;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.latex-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.latex-icon-box {
+    padding: 10px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 12px;
+    color: #60a5fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.latex-icon-box.emerald {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+}
+
+.latex-section-title {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.latex-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.latex-btn {
+    padding: 10px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.latex-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.latex-btn.active {
+    background: var(--primary-500, #3b82f6);
+    border-color: var(--primary-400, #60a5fa);
+    color: white;
+}
+
+.latex-btn span {
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.latex-export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.latex-export-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.latex-export-btn span {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.latex-export-btn .icon {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.latex-export-btn:hover .icon {
+    opacity: 1;
+}
+
+/* Editor Main Area */
+.latex-editor-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.latex-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    padding: 8px 16px;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.latex-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse 2s infinite;
+}
+
+.latex-copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
+    color: #e2e8f0;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.latex-copy-btn:hover {
+    background: var(--primary-500, #3b82f6);
+}
+
+.latex-mainframe {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+    height: calc(100vh - 280px);
+}
+
+.latex-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Specific Panes */
+.latex-pane.editor {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.latex-pane.preview {
+    background: white;
+}
+
+.latex-pane-header {
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.latex-pane.editor .latex-pane-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #64748b;
+}
+
+.latex-pane.preview .latex-pane-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #f1f5f9;
+    color: #94a3b8;
+}
+
+.latex-textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 32px;
+    color: #bfdbfe;
+    font-family: monospace;
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    line-height: 1.6;
+}
+
+.latex-preview-content {
+    flex: 1;
+    padding: 48px;
+    overflow: auto;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* KaTeX Specific Formatting */
+.math-rendering-box {
+    padding: 24px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    text-align: center;
+    overflow-x: auto;
+    border: 2px solid rgba(59, 130, 246, 0.1);
+}
+
+.katex-display {
+    margin: 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px;
+}
+
+/* Responsiveness */
+@media (max-width: 1024px) {
+    .latex-mainframe {
+        flex-direction: column;
+        height: auto;
+    }
+    .latex-pane {
+        min-height: 320px;
+    }
+}

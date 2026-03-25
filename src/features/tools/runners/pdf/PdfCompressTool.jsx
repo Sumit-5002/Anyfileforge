@@ -3,7 +3,7 @@ import pdfService from '../../../../services/pdfService';
 import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { FileText, Zap, CheckCircle2, ShieldCheck, Settings } from 'lucide-react';
+import { FileText, Zap, CheckCircle2, ShieldCheck, Settings, Eye, ChevronUp, ChevronDown } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
 const LEVELS = [
@@ -21,6 +21,20 @@ function PdfCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const handleFilesSelected = (newFiles) => {
         setFiles(prev => [...prev, ...newFiles]);
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
+    };
+
+    const handleMove = (index, direction) => {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= files.length) return;
+        const newFiles = [...files];
+        const [moved] = newFiles.splice(index, 1);
+        newFiles.splice(newIndex, 0, moved);
+        setFiles(newFiles);
+    };
+
+    const handlePreview = (file) => {
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank');
     };
 
     const handleProcess = async () => {
@@ -90,8 +104,17 @@ function PdfCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <div className="file-item-name">{file.name}</div>
                             <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
                         </div>
-                        {i < completedCount && <div className="status-badge">Done!</div>}
-                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))}>×</button>
+                        <div className="file-item-actions">
+                            <button className="btn-icon" onClick={() => handlePreview(file)} title="Preview source">
+                                <Eye size={16} />
+                            </button>
+                            <div className="reorder-buttons">
+                                <button className="btn-icon" onClick={() => handleMove(i, -1)} disabled={i === 0}><ChevronUp size={14} /></button>
+                                <button className="btn-icon" onClick={() => handleMove(i, 1)} disabled={i === files.length - 1}><ChevronDown size={14} /></button>
+                            </div>
+                            {i < completedCount && <div className="status-badge">Done!</div>}
+                            <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} title="Remove file">×</button>
+                        </div>
                     </div>
                 ))}
             </div>

@@ -3,7 +3,7 @@ import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
 import * as pdfjsLib from 'pdfjs-dist';
 import { jsPDF } from 'jspdf';
-import { ScanText, CircleCheck, FileText, Settings, Zap } from 'lucide-react';
+import { ScanText, CircleCheck, FileText, Settings, Zap, ChevronUp, ChevronDown, Eye, ImageIcon } from 'lucide-react';
 import Tesseract from 'tesseract.js';
 
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
@@ -11,7 +11,7 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 function PdfOcrTool({ tool, onFilesAdded }) {
-    const [file, setFile] = useState(null);
+    const [files, setFiles] = useState([]);
     const [processing, setProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [progressLabel, setProgressLabel] = useState("");
@@ -19,10 +19,24 @@ function PdfOcrTool({ tool, onFilesAdded }) {
     const [language, setLanguage] = useState('eng');
     const [mode, setMode] = useState('extract'); // 'extract' or 'ocr'
 
-    const handleFilesSelected = (files) => {
-        setFile(files[0] || null);
+    const handleFilesSelected = (newFiles) => {
+        setFiles(prev => [...prev, ...newFiles]);
         setDone(false);
-        if (onFilesAdded) onFilesAdded(files);
+        if (onFilesAdded) onFilesAdded(newFiles);
+    };
+
+    const handleMove = (index, direction) => {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= files.length) return;
+        const newFiles = [...files];
+        const [moved] = newFiles.splice(index, 1);
+        newFiles.splice(newIndex, 0, moved);
+        setFiles(newFiles);
+    };
+
+    const handlePreview = (file) => {
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank');
     };
 
     const runExtraction = async (pdfDoc, totalPages, outputPdf, pdfWidth, pdfHeight) => {
@@ -93,59 +107,94 @@ function PdfOcrTool({ tool, onFilesAdded }) {
     };
 
     const handleProcess = async () => {
-        if (!file) return;
+        if (files.length === 0) return;
         setProcessing(true);
         setProgress(5);
-        setProgressLabel("Loading PDF engine...");
+        setProgressLabel("Initializing AI Engine...");
         
         try {
-            const arrayBuffer = await file.arrayBuffer();
-            const pdfData = new Uint8Array(arrayBuffer);
-            const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
-            const totalPages = pdfDoc.numPages;
-            
-            const outputPdf = new jsPDF('p', 'pt', 'a4');
-            const pdfWidth = outputPdf.internal.pageSize.getWidth();
-            const pdfHeight = outputPdf.internal.pageSize.getHeight();
-            
-            if (mode === 'extract') {
-                await runExtraction(pdfDoc, totalPages, outputPdf, pdfWidth, pdfHeight);
-            } else {
-                await runOcr(pdfDoc, totalPages, outputPdf, pdfWidth, pdfHeight);
+            let worker = null;
+            if (mode === 'ocr' || files.some(f => !f.type.includes('pdf'))) {
+                try {
+                    worker = await Tesseract.createWorker(language);
+                } catch (tness) {
+                    throw new Error("Tesseract Bridge Error: AI models could not be loaded from CDN. Check your connection.");
+                }
+            }
+
+            for (let fIdx = 0; fIdx < files.length; fIdx++) {
+                const file = files[fIdx];
+                const baseProgress = (fIdx / files.length) * 100;
+                const nextBaseProgress = ((fIdx + 1) / files.length) * 100;
+                
+                const isPdf = file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf');
+                const outputPdf = new jsPDF('p', 'pt', 'a4');
+                const pdfWidth = outputPdf.internal.pageSize.getWidth();
+                const pdfHeight = outputPdf.internal.pageSize.getHeight();
+
+                if (isPdf) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdfDoc = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+                    const totalPages = pdfDoc.numPages;
+
+                    if (mode === 'extract') {
+                        await runExtraction(pdfDoc, totalPages, outputPdf, pdfWidth, pdfHeight);
+                    } else {
+                        await runOcr(pdfDoc, totalPages, outputPdf, pdfWidth, pdfHeight);
+                    }
+                } else {
+                    // Direct Image OCR
+                    setProgressLabel(`Running Vision OCR on ${file.name}...`);
+                    const imgUrl = URL.createObjectURL(file);
+                    const { data } = await worker.recognize(imgUrl);
+                    URL.revokeObjectURL(imgUrl);
+
+                    outputPdf.setFontSize(11);
+                    const splitText = outputPdf.splitTextToSize(data.text || "No text found", pdfWidth - 40);
+                    let y = 40;
+                    for(let line = 0; line < splitText.length; line++) {
+                        if (y > pdfHeight - 40) {
+                            outputPdf.addPage();
+                            y = 40;
+                        }
+                        outputPdf.text(splitText[line], 20, y);
+                        y += 14;
+                    }
+                }
+
+                outputPdf.save(`${file.name.replace(/\.[^/.]+$/, '')}_processed.pdf`);
+                setProgress(nextBaseProgress);
             }
             
-            setProgressLabel("Finalizing PDF...");
-            outputPdf.save(`${file.name.replace(/\.[^/.]+$/, '')}_${mode === 'extract' ? 'extracted' : 'ocr'}.pdf`);
-            
-            setProgress(100);
+            if (worker) await worker.terminate();
             setDone(true);
         } catch (error) {
-            console.error('Text Extraction Error:', error);
-            alert(`Failed during ${mode === 'extract' ? 'extraction' : 'OCR'}: ` + error.message);
+            console.error('OCR Process Failure:', error);
+            alert(`Process error: ` + error.message);
         } finally {
             setProcessing(false);
             setProgressLabel("");
         }
     };
 
-    if (!file) {
-        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} accept="application/pdf" />;
+    if (files.length === 0) {
+        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={true} accept="application/pdf,image/*" />;
     }
 
     return (
         <ToolWorkspace
             tool={tool}
-            files={[file]}
+            files={files}
             onFilesSelected={handleFilesSelected}
             onReset={() => {
-                 setFile(null);
+                 setFiles([]);
                  setDone(false);
                  setProgress(0);
             }}
             processing={processing}
             progress={progress}
             onProcess={handleProcess}
-            actionLabel={mode === 'extract' ? "Extract Text Quickly" : "Run Vision OCR Mode"}
+            actionLabel={files.length > 1 ? `Batch Process (${files.length})` : (mode === 'extract' ? "Extract Text" : "Run AI Vision OCR")}
             sidebar={
                 <div className="sidebar-info">
                     <p className="tool-help mb-4">
@@ -179,22 +228,33 @@ function PdfOcrTool({ tool, onFilesAdded }) {
                 </div>
             }
         >
-            <div className="files-list-view" style={{ minHeight: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="files-list-view">
                 {done ? (
-                    <div className="fade-in text-center">
-                        <CircleCheck size={64} className="text-success mb-3" />
-                        <h3>{mode === 'extract' ? 'Extraction' : 'OCR'} Complete</h3>
-                        <p className="text-muted">Your document has been processed and downloaded!</p>
+                    <div className="fade-in text-center py-5">
+                        <CircleCheck size={64} className="text-success mb-3 mx-auto" />
+                        <h3>Processing Complete</h3>
+                        <p className="text-muted">All documents and images have been processed and downloaded!</p>
                     </div>
                 ) : (
-                    <div className="file-item-horizontal w-full" style={{ maxWidth: '520px' }}>
-                        <FileText size={24} className="text-primary" />
-                        <div className="file-item-info">
-                            <div className="file-item-name">{file.name}</div>
-                            <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                    files.map((file, i) => (
+                        <div key={i} className="file-item-horizontal">
+                            {file.type.includes('image') ? <ImageIcon size={24} className="text-primary" /> : <FileText size={24} className="text-danger" />}
+                            <div className="file-item-info">
+                                <div className="file-item-name font-mono">{file.name}</div>
+                                <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                            </div>
+                            <div className="file-item-actions">
+                                <button className="btn-icon" onClick={() => handlePreview(file)} title="Preview source">
+                                    <Eye size={16} />
+                                </button>
+                                <div className="reorder-buttons">
+                                    <button className="btn-icon" onClick={() => handleMove(i, -1)} disabled={i === 0}><ChevronUp size={14} /></button>
+                                    <button className="btn-icon" onClick={() => handleMove(i, 1)} disabled={i === files.length - 1}><ChevronDown size={14} /></button>
+                                </div>
+                                <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} title="Remove file">×</button>
+                            </div>
                         </div>
-                        <ScanText size={20} className="text-primary" opacity={mode === 'ocr' ? 1 : 0.3} />
-                    </div>
+                    ))
                 )}
             </div>
         </ToolWorkspace>
@@ -202,4 +262,3 @@ function PdfOcrTool({ tool, onFilesAdded }) {
 }
 
 export default PdfOcrTool;
-

@@ -1,67 +1,119 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import * as hdf5 from 'jsfive';
-import { 
-    Download, FileText, ChevronRight, ChevronDown, Database, 
+import {
+    Download, FileText, ChevronRight, Database,
     Activity, Info, Trash2, Layers, Loader2, Maximize2,
-    FileJson, FileSpreadsheet as CSVIcon, Search, Workflow, Boxes, Network,
-    Sigma, Calculator, Code2, Compare, GitCompare
+    FileJson, FileSpreadsheet as CSVIcon, Search, Boxes, Network,
+    Calculator
 } from 'lucide-react';
 import {
-  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend,
+    Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import ToolWorkspace from '../common/ToolWorkspace';
 import { useFileList } from '../../../../components/tools/shared/useFileList';
-import './Hdf5ViewerTool.css'; 
+import './Hdf5ViewerTool.css';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const DatasetNode = ({ name, node, path, onSelect, selectedPaths, level = 0 }) => {
-    // In jsfive, nodes can be Group or Dataset
-    const isGroup = node instanceof hdf5.Group;
-    const [isExpanded, setIsExpanded] = useState(level < 1);
-    const isSelected = selectedPaths.includes(path);
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-    let keys = [];
-    if (isGroup) {
-        try {
-            if (typeof node.keys === 'function') keys = node.keys();
-            else if (Array.isArray(node.keys)) keys = node.keys;
-            else if (node._links) keys = Object.keys(node._links);
-        } catch (e) {
-            console.warn("Could not read keys for group:", name, e);
-        }
-    }
+/** Detect if this node is a navigable Group (has children) */
+const isGroup = (node) =>
+    node != null &&
+    !('value' in node) &&          // datasets have .value; groups don't
+    (typeof node.keys === 'function' || Array.isArray(node.keys) || !!node._links);
+
+/** Detect if this node is a Dataset (has a value / dtype) */
+const isDataset = (node) =>
+    node != null &&
+    ('value' in node || node.dtype != null);
+
+/** Extract child key names from a group node */
+const getKeys = (node) => {
+    try {
+        const raw = typeof node.keys === 'function' ? node.keys() : node.keys;
+        if (Array.isArray(raw)) return [...new Set(raw)].sort();
+        if (raw && typeof raw === 'object') return Object.keys(raw).sort();
+        if (node._links) return Object.keys(node._links).sort();
+    } catch (_) { /* ignore */ }
+    return [];
+};
+
+/** Retrieve a child by name from a group node */
+const getChild = (node, key) => {
+    try {
+        if (typeof node.get === 'function') return node.get(key);
+        if (node[key] !== undefined)        return node[key];
+        if (node._links?.[key])             return node._links[key];
+    } catch (_) { /* ignore */ }
+    return null;
+};
+
+// ─── DatasetNode ──────────────────────────────────────────────────────────────
+
+const DatasetNode = ({ name, node, path, onSelect, selectedPaths, level = 0 }) => {
+    const isGrp = isGroup(node);
+    const isDst = isDataset(node);
+    const keys = isGrp ? getKeys(node) : [];
+
+    const [expanded, setExpanded] = useState(level < 1);
+    const selected = selectedPaths.includes(path);
 
     return (
-        <div className="tree-node-wrapper">
-            <div 
-                className={`tree-node-item ${isSelected ? 'selected' : ''}`}
-                style={{ paddingLeft: `${level * 16 + 10}px`, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', transition: 'background 0.2s', background: isSelected ? 'rgba(139, 92, 246, 0.2)' : 'transparent' }}
-                onClick={isGroup ? () => setIsExpanded(!isExpanded) : () => onSelect(path, node, name)}
+        <div>
+            {/* Row */}
+            <div
+                onClick={() => {
+                    if (isGrp) setExpanded(v => !v);
+                    if (isDst) onSelect(path, node, name);
+                }}
+                style={{
+                    paddingLeft: `${level * 16 + 12}px`,
+                    paddingTop: 7,
+                    paddingBottom: 7,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    cursor: 'pointer',
+                    borderRadius: 8,
+                    transition: 'background 0.15s',
+                    background: selected ? 'rgba(139,92,246,0.15)' : 'transparent',
+                    border: selected ? '1px solid rgba(139,92,246,0.25)' : '1px solid transparent',
+                }}
+                onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent'; }}
             >
-                <div className={`node-chevron ${isExpanded ? 'expanded' : ''}`} style={{ width: 14, transition: 'transform 0.2s', transform: isExpanded && isGroup ? 'rotate(90deg)' : 'none', display: isGroup ? 'block' : 'none' }}>
-                    <ChevronRight size={14} />
+                {/* Chevron */}
+                <div style={{ width: 14, opacity: isGrp ? 1 : 0, transition: 'transform 0.2s', transform: expanded && isGrp ? 'rotate(90deg)' : 'none' }}>
+                    <ChevronRight size={13} />
                 </div>
-                <div className="node-type-icon">
-                    {isGroup ? <Boxes size={14} color="#a78bfa" /> : <Network size={14} color="#60a5fa" />}
-                </div>
-                <div className="node-label-text font-mono text-[11px] font-bold tracking-tight truncate overflow-hidden" title={name}>{name}</div>
+
+                {/* Icon */}
+                {isGrp
+                    ? <Boxes  size={13} color="#a78bfa" style={{ flexShrink: 0 }} />
+                    : <Network size={13} color="#60a5fa" style={{ flexShrink: 0 }} />
+                }
+
+                {/* Label */}
+                <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: 11, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={name}>
+                    {name}
+                </span>
             </div>
-            {isGroup && isExpanded && (
-                <div className="node-children">
-                    {keys.sort().map((key) => {
-                        let childNode;
-                        try {
-                            childNode = node.get(key);
-                        } catch(e) { return null; }
+
+            {/* Children */}
+            {isGrp && expanded && keys.length > 0 && (
+                <div>
+                    {keys.map(key => {
+                        const child = getChild(node, key);
+                        if (!child) return null;
+                        const childPath = path === '/' ? `/${key}` : `${path}/${key}`;
                         return (
-                            <DatasetNode 
-                                key={path + key} 
-                                name={key} 
-                                node={childNode} 
-                                path={path === '/' ? `/${key}` : `${path}/${key}`} 
-                                onSelect={onSelect} 
+                            <DatasetNode
+                                key={childPath}
+                                name={key}
+                                node={child}
+                                path={childPath}
+                                onSelect={onSelect}
                                 selectedPaths={selectedPaths}
                                 level={level + 1}
                             />
@@ -73,139 +125,139 @@ const DatasetNode = ({ name, node, path, onSelect, selectedPaths, level = 0 }) =
     );
 };
 
+// ─── Main Tool ────────────────────────────────────────────────────────────────
+
 const Hdf5ViewerTool = ({ tool }) => {
     const { files, addFiles, removeFile } = useFileList();
-    const [loadedFiles, setLoadedFiles] = useState({}); 
+    const [loadedFiles, setLoadedFiles] = useState({});
     const [currentFile, setCurrentFile] = useState(null);
     const [selectedPaths, setSelectedPaths] = useState([]);
-    const [selectedDatasets, setSelectedDatasets] = useState([]); // Array of dataset objects
+    const [selectedDatasets, setSelectedDatasets] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [parseError, setParseError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
 
     useEffect(() => {
-        const loadH5 = async () => {
-            const nextLoaded = { ...loadedFiles };
+        const load = async () => {
+            const next = { ...loadedFiles };
             let lastAdded = null;
+            setParseError(null);
+
             for (const f of files) {
-                if (!nextLoaded[f.file.name]) {
-                    setIsProcessing(true);
-                    try {
-                        const buffer = await f.file.arrayBuffer();
-                        const h5 = new hdf5.File(buffer, f.file.name);
-                        nextLoaded[f.file.name] = h5;
-                        lastAdded = f.file.name;
-                    } catch (err) { console.error(err); } finally { setIsProcessing(false); }
+                if (next[f.file.name]) continue;
+                setIsProcessing(true);
+                try {
+                    const buffer = await f.file.arrayBuffer();
+                    // jsfive exposes the File class as a named export
+                    const { File: H5File } = await import('jsfive');
+                    const h5 = new H5File(buffer, f.file.name);
+                    next[f.file.name] = h5;
+                    lastAdded = f.file.name;
+                } catch (err) {
+                    console.error('[HDF5] parse error:', err);
+                    setParseError(`${f.file.name}: ${err.message}`);
+                } finally {
+                    setIsProcessing(false);
                 }
             }
-            const currentFileNames = files.map(f => f.file.name);
-            Object.keys(nextLoaded).forEach(name => { if (!currentFileNames.includes(name)) delete nextLoaded[name]; });
-            setLoadedFiles(nextLoaded);
-            if (lastAdded) { setCurrentFile(lastAdded); setSelectedPaths([]); setSelectedDatasets([]); }
+
+            // Prune removed files
+            const names = files.map(f => f.file.name);
+            Object.keys(next).forEach(n => { if (!names.includes(n)) delete next[n]; });
+
+            setLoadedFiles(next);
+            if (lastAdded) {
+                setCurrentFile(lastAdded);
+                setSelectedPaths([]);
+                setSelectedDatasets([]);
+            }
         };
-        loadH5();
-    }, [files]);
+        load();
+    }, [files]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const activeH5 = currentFile ? loadedFiles[currentFile] : null;
 
     const handleSelectNode = (path, node, name) => {
-        if (node instanceof hdf5.Dataset) {
-            const isMulti = window.event && (window.event.ctrlKey || window.event.metaKey || window.event.shiftKey);
-            
-            // In jsfive, node.value might need to be accessed. 
-            // It could be a typed array.
-            const rawValue = node.value;
-            const ds = {
-                name: name || path.split('/').pop(),
-                path,
-                shape: node.shape || [],
-                dtype: node.dtype || 'mixed',
-                data: Array.isArray(rawValue) ? rawValue : (rawValue.buffer ? Array.from(rawValue) : [rawValue]),
-                attributes: node.attrs || {}
-            };
+        if (!node) return;
 
-            if (isMulti) {
-                setSelectedPaths(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]);
-                setSelectedDatasets(prev => prev.some(d => d.path === path) ? prev.filter(d => d.path !== path) : [...prev, ds]);
-            } else {
-                setSelectedPaths([path]);
-                setSelectedDatasets([ds]);
-            }
-            setActiveTab('overview');
+        const rawValue = node.value;
+        let data = [];
+
+        if (rawValue == null) {
+            data = [];
+        } else if (Array.isArray(rawValue)) {
+            data = rawValue;
+        } else if (rawValue?.buffer) {          // TypedArray
+            data = Array.from(rawValue);
         } else {
-            setSelectedPaths([]);
-            setSelectedDatasets([]);
+            data = [rawValue];
         }
+
+        const ds = {
+            name: name || path.split('/').pop(),
+            path,
+            shape: node.shape || [],
+            dtype: node.dtype || 'unknown',
+            data,
+            attributes: node.attrs || {},
+        };
+
+        const isMulti = window.event && (window.event.ctrlKey || window.event.metaKey || window.event.shiftKey);
+        if (isMulti) {
+            setSelectedPaths(p => p.includes(path) ? p.filter(x => x !== path) : [...p, path]);
+            setSelectedDatasets(p => p.some(d => d.path === path) ? p.filter(d => d.path !== path) : [...p, ds]);
+        } else {
+            setSelectedPaths([path]);
+            setSelectedDatasets([ds]);
+        }
+        setActiveTab('overview');
     };
 
-    const previewData = useMemo(() => {
-        if (selectedDatasets.length === 0) return [];
-        return selectedDatasets[0].data.slice(0, 1000);
-    }, [selectedDatasets]);
+    const previewData = useMemo(() =>
+        selectedDatasets.length > 0 ? selectedDatasets[0].data.slice(0, 1000) : [],
+    [selectedDatasets]);
 
     const chartData = useMemo(() => {
-        if (selectedDatasets.length === 0) return null;
-        
-        const datasets = selectedDatasets.map((ds, idx) => {
-            const dataSlice = ds.data.slice(0, 1000);
-            const colors = ['#8b5cf6', '#3b82f6', '#f97316', '#10b981', '#ef4444'];
-            return {
+        if (!selectedDatasets.length) return null;
+        const colors = ['#8b5cf6', '#3b82f6', '#f97316', '#10b981', '#ef4444'];
+        const maxPts = Math.max(...selectedDatasets.map(d => Math.min(d.data.length, 1000)));
+        return {
+            labels: Array.from({ length: maxPts }, (_, i) => i + 1),
+            datasets: selectedDatasets.map((ds, i) => ({
                 label: ds.name,
-                data: dataSlice.map(v => typeof v === 'number' ? v : 0),
-                borderColor: colors[idx % colors.length],
-                backgroundColor: `${colors[idx % colors.length]}22`,
+                data: ds.data.slice(0, 1000).map(v => typeof v === 'number' ? v : 0),
+                borderColor: colors[i % colors.length],
+                backgroundColor: `${colors[i % colors.length]}22`,
                 fill: selectedDatasets.length === 1,
                 tension: 0.1,
-                pointRadius: 0
-            };
-        });
-
-        const maxPoints = Math.max(...selectedDatasets.map(ds => Math.min(ds.data.length, 1000)));
-
-        return {
-            labels: Array.from({ length: maxPoints }, (_, i) => i + 1),
-            datasets
+                pointRadius: 0,
+            })),
         };
     }, [selectedDatasets]);
 
     const stats = useMemo(() => {
-        if (selectedDatasets.length === 0 || typeof selectedDatasets[0].data[0] !== 'number') return null;
-        const data = selectedDatasets[0].data;
-        const n = data.length;
-        if (n === 0) return null;
+        if (!selectedDatasets.length) return null;
+        const data = selectedDatasets[0].data.filter(v => typeof v === 'number');
+        if (!data.length) return null;
         let sum = 0, min = data[0], max = data[0];
-        for (let i = 0; i < n; i++) {
-            const v = data[i];
-            sum += v;
-            if (v < min) min = v;
-            if (v > max) max = v;
-        }
-        return { mean: sum/n, min, max, count: n };
+        data.forEach(v => { sum += v; if (v < min) min = v; if (v > max) max = v; });
+        return { mean: sum / data.length, min, max, count: data.length };
     }, [selectedDatasets]);
 
-    const handleExport = (format) => {
-        if (selectedDatasets.length === 0) return;
-        const ds = selectedDatasets[0];
-        let content = '';
-        let fileName = `${ds.name}.${format}`;
-
-        if (format === 'csv') {
-            content = ds.data.join('\n');
-            const blob = new Blob([content], { type: 'text/csv' });
-            triggerDownload(blob, fileName);
-        } else if (format === 'json') {
-            content = JSON.stringify(ds, null, 2);
-            const blob = new Blob([content], { type: 'application/json' });
-            triggerDownload(blob, fileName);
-        }
+    const triggerDownload = (blob, name) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+        URL.revokeObjectURL(url);
     };
 
-    const triggerDownload = (blob, fileName) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
+    const handleExport = (fmt) => {
+        if (!selectedDatasets.length) return;
+        const ds = selectedDatasets[0];
+        if (fmt === 'csv') {
+            triggerDownload(new Blob([ds.data.join('\n')], { type: 'text/csv' }), `${ds.name}.csv`);
+        } else {
+            triggerDownload(new Blob([JSON.stringify(ds, null, 2)], { type: 'application/json' }), `${ds.name}.json`);
+        }
     };
 
     return (
@@ -226,87 +278,199 @@ const Hdf5ViewerTool = ({ tool }) => {
             }}
             sidebar={
                 <div className="sidebar-info researcher-tool-container h-full flex flex-col">
+                    {/* File List */}
                     <div className="explorer-section">
-                        <div className="section-header"><Layers size={14}/> LOADED ARCHIVES</div>
+                        <div className="section-header"><Layers size={13}/> LOADED ARCHIVES</div>
                         <div className="file-tabs-list">
                             {files.map(f => (
-                                <div key={f.file.name} className={`file-item-tab ${currentFile === f.file.name ? 'active' : ''}`} onClick={() => { setCurrentFile(f.file.name); setSelectedPaths([]); setSelectedDatasets([]); }}>
-                                    <div className="flex items-center gap-2 overflow-hidden"><Database size={13} className={currentFile === f.file.name ? 'text-primary-400' : 'text-slate-500'} /><span className="file-name font-mono text-[11px] font-bold">{f.file.name}</span></div>
-                                    <button className="btn-remove-ocean" style={{opacity:0.6}} onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}><Trash2 size={12}/></button>
+                                <div
+                                    key={f.file.name}
+                                    className={`file-item-tab ${currentFile === f.file.name ? 'active' : ''}`}
+                                    onClick={() => { setCurrentFile(f.file.name); setSelectedPaths([]); setSelectedDatasets([]); }}
+                                >
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                        <Database size={13} className={currentFile === f.file.name ? 'text-primary-400' : 'text-slate-500'} />
+                                        <span className="file-name font-mono text-[11px] font-bold">{f.file.name}</span>
+                                    </div>
+                                    <button className="btn-remove-ocean" style={{ opacity: 0.6 }} onClick={e => { e.stopPropagation(); removeFile(f.id); }}>
+                                        <Trash2 size={12}/>
+                                    </button>
                                 </div>
                             ))}
                         </div>
                     </div>
-                    {isProcessing && (<div className="ocean-loading-badge" style={{borderColor: 'rgba(139, 92, 246, 0.4)', color: '#a78bfa'}}><Loader2 size={14} className="spinning"/><span className="text-[10px] uppercase font-bold text-primary-400">Parsing...</span></div>)}
+
+                    {/* States */}
+                    {isProcessing && (
+                        <div className="ocean-loading-badge" style={{ borderColor: 'rgba(139,92,246,.4)', color: '#a78bfa' }}>
+                            <Loader2 size={14} className="spinning"/>
+                            <span className="text-[10px] uppercase font-bold">Parsing Binary...</span>
+                        </div>
+                    )}
+                    {parseError && (
+                        <div style={{ background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.25)', borderRadius: 8, padding: '8px 12px', fontSize: 10, color: '#f87171', fontWeight: 700 }}>
+                            ⚠ {parseError}
+                        </div>
+                    )}
+
+                    {/* Tree Browser */}
                     {activeH5 && (
                         <div className="explorer-section flex-grow overflow-hidden flex flex-col">
-                            <div className="section-header flex justify-between"><span><Search size={14}/> BROWSER</span><span className="text-[9px] opacity-40">Shift/Double for Multi</span></div>
+                            <div className="section-header flex justify-between">
+                                <span><Search size={13}/> BROWSER</span>
+                                <span style={{ fontSize: 9, opacity: .4 }}>Ctrl+Click = Multi-select</span>
+                            </div>
                             <div className="tree-explorer flex-grow overflow-auto scroll-premium pr-1">
-                                <DatasetNode name="root" node={activeH5.root} path="/" onSelect={handleSelectNode} selectedPaths={selectedPaths} />
+                                <DatasetNode
+                                    name="/"
+                                    node={activeH5.root ?? activeH5}
+                                    path="/"
+                                    onSelect={handleSelectNode}
+                                    selectedPaths={selectedPaths}
+                                    level={0}
+                                />
                             </div>
                         </div>
                     )}
                 </div>
             }
         >
+            {/* ─── Main Canvas ─── */}
             <div className="researcher-tool-container h-full p-4 pb-8 overflow-hidden">
                 {!currentFile ? (
-                    <div className="empty-state text-center p-12"><Database size={64} className="opacity-10 mx-auto mb-6 text-primary-500"/><h2 className="mb-2 font-mono">HDF5 Scientific <span className="text-secondary-400">Voyager</span></h2><p className="text-muted text-sm max-w-sm mx-auto">Explore high-dimensional hierarchical data structures with system-level speed and precision.</p></div>
+                    <div className="empty-state text-center p-12">
+                        <Database size={64} className="opacity-10 mx-auto mb-6 text-primary-500"/>
+                        <h2 className="mb-2 font-mono">HDF5 Scientific <span className="text-secondary-400">Voyager</span></h2>
+                        <p className="text-muted text-sm max-w-sm mx-auto">Explore high-dimensional hierarchical data structures with system-level speed and precision.</p>
+                    </div>
                 ) : selectedDatasets.length === 0 ? (
-                    <div className="empty-state text-center p-12"><Maximize2 size={48} className="opacity-10 mx-auto mb-4 text-primary-400"/><p className="font-mono text-sm opacity-60">Archive <b>{currentFile}</b> mounted. Select dataset(s).</p></div>
+                    <div className="empty-state text-center p-12">
+                        <Maximize2 size={48} className="opacity-10 mx-auto mb-4 text-primary-400"/>
+                        <p className="font-mono text-sm opacity-60">Archive <b>{currentFile}</b> mounted.<br/>Select a dataset from the explorer.</p>
+                    </div>
                 ) : (
                     <div className="dataset-panel h-full flex flex-col fade-in overflow-hidden gap-2">
-                        <div className="dataset-header mb-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="breadcrumb-nav bg-white/5 px-4 py-2 rounded-full border border-white/10 flex items-center gap-2 overflow-hidden max-w-[70%]">
-                                    <Database size={12} className="text-slate-500 flex-shrink-0"/>
-                                    <span className="breadcrumb-part font-mono text-[10px] text-slate-400 truncate">{currentFile}</span>
+                        {/* Header */}
+                        <div className="dataset-header mb-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="breadcrumb-nav bg-white/5 px-4 py-2 rounded-full border border-white/10 flex items-center gap-2 overflow-hidden max-w-[65%]">
+                                    <Database size={11} className="text-slate-500 flex-shrink-0"/>
+                                    <span className="font-mono text-[10px] text-slate-400 truncate">{currentFile}</span>
                                     <ChevronRight size={10} className="text-slate-600"/>
-                                    <span className="breadcrumb-part font-mono text-[10px] text-primary-400 font-bold truncate">{selectedDatasets[0].path}</span>
-                                    {selectedDatasets.length > 1 && <span className="bg-secondary-500/20 text-secondary-400 text-[9px] px-2 py-0.5 rounded-full font-bold">+{selectedDatasets.length-1}</span>}
+                                    <span className="font-mono text-[10px] text-primary-400 font-bold truncate">{selectedDatasets[0].path}</span>
+                                    {selectedDatasets.length > 1 && <span className="bg-secondary-500/20 text-secondary-400 text-[9px] px-2 py-0.5 rounded-full font-bold">+{selectedDatasets.length - 1}</span>}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => handleExport('csv')} className="btn btn-secondary p-2.5 rounded-xl hover:bg-secondary-500/10 hover:text-secondary-400 transition-all border-white/5 shadow-premium" title="CSV Export"><CSVIcon size={16}/></button>
-                                    <button onClick={() => handleExport('json')} className="btn btn-secondary p-2.5 rounded-xl hover:bg-secondary-500/10 hover:text-secondary-400 transition-all border-white/5 shadow-premium" title="JSON Export"><FileJson size={16}/></button>
-                                    <div className="bg-primary/10 text-primary border border-primary/20 font-bold tracking-widest px-3 py-1.5 rounded-full text-[9px] uppercase ml-2">HDF-5 Binary</div>
+                                    <button onClick={() => handleExport('csv')} className="btn btn-secondary p-2.5 rounded-xl hover:bg-secondary-500/10 hover:text-secondary-400 transition-all border-white/5" title="Export CSV"><CSVIcon size={15}/></button>
+                                    <button onClick={() => handleExport('json')} className="btn btn-secondary p-2.5 rounded-xl hover:bg-secondary-500/10 hover:text-secondary-400 transition-all border-white/5" title="Export JSON"><FileJson size={15}/></button>
+                                    <div className="bg-primary/10 text-primary border border-primary/20 font-bold tracking-widest px-3 py-1.5 rounded-full text-[9px] uppercase ml-1">HDF-5</div>
                                 </div>
                             </div>
+
+                            {/* Tabs */}
                             <div className="custom-tabs">
-                                <button className={`tab-pill ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><Activity size={14}/> Dual Plot</button>
-                                <button className={`tab-pill ${activeTab === 'analysis' ? 'active' : ''}`} onClick={() => setActiveTab('analysis')}><Calculator size={14}/> Stats</button>
-                                <button className={`tab-pill ${activeTab === 'metadata' ? 'active' : ''}`} onClick={() => setActiveTab('metadata')}><Info size={14}/> Meta</button>
+                                <button className={`tab-pill ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><Activity size={13}/> Plot</button>
+                                <button className={`tab-pill ${activeTab === 'analysis' ? 'active' : ''}`} onClick={() => setActiveTab('analysis')}><Calculator size={13}/> Stats</button>
+                                <button className={`tab-pill ${activeTab === 'metadata' ? 'active' : ''}`} onClick={() => setActiveTab('metadata')}><Info size={13}/> Meta</button>
                             </div>
                         </div>
+
+                        {/* Tab Content */}
                         <div className="tab-content flex-grow overflow-y-auto scroll-premium pr-2 pb-6">
-                             {activeTab === 'overview' && (
+                            {/* Overview Tab */}
+                            {activeTab === 'overview' && (
                                 <div className="overview-tab flex flex-col gap-6 p-1">
                                     <div className="overview-grid">
                                         {selectedDatasets.slice(0, 2).map((ds, idx) => (
-                                            <div key={idx} className="overview-card"><div className="card-label">{idx === 0 ? 'Primary' : 'Secondary'} Dataset</div><div className="card-value font-mono text-primary-400">{ds.name} [{ds.shape.join(',')}]</div></div>
+                                            <div key={idx} className="overview-card">
+                                                <div className="card-label">{idx === 0 ? 'Primary' : 'Secondary'} Dataset</div>
+                                                <div className="card-value font-mono text-primary-400">{ds.name}</div>
+                                                <div className="card-label mt-1">Shape: [{ds.shape.join(',')}] · {ds.dtype}</div>
+                                            </div>
                                         ))}
                                     </div>
-                                    <div className="chart-wrapper bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
-                                        <div className="h-64"><Line data={chartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: selectedDatasets.length > 1, labels: { color: 'rgba(255,255,255,0.4)', boxWidth: 10 } } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: 'rgba(255,255,255,0.3)' } }, y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: 'rgba(255,255,255,0.3)' } } } }} /></div>
-                                    </div>
-                                    <div className="data-preview mt-4">
-                                         <div className="card-label mb-3 ml-2 text-primary-400 font-bold uppercase tracking-widest text-[9px]">Comparative Buffer Analysis</div>
-                                         <div className="table-container bg-black/40 rounded-xl overflow-hidden border border-white/5">
+                                    {chartData && (
+                                        <div className="chart-wrapper bg-black/20 p-6 rounded-2xl border border-white/5">
+                                            <div className="h-64">
+                                                <Line data={chartData} options={{
+                                                    responsive: true, maintainAspectRatio: false,
+                                                    plugins: { legend: { display: selectedDatasets.length > 1, labels: { color: 'rgba(255,255,255,0.4)', boxWidth: 10 } } },
+                                                    scales: {
+                                                        x: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: 'rgba(255,255,255,0.3)' } },
+                                                        y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: 'rgba(255,255,255,0.3)' } },
+                                                    }
+                                                }} />
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* Data Table */}
+                                    <div className="data-preview mt-2">
+                                        <div className="card-label mb-2 ml-1 text-primary-400 font-bold uppercase tracking-widest text-[9px]">Buffer Preview (first 50 rows)</div>
+                                        <div className="table-container bg-black/40 rounded-xl overflow-hidden border border-white/5">
                                             <table className="w-full text-[11px] font-mono">
-                                                <thead className="bg-white/5 text-muted border-b border-white/10"><tr><th className="p-3 text-left">pos</th>{selectedDatasets.map(ds => <th key={ds.path} className="p-3 text-left">{ds.name}</th>)}</tr></thead>
+                                                <thead className="bg-white/5 text-muted border-b border-white/10">
+                                                    <tr>
+                                                        <th className="p-3 text-left">pos</th>
+                                                        {selectedDatasets.map(ds => <th key={ds.path} className="p-3 text-left">{ds.name}</th>)}
+                                                    </tr>
+                                                </thead>
                                                 <tbody className="divide-y divide-white/5">
-                                                    {previewData.slice(0, 50).map((v, i) => (
-                                                        <tr key={i} className="hover:bg-white/5"><td className="p-2 px-3 text-muted">{i}</td>{selectedDatasets.map(ds => <td key={ds.path} className="p-2 px-3 text-primary-300">{(ds.data[i] !== undefined ? (typeof ds.data[i] === 'number' ? ds.data[i].toFixed(4) : String(ds.data[i])) : '-')}</td>)}</tr>
+                                                    {previewData.slice(0, 50).map((_, i) => (
+                                                        <tr key={i} className="hover:bg-white/5">
+                                                            <td className="p-2 px-3 text-muted">{i}</td>
+                                                            {selectedDatasets.map(ds => (
+                                                                <td key={ds.path} className="p-2 px-3 text-primary-300">
+                                                                    {ds.data[i] !== undefined
+                                                                        ? (typeof ds.data[i] === 'number' ? ds.data[i].toFixed(4) : String(ds.data[i]))
+                                                                        : '-'}
+                                                                </td>
+                                                            ))}
+                                                        </tr>
                                                     ))}
                                                 </tbody>
                                             </table>
-                                         </div>
+                                        </div>
                                     </div>
                                 </div>
-                             )}
-                             {activeTab === 'analysis' && (<div className="analysis-tab p-1 fade-in">
-                                <h3 className="text-xs font-bold uppercase tracking-widest text-primary-400 mb-6 flex items-center gap-2"><Calculator size={14}/> Mathematical Synthesis</h3>
-                                {stats ? (<div className="stats-grid grid grid-cols-2 gap-4"><div className="stat-box bg-black/40 p-6 rounded-2xl border border-white/5"><div className="card-label">Primary Mean</div><div className="text-2xl font-mono text-primary-300">{stats.mean.toFixed(8)}</div></div><div className="stat-box bg-black/40 p-6 rounded-2xl border border-white/5"><div className="card-label">Primary Peak</div><div className="text-2xl font-mono text-primary-300">{stats.max.toFixed(4)}</div></div></div>) : <div className="p-12 text-center opacity-40 font-mono">Select numeric nodes to synthesize.</div>}
-                             </div>)}
+                            )}
+
+                            {/* Stats Tab */}
+                            {activeTab === 'analysis' && (
+                                <div className="analysis-tab p-1 fade-in">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary-400 mb-6 flex items-center gap-2"><Calculator size={14}/> Mathematical Synthesis</h3>
+                                    {stats ? (
+                                        <div className="stats-grid grid grid-cols-2 gap-4">
+                                            {[['Mean', stats.mean.toFixed(6)], ['Max', stats.max.toFixed(4)], ['Min', stats.min.toFixed(4)], ['Count', stats.count.toLocaleString()]].map(([label, value]) => (
+                                                <div key={label} className="stat-box bg-black/40 p-5 rounded-2xl border border-white/5">
+                                                    <div className="card-label">{label}</div>
+                                                    <div className="text-xl font-mono text-primary-300">{value}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-12 text-center opacity-40 font-mono">Select a numeric dataset to compute statistics.</div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Metadata Tab */}
+                            {activeTab === 'metadata' && (
+                                <div className="metadata-tab p-1 fade-in">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary-400 mb-4 flex items-center gap-2"><Info size={14}/> Dataset Attributes</h3>
+                                    {Object.keys(selectedDatasets[0].attributes).length === 0 ? (
+                                        <div className="p-12 text-center opacity-40 font-mono">No attributes attached.</div>
+                                    ) : (
+                                        <div className="flex flex-col gap-2">
+                                            {Object.entries(selectedDatasets[0].attributes).map(([k, v]) => (
+                                                <div key={k} className="flex gap-3 bg-black/30 p-3 rounded-lg border border-white/5">
+                                                    <span className="font-mono text-[10px] font-bold text-primary-400 w-32 flex-shrink-0">{k}</span>
+                                                    <span className="font-mono text-[10px] text-slate-300 break-all">{String(v)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

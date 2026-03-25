@@ -1,6 +1,10 @@
+/* =========================================
+   FASTA Analyzer Tool Styles
+   ========================================= */
+
 .fasta-workspace {
     display: flex;
-    gap: var(--spacing-6);
+    gap: 24px;
     height: 100%;
     min-height: 70vh;
 }
@@ -10,87 +14,111 @@
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-4);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-4);
+    gap: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
 }
 
+/* Processing Indicator */
 .processing-indicator {
-    padding: var(--spacing-4);
-    background: var(--primary-light, #e0f2fe);
-    border: 1px solid var(--primary);
-    border-radius: var(--radius-md);
+    padding: 16px;
+    background: rgba(var(--primary-rgb), 0.08);
+    border: 1px solid rgba(var(--primary-rgb), 0.25);
+    border-radius: 10px;
     text-align: center;
+    animation: fasta-pulse 2s ease-in-out infinite;
+}
+
+@keyframes fasta-pulse {
+    0%, 100% { border-color: rgba(var(--primary-rgb), 0.25); }
+    50% { border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.1); }
 }
 
 .processing-indicator p {
-    margin: 0 0 var(--spacing-2) 0;
-    font-weight: 500;
-    color: var(--primary-dark, #0369a1);
+    margin: 0 0 8px 0;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #93c5fd;
 }
 
 .progress-bar-bg {
     height: 8px;
-    background: var(--bg);
+    background: var(--bg-deep);
     border-radius: 4px;
     overflow: hidden;
 }
 
 .progress-bar-fill {
     height: 100%;
-    background: var(--primary);
-    transition: width 0.1s linear;
+    background: linear-gradient(90deg, var(--primary-500), #60a5fa);
+    transition: width 0.15s linear;
+    box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.4);
 }
 
+/* Stats Panel */
 .stats-panel {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--bg);
-    padding: var(--spacing-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    background: var(--bg-deep);
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-3);
+    gap: 12px;
 }
 
 .stats-panel h4 {
     margin: 0;
-    font-size: 0.95rem;
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--border);
-    padding-bottom: var(--spacing-2);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #60a5fa;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .stat-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--surface);
-    padding: var(--spacing-2) var(--spacing-3);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
+    background: rgba(var(--primary-rgb), 0.04);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(var(--primary-rgb), 0.08);
+    transition: border-color 0.2s;
+}
+
+.stat-card:hover {
+    border-color: rgba(var(--primary-rgb), 0.2);
 }
 
 .stat-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
+    font-weight: 600;
 }
 
 .stat-value {
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #93c5fd;
+    font-family: ui-monospace, monospace;
 }
 
+/* Main Analysis Area */
 .fasta-main {
     flex-grow: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
-    padding: var(--spacing-6);
+    padding: 24px;
     overflow: hidden;
 }
 
@@ -99,7 +127,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-6);
+    gap: 24px;
     overflow-y: auto;
 }
 
@@ -107,18 +135,20 @@
     flex-shrink: 0;
     width: 100%;
     height: 400px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-4);
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 16px;
 }
 
 .error-message {
-    color: var(--danger, #ef4444);
-    background: var(--danger-light, #fef2f2);
-    padding: var(--spacing-2);
-    border-radius: var(--radius-sm);
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 8px 12px;
+    border-radius: 8px;
     font-size: 0.85rem;
+    font-weight: 600;
 }
 
 @media (max-width: 768px) {
@@ -127,5 +157,8 @@
     }
     .fasta-sidebar {
         width: 100%;
+    }
+    .chart-wrapper {
+        height: 260px;
     }
 }
