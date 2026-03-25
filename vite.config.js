@@ -11,6 +11,9 @@ export default defineConfig({
             devOptions: {
                 enabled: true
             },
+            workbox: {
+                maximumFileSizeToCacheInBytes: 3 * 1024 * 1024
+            },
             includeAssets: ['favicon.png', 'logo.png', 'PROFILE.png', 'icon-192.png', 'icon-512.png'],
             manifest: {
                 name: 'AnyFileForge',

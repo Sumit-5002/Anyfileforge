@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import imageService from '../../../../services/imageService';
 import GenericFileTool from '../common/GenericFileTool';
-import { Compare } from 'lucide-react';
+import { GitCompare } from 'lucide-react';
 
 const getBaseName = (name) => name.replace(/\.[^/.]+$/, '');
 
@@ -85,7 +85,7 @@ function ImageRemoveBgTool({ tool }) {
             {preview && (
                 <div className="comparison-container mt-12 mb-8 animate-in fade-in slide-in-from-bottom-4">
                     <div className="flex items-center gap-4 mb-6">
-                        <div className="p-2.5 bg-primary-500/10 rounded-xl"><Compare size={18} className="text-primary-400 rotate-90"/></div>
+                        <div className="p-2.5 bg-primary-500/10 rounded-xl"><GitCompare size={18} className="text-primary-400 rotate-90"/></div>
                         <div>
                             <h4 className="text-sm font-black italic tracking-tighter text-white uppercase">Visual_Diff</h4>
                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Segmentation Analysis</p>
