@@ -304,21 +304,21 @@
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: rgba(var(--primary-rgb, 99 102 241), 0.5);
+    color: rgba(99, 102, 241, 0.6);   /* indigo, fixed – no CSS var inside rgba */
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     white-space: nowrap;
 }
 
 .pq-table td {
     padding: 12px 24px;
-    color: #cbd5e1;
+    color: #e2e8f0;                    /* slightly brighter for readability */
     border-bottom: 1px solid rgba(255, 255, 255, 0.02);
     min-width: 120px;
     white-space: nowrap;
 }
 
 .pq-table tbody tr:hover td {
-    background: rgba(var(--primary-rgb, 99 102 241), 0.04);
+    background: rgba(99, 102, 241, 0.06);   /* fixed – plain rgba */
 }
 
 .pq-table-footer {
@@ -433,13 +433,20 @@
 
 /* ── Chart Area ── */
 .pq-chart-wrapper {
-    flex-grow: 1;
+    position: relative;          /* required by Chart.js canvas */
     background: rgba(0, 0, 0, 0.35);
     border-radius: 32px;
     border: 1px solid rgba(255, 255, 255, 0.04);
     padding: 32px;
     overflow: hidden;
+    height: 420px;               /* explicit height — Chart.js needs this */
     min-height: 300px;
+}
+
+/* The canvas Chart.js injects must fill the wrapper */
+.pq-chart-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* ── Utility ── */

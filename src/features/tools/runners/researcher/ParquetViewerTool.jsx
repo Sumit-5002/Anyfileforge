@@ -20,11 +20,11 @@ const ParquetViewerTool = ({ tool }) => {
     const [results] = useState([]);
 
     const [activeTab, setActiveTab] = useState('sql');
-    const [sqlQuery, setSqlQuery] = useState('SELECT * FROM data LIMIT 10');
+    const [sqlQuery, setSqlQuery] = useState('SELECT * FROM data LIMIT 100');
     const [queryResult, setQueryResult] = useState([]);
     const [queryError, setQueryError] = useState('');
     const [chartDataState, setChartDataState] = useState(null);
-    const [displayLimit, setDisplayLimit] = useState(50);
+    const [displayLimit, setDisplayLimit] = useState(100);
 
     const columnStats = useMemo(() => {
         if (!allRows || allRows.length === 0) return {};
@@ -55,7 +55,7 @@ const ParquetViewerTool = ({ tool }) => {
                     const rows = await fetchParquetData(data.arrayBuffer);
                     if (cancelled) return;
                     setAllRows(rows);
-                    setQueryResult(rows.slice(0, 10));
+                    setQueryResult(rows.slice(0, 100));
                     generateChart(rows.slice(0, 10));
                 } catch (err) {
                     if (!cancelled) setError(err.message);
@@ -84,18 +84,20 @@ const ParquetViewerTool = ({ tool }) => {
     const generateChart = (dataArr) => {
         if (!dataArr?.length) { setChartDataState(null); return; }
         const first = dataArr[0];
-        let xKey = Object.keys(first).find(k => typeof first[k] === 'string') || Object.keys(first)[0];
-        let yKey = Object.keys(first).find(k => typeof first[k] === 'number');
+        const xKey = Object.keys(first).find(k => typeof first[k] === 'string') || Object.keys(first)[0];
+        const yKey = Object.keys(first).find(k => typeof first[k] === 'number');
         if (!yKey) { setChartDataState(null); return; }
         setChartDataState({
             labels: dataArr.slice(0, 50).map(d => String(d[xKey]).substring(0, 20)),
             datasets: [{
                 label: yKey,
                 data: dataArr.slice(0, 50).map(d => d[yKey] || 0),
-                backgroundColor: 'rgba(99,102,241,0.55)',
-                borderColor: 'rgb(99,102,241)',
+                backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                borderColor: 'rgb(129, 140, 248)',
                 borderWidth: 2,
-                borderRadius: 10,
+                borderRadius: 8,
+                borderSkipped: false,
+                hoverBackgroundColor: 'rgba(129, 140, 248, 0.9)',
             }],
         });
     };
@@ -103,7 +105,8 @@ const ParquetViewerTool = ({ tool }) => {
     const handleExport = (format, source) => {
         const dataToExport = source === 'full' ? allRows : queryResult;
         if (!dataToExport?.length) return;
-        let blob, fileName = `parquet_${source}_${Date.now()}.${format}`;
+        let blob;
+        const fileName = `parquet_${source}_${Date.now()}.${format}`;
         if (format === 'csv') {
             const keys = Object.keys(dataToExport[0]);
             const content = [keys.join(','), ...dataToExport.map(row => keys.map(k => `"${String(row[k] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
@@ -123,19 +126,17 @@ const ParquetViewerTool = ({ tool }) => {
         URL.revokeObjectURL(url);
     };
 
-    /* ── Nav items ── */
     const TABS = [
-        { id: 'sql',    icon: <FileTerminal size={18}/>, label: 'SQL Voyager',     sub: 'Query Engine' },
-        { id: 'chart',  icon: <BarChart2 size={18}/>,    label: 'Density Plots',   sub: 'Visualization' },
-        { id: 'schema', icon: <Info size={18}/>,          label: 'Struct Columns',  sub: 'Schema Inspector' },
+        { id: 'sql', icon: <FileTerminal size={18} />, label: 'SQL Voyager', sub: 'Query Engine' },
+        { id: 'chart', icon: <BarChart2 size={18} />, label: 'Density Plots', sub: 'Visualization' },
+        { id: 'schema', icon: <Info size={18} />, label: 'Struct Columns', sub: 'Schema Inspector' },
     ];
 
-    /* ── Export items ── */
     const EXPORTS = [
-        { fmt: 'xlsx', src: 'query', icon: <FileSpreadsheet size={22} className="text-emerald-400"/>, label: 'Excel',  sub: 'Query set' },
-        { fmt: 'csv',  src: 'full',  icon: <Database size={22} className="text-blue-400"/>,           label: 'CSV',    sub: 'Full data' },
-        { fmt: 'json', src: 'query', icon: <FileJson size={22} className="text-amber-400"/>,           label: 'JSON',   sub: 'Query set' },
-        { fmt: 'xlsx', src: 'full',  icon: <Layers size={22} className="text-indigo-400"/>,            label: 'Excel',  sub: 'Full data' },
+        { fmt: 'xlsx', src: 'query', icon: <FileSpreadsheet size={22} className="text-emerald-400" />, label: 'Excel', sub: 'Query set' },
+        { fmt: 'csv', src: 'full', icon: <Database size={22} className="text-blue-400" />, label: 'CSV', sub: 'Full data' },
+        { fmt: 'json', src: 'query', icon: <FileJson size={22} className="text-amber-400" />, label: 'JSON', sub: 'Query set' },
+        { fmt: 'xlsx', src: 'full', icon: <Layers size={22} className="text-indigo-400" />, label: 'Excel', sub: 'Full data' },
     ];
 
     return (
@@ -150,7 +151,7 @@ const ParquetViewerTool = ({ tool }) => {
             sidebarTitle="PARQUET_ENGINE"
             sidebar={
                 <div className="pq-sidebar">
-                    {/* ── Navigation ── */}
+                    {/* Navigation */}
                     <div>
                         <div className="pq-sidebar-label">View Mode</div>
                         <div className="pq-nav-list">
@@ -170,7 +171,7 @@ const ParquetViewerTool = ({ tool }) => {
                         </div>
                     </div>
 
-                    {/* ── Buffered Export ── */}
+                    {/* Buffered Export */}
                     {pqData && (
                         <div className="pq-export-section">
                             <div className="pq-sidebar-label">Buffered Export</div>
@@ -192,26 +193,25 @@ const ParquetViewerTool = ({ tool }) => {
         >
             <div className="pq-container h-full flex flex-col">
                 {!pqData ? (
-                    /* ── Empty State ── */
+                    /* Empty State */
                     <div className="pq-empty">
-                        <Database size={72} strokeWidth={1} className="text-slate-600"/>
+                        <Database size={72} strokeWidth={1} className="text-slate-600" />
                         <div>
                             <p className="pq-empty-title">Registry Null</p>
                             <p className="pq-empty-sub">Mount a .parquet volume for columnar inspection</p>
                         </div>
                         {error && (
                             <div className="pq-error-badge">
-                                <AlertCircle size={16}/> {error}
+                                <AlertCircle size={16} /> {error}
                             </div>
                         )}
                     </div>
                 ) : (
-                    <div className="h-full flex flex-col gap-5 animate-in fade-in">
+                    <div className="h-full flex flex-col gap-5">
 
-                        {/* ─── SQL TAB ─── */}
+                        {/* SQL TAB */}
                         {activeTab === 'sql' && (
                             <div className="flex flex-col h-full gap-5">
-                                {/* Editor Card */}
                                 <div className="pq-sql-editor">
                                     <textarea
                                         className="pq-sql-textarea"
@@ -223,25 +223,24 @@ const ParquetViewerTool = ({ tool }) => {
                                     />
                                     <div className="pq-sql-footer">
                                         <button className="pq-run-btn" onClick={handleRunQuery}>
-                                            <Zap size={15}/> Run Query
+                                            <Zap size={15} /> Run Query
                                         </button>
                                         <div className="pq-stats-bar">
                                             <span>Limit</span>
                                             <select value={displayLimit} onChange={e => setDisplayLimit(Number(e.target.value))}>
                                                 {[10, 50, 100, 500, 1000].map(n => <option key={n} value={n}>{n}</option>)}
                                             </select>
-                                            <div className="pq-stats-sep"/>
+                                            <div className="pq-stats-sep" />
                                             <span>Showing {Math.min(queryResult.length, displayLimit)} of {allRows?.length?.toLocaleString()} rows</span>
                                         </div>
                                     </div>
                                     {queryError && (
                                         <div className="pq-error-badge" style={{ marginTop: 12 }}>
-                                            <AlertCircle size={14}/> {queryError}
+                                            <AlertCircle size={14} /> {queryError}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Table */}
                                 <div className="pq-table-container flex-grow">
                                     <div className="pq-table-scroll">
                                         {queryResult.length > 0 ? (
@@ -249,9 +248,7 @@ const ParquetViewerTool = ({ tool }) => {
                                                 <thead>
                                                     <tr>
                                                         <th style={{ width: 48, textAlign: 'center', color: '#334155' }}>#</th>
-                                                        {Object.keys(queryResult[0]).map(k => (
-                                                            <th key={k}>{k}</th>
-                                                        ))}
+                                                        {Object.keys(queryResult[0]).map(k => <th key={k}>{k}</th>)}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -278,19 +275,20 @@ const ParquetViewerTool = ({ tool }) => {
                             </div>
                         )}
 
-                        {/* ─── CHART TAB ─── */}
+                        {/* CHART TAB */}
                         {activeTab === 'chart' && (
                             <div className="flex flex-col h-full gap-5">
                                 <div className="flex items-center justify-between px-2">
                                     <div className="flex items-center gap-3">
-                                        <BarChart2 size={22} className="text-primary-500"/>
+                                        <BarChart2 size={22} className="text-primary-500" />
                                         <div>
-                                            <div style={{ fontSize: 13, fontWeight: 900, color: 'white' }}>Spectral Probability</div>
-                                            <div style={{ fontSize: 9, color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2 }}>Top 50 variance distribution</div>
+                                            <div style={{ fontSize: 13, fontWeight: 900, color: 'white' }}>Column Distribution</div>
+                                            <div style={{ fontSize: 9, color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2 }}>First numeric column · up to 50 rows</div>
                                         </div>
                                     </div>
-                                    <span className="pq-schema-type-badge">AUTO AXIS</span>
+                                    <span className="pq-schema-type-badge">Bar Chart</span>
                                 </div>
+
                                 <div className="pq-chart-wrapper">
                                     {chartDataState ? (
                                         <Bar
@@ -298,16 +296,35 @@ const ParquetViewerTool = ({ tool }) => {
                                             options={{
                                                 responsive: true,
                                                 maintainAspectRatio: false,
-                                                plugins: { legend: { display: false } },
+                                                plugins: {
+                                                    legend: { display: false },
+                                                    tooltip: {
+                                                        backgroundColor: 'rgba(2, 6, 23, 0.95)',
+                                                        borderColor: 'rgba(99,102,241,0.3)',
+                                                        borderWidth: 1,
+                                                        titleColor: '#a5b4fc',
+                                                        bodyColor: '#e2e8f0',
+                                                        padding: 12,
+                                                        cornerRadius: 10,
+                                                    },
+                                                },
                                                 scales: {
-                                                    x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.2)', font: { size: 9 } } },
-                                                    y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: 'rgba(255,255,255,0.2)', font: { size: 9 } } },
+                                                    x: {
+                                                        grid: { display: false },
+                                                        ticks: { color: 'rgba(255,255,255,0.35)', font: { size: 10, weight: '700' } },
+                                                        border: { color: 'rgba(255,255,255,0.06)' },
+                                                    },
+                                                    y: {
+                                                        grid: { color: 'rgba(255,255,255,0.04)', lineWidth: 1 },
+                                                        ticks: { color: 'rgba(255,255,255,0.35)', font: { size: 10, weight: '700' } },
+                                                        border: { color: 'rgba(255,255,255,0.06)', dash: [4, 4] },
+                                                    },
                                                 },
                                             }}
                                         />
                                     ) : (
-                                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: .2, gap: 12 }}>
-                                            <AlertCircle size={40} className="text-slate-500"/>
+                                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.2, gap: 12 }}>
+                                            <AlertCircle size={40} className="text-slate-500" />
                                             <p style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2 }}>No numeric dimension detected</p>
                                         </div>
                                     )}
@@ -315,7 +332,7 @@ const ParquetViewerTool = ({ tool }) => {
                             </div>
                         )}
 
-                        {/* ─── SCHEMA TAB ─── */}
+                        {/* SCHEMA TAB */}
                         {activeTab === 'schema' && (
                             <div className="h-full overflow-auto no-scrollbar">
                                 <div className="pq-schema-grid">
