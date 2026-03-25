@@ -35,7 +35,7 @@ AnyFileForge is an open-source, **privacy-first** web application that handles c
 ### 🔬 For Academic Researchers
 - **Academic Writing**: LaTeX Editor, BibTeX Reference Manager
 - **Data Analysis**: CSV Plotting with instant chart generation
-- **Format Support**: HDF5, Parquet, NetCDF *(Planned)*
+- **Format Support**: HDF5, Parquet, NetCDF
 
 ### 📄 For Everyone (PDF & Images)
 - **PDF Suite (25+ tools)**: Merge, Split, Compress, Rotate, Watermark, Sign, Protect, Unlock, Compare, Redact, Add Page Numbers, Organize Pages, Repair
@@ -258,10 +258,10 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 ### Phase 2: Advanced Features
 - [ ] Batch processing with progress tracking
-- [ ] REST API for programmatic access
+- [x] REST API for programmatic access
 - [ ] Advanced PDF annotations and form filling
-- [ ] OCR for scanned documents (Tesseract.js)
-- [ ] Expanded researcher tools (HDF5, Parquet, NetCDF)
+- [x] OCR for scanned documents (Tesseract.js)
+- [x] Expanded researcher tools (HDF5, Parquet, NetCDF)
 
 ### Phase 3: Premium Features
 - [ ] Extended cloud storage duration
