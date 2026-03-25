@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import pdfService from '../../../../services/pdfService';
 import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { FileText, ArrowUpDown, ListOrdered } from 'lucide-react';
+import { FileText, ArrowUpDown } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
 function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
@@ -67,7 +67,7 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                         <span>{files.length} PDFs Selected</span>
                     </div>
                     <p className="tool-help mt-3">
-                        PDFs will be merged in the order shown on the left. You can add more files or remove items before processing.
+                        PDFs will be merged in the order shown in the list. Drag items to reorder, or remove items before processing.
                     </p>
                 </div>
             }

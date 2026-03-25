@@ -1,7 +1,7 @@
 import React, { useMemo, Suspense } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ShieldCheck, Info, Crown, Building, Lock, Code, Activity, Terminal } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Info, Crown, Building, Lock, Code, Activity, Terminal, Zap, Globe, Cpu } from 'lucide-react';
 import { TOOLS } from '../../data/toolsData';
 import TOOL_RUNNERS from './runners';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,8 +9,6 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import serverProcessingService from '../../services/serverProcessingService';
 import './ToolDetailPage.css';
-
-
 
 function ToolDetailPage() {
     const { t } = useTranslation();
@@ -44,8 +42,6 @@ function ToolDetailPage() {
     const forceOnlineMode = queryMode === 'online' || (!queryMode && storedOnlineMode);
     const effectiveTool = useMemo(() => forceOnlineMode ? { ...tool, mode: 'server' } : tool, [forceOnlineMode, tool]);
     
-    // Bypass auth check if user is a Developer
-    // Server Mode Check
     const isServerMode = effectiveTool?.mode === 'server';
     const canAccessOnline = isServerMode && Boolean(user);
 
@@ -77,104 +73,91 @@ function ToolDetailPage() {
     };
 
     return (
-        <div className="tool-detail-page bg-mesh">
-            <div className="container">
-                <Link to="/" className="back-link">
+        <div className="tool-detail-page bg-mesh min-h-screen">
+            <div className="container mx-auto px-4 py-2 md:py-4">
+                <Link to="/" className="back-link flex items-center gap-2 text-slate-400 hover:text-white transition-all mb-4 w-fit text-xs font-bold uppercase tracking-widest">
                     <ArrowLeft size={16} />
-                    {t('common.backToTools', 'Back to all tools')}
+                    {t('common.backToTools', 'Back to Workspace')}
                 </Link>
 
-                <div className="tool-header fade-in">
-                    <div className="tool-type-badge">{tool.type}</div>
-                    <div className={`tool-mode-pill ${isServerMode ? 'server' : 'serverless'}`}>
-                        {isServerMode ? 'Server Mode (Online)' : 'Serverless (Offline-Ready)'}
-                        {isServerMode && serverAvailable && <span className="health-dot active"></span>}
-                    </div>
-                    <h1 className="tool-title">{effectiveTool.name}</h1>
-                    <p className="tool-description">{effectiveTool.description}</p>
+                <div className="tool-header fade-in mb-4">
+                    <h1 className="tool-title text-4xl md:text-7xl font-black italic tracking-tighter text-white uppercase leading-none">{effectiveTool.name}</h1>
                 </div>
 
-                <div className="uploader-wrapper fade-in">
+                <div className="uploader-wrapper fade-in shadow-2xl rounded-[40px] overflow-hidden">
                     {isServerMode && forceOnlineMode && !canAccessOnline ? (
-                        <div className="login-gate">
+                        <div className="login-gate bg-slate-900/50 backdrop-blur-xl p-12 text-center">
                             <div className="login-gate-content">
-                                <Crown size={42} color="var(--primary-500)" />
-                                <h2>Login Required</h2>
-                                <p>
-                                    Account and an active plan required for online server-mode tools.
-                                    Switch to **Offline Mode** to explore without an account.
+                                < Crown size={48} className="text-primary-500 mx-auto mb-6" />
+                                <h2 className="text-2xl font-black italic tracking-tight text-white mb-4">AUTHENTICATION_FAILURE</h2>
+                                <p className="text-slate-400 max-w-sm mx-auto mb-8">
+                                    Server-mode tools require an active account. 
+                                    Switch to **Offline Mode** or sign in to continue.
                                 </p>
-                                <div className="server-mode-actions">
-                                    <Link to="/login" className="btn btn-primary">Login</Link>
-                                    <Link to="/signup" className="btn btn-secondary">Create Account</Link>
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                    <Link to="/login" className="btn-primary-gradient px-8 py-3 rounded-2xl w-full sm:w-auto font-black italic uppercase text-xs">Login</Link>
+                                    <Link to="/signup" className="btn-secondary px-8 py-3 rounded-2xl w-full sm:w-auto font-bold text-xs">Create Account</Link>
                                 </div>
                             </div>
                         </div>
                     ) : Runner ? (
                         <ErrorBoundary>
-                            <Suspense fallback={<LoadingSpinner />}>
+                            <Suspense fallback={<div className="p-24 flex items-center justify-center"><LoadingSpinner /></div>}>
                                 <Runner tool={effectiveTool} onFilesAdded={handleFilesAdded} />
                             </Suspense>
                         </ErrorBoundary>
                     ) : isServerMode ? (
-                        <div className="server-mode-card">
+                        <div className="server-mode-card bg-slate-900 border border-white/5 p-12 text-center">
                             <div className="server-mode-content">
-                                <Building size={48} color="var(--primary-500)" />
-                                <h2>{forceOnlineMode ? 'Server Mode Connection' : 'Server Optimized Tool'}</h2>
-                                <p>
+                                <Building size={64} className="text-primary-500 mx-auto mb-6" />
+                                <h2 className="text-2xl font-black italic tracking-tight text-white mb-4 uppercase">{forceOnlineMode ? 'Engine_Link' : 'Optimization_Ready'}</h2>
+                                <p className="text-slate-400 max-w-md mx-auto mb-8">
                                     {!forceOnlineMode
-                                        ? 'This tool works best in Server Mode. For faster processing and better results with large files, we recommend connecting to your backend.'
+                                        ? 'This tool is optimized for high-performance cloud processing. Switch to Server Mode for better reliability with massive datasets.'
                                         : (serverAvailable
-                                            ? 'Server is active and ready for background compute. This tool handles large files and advanced processing.'
-                                            : 'Connecting to backend compute... Please ensure your server is running on the configured port.')}
+                                            ? 'The computing engine is active. Large files and batch transformations are supported in this mode.'
+                                            : 'Connecting to background engine... Please ensure the processing agent is running.')}
                                 </p>
-                                <div className="server-mode-premium">
-                                    <Crown size={18} color="var(--accent-yellow)" />
-                                    <span>Premium Online Mode</span>
+                                <div className="server-mode-premium flex items-center justify-center gap-2 mb-8 p-3 bg-yellow-500/10 rounded-2xl border border-yellow-500/20 w-fit mx-auto">
+                                    < Crown size={18} className="text-yellow-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500">Premium Subscription Active</span>
                                 </div>
-                                <div className="server-mode-actions">
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                                     {!forceOnlineMode ? (
                                         <button
-                                            className="btn btn-primary"
+                                            className="btn-primary-gradient px-8 py-3 rounded-2xl w-full sm:w-auto font-black italic uppercase text-xs"
                                             onClick={() => {
                                                 window.localStorage.setItem('anyfileforge_mode', 'online');
                                                 window.location.reload();
                                             }}
                                         >
-                                            Try Online Mode
+                                            Activate Online Mode
                                         </button>
                                     ) : !canAccessOnline ? (
-                                        <Link to="/login" className="btn btn-primary">
-                                            Connect to Server
-                                        </Link>
-                                    ) : userData?.tier !== 'premium' ? (
-                                        <Link to="/pricing" className="btn btn-primary">
-                                            Upgrade to Premium
+                                        <Link to="/login" className="btn-primary-gradient px-8 py-3 rounded-2xl w-full sm:w-auto font-black italic uppercase text-xs">
+                                            Establish Connection
                                         </Link>
                                     ) : (
-                                        <div className="btn btn-primary disabled" style={{ cursor: 'default', opacity: 0.8 }}>
-                                            Server Active
+                                        <div className="px-8 py-3 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-2xl font-bold text-xs">
+                                            Engine_Safe
                                         </div>
                                     )}
-                                    <Link to="/pricing" className="btn btn-secondary">
-                                        View Plans
+                                    <Link to="/pricing" className="btn-secondary px-8 py-3 rounded-2xl w-full sm:w-auto font-bold text-xs uppercase">
+                                        Support Plan
                                     </Link>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="server-mode-card">
+                        <div className="server-mode-card bg-slate-900 border border-white/5 p-24 text-center">
                             <div className="server-mode-content">
-                                <Info size={48} color="var(--primary-500)" />
-                                <h2>Tool Coming Soon</h2>
-                                <p>
-                                    This tool is on the roadmap. We are prioritizing the most requested offline features first.
+                                <Terminal size={64} className="text-slate-700 mx-auto mb-6" />
+                                <h2 className="text-2xl font-black italic tracking-tight text-slate-500 mb-4 uppercase">Status_Pending</h2>
+                                <p className="text-slate-600 max-w-sm mx-auto mb-8">
+                                    This module is currently in the development pipeline. Your interest helps us prioritize!
                                 </p>
-                                <div className="server-mode-actions">
-                                    <Link to="/pricing" className="btn btn-secondary">
-                                        View Plans
-                                    </Link>
-                                    <Link to="/tools" className="btn btn-primary">
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                    <Link to="/tools" className="btn-primary-gradient px-8 py-3 rounded-2xl w-full sm:w-auto font-black italic uppercase text-xs">
                                         Back to Tools
                                     </Link>
                                 </div>
@@ -184,36 +167,34 @@ function ToolDetailPage() {
                 </div>
 
                 {!hasFiles && (
-                    <div className="tool-info-footer container fade-in">
+                    <div className="tool-info-footer mt-24 mb-16 fade-in">
                         <div className="info-grid">
                             <div className="info-item">
-                                <div className="info-icon-title">
-                                    <Info size={20} color="var(--primary-500)" />
-                                    <h3>About {effectiveTool.name}</h3>
+                                <div className="info-icon-title flex items-center gap-4 mb-6">
+                                    <div className="p-4 bg-primary-500/20 rounded-3xl"><Info size={24} className="text-primary-400" /></div>
+                                    <h3 className="text-xl font-black italic tracking-tight text-white">About {effectiveTool.name}</h3>
                                 </div>
-                                <p>
+                                 <p className="text-slate-400 leading-relaxed text-sm">
                                     {isServerMode
-                                        ? 'This is an online server-mode tool intended for heavy processing. Paid mode can support large files and cloud-source imports, while optional server storage can keep results for future work.'
-                                        : t('common.toolAboutText', 'This professional tool allows you to process files directly in your browser. No files are uploaded to any server, making it the most secure choice for your sensitive data.')}
+                                        ? `High-performance cloud processing for ${effectiveTool.name}. This tool utilizes remote compute clusters for heavy-duty transformations that typical browser engines cannot handle.`
+                                        : (effectiveTool.about || `${effectiveTool.description} This ${effectiveTool.type?.toLowerCase() || 'utility'} tool operates entirely within your browser's private sandbox, ensuring no data ever touches our servers.`)}
                                 </p>
                             </div>
                             <div className="info-item">
-                                <div className="info-icon-title">
-                                    <ShieldCheck size={20} color="var(--primary-500)" />
-                                    <h3>{isServerMode ? 'Server Processing' : '100% Client-Side'}</h3>
+                                <div className="info-icon-title flex items-center gap-4 mb-6">
+                                    <div className="p-4 bg-emerald-500/20 rounded-3xl"><ShieldCheck size={24} className="text-emerald-400" /></div>
+                                    <h3 className="text-xl font-black italic tracking-tight text-white">{isServerMode ? 'Engine Trust' : (effectiveTool.privacy_header || '100% Client-Side')}</h3>
                                 </div>
-                                <p>
+                                <p className="text-slate-400 leading-relaxed text-sm">
                                     {isServerMode
-                                        ? 'This tool runs in server mode due to heavy compute, advanced conversions, or model-based processing that cannot be done entirely offline.'
-                                        : t('common.toolSecurityText', 'We use WebAssembly and modern browser Canvas APIs to process your files locally. Your data residency never leaves your physical machine.')}
+                                        ? 'Connection to the remote engine is encrypted via TLS 1.3. Files are processed in volatile memory and purged immediately after the session concludes.'
+                                        : (effectiveTool.privacy || '100% Client-Side execution. We use WebAssembly and modern browser APIs to process your files locally. Your sensitive data residency remains on your machine.')}
                                 </p>
                             </div>
                         </div>
                     </div>
                 )}
             </div>
-            
-
         </div>
     );
 }

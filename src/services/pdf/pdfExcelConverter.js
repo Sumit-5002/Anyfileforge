@@ -3,102 +3,107 @@ import * as XLSX from 'xlsx';
 import { safeText, downloadBlob } from './pdfUtils';
 import * as pdfjs from 'pdfjs-dist';
 
-export const excelToPDF = async (file, onProgress) => {
-    const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
+export const excelToPDF = async (filesInput, onProgress) => {
+    const files = Array.isArray(filesInput) ? filesInput : [filesInput];
     const pdfDoc = await PDFDocument.create();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
     const margin = 40, fontSize = 9, rowHeight = 22;
-    let page = pdfDoc.addPage(), y = page.getHeight() - margin;
-    const pageWidth = page.getWidth();
 
-    // Calculate column widths
-    const colCount = Math.max(...data.map(r => r.length));
-    const rawWidths = Array(colCount).fill(0);
-    // Use first 100 rows for auto-sizing
-    data.slice(0, 100).forEach(row => row.forEach((c, i) => {
-        const w = font.widthOfTextAtSize(safeText(c), fontSize);
-        if (w > rawWidths[i]) rawWidths[i] = w;
-    }));
+    for (let fIdx = 0; fIdx < files.length; fIdx++) {
+        const file = files[fIdx];
+        const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-    const totalRaw = rawWidths.reduce((a, b) => a + b, 0) + (colCount * 12);
-    const scale = Math.min(1.2, (pageWidth - (margin * 2)) / totalRaw);
-    const colWidths = rawWidths.map(w => (w + 12) * scale);
-    const totalTableWidth = colWidths.reduce((a, b) => a + b, 0);
+        let page = pdfDoc.addPage();
+        let y = page.getHeight() - margin;
+        const pageWidth = page.getWidth();
 
-    for (let rIdx = 0; rIdx < data.length; rIdx++) {
-        if (onProgress) onProgress((rIdx / data.length) * 100);
-        const row = data[rIdx];
+        // Calculate column widths
+        const colCount = Math.max(...data.map(r => r.length));
+        if (colCount === 0 || colCount === -Infinity) continue;
 
-        // Draw row background for header
-        if (rIdx === 0) {
-            page.drawRectangle({
-                x: margin, y: y - 2,
-                width: totalTableWidth, height: rowHeight,
-                color: rgb(0.95, 0.95, 0.95)
-            });
-        }
+        const rawWidths = Array(colCount).fill(0);
+        data.slice(0, 100).forEach(row => row.forEach((c, i) => {
+            if (i >= colCount) return;
+            const w = font.widthOfTextAtSize(safeText(c), fontSize);
+            if (w > rawWidths[i]) rawWidths[i] = w;
+        }));
 
-        let x = margin;
-        row.forEach((cell, cIdx) => {
-            const txt = safeText(cell);
-            const cw = colWidths[cIdx];
-            const cellFont = rIdx === 0 ? fontBold : font;
+        const totalRaw = rawWidths.reduce((a, b) => a + b, 0) + (colCount * 12);
+        const scale = Math.min(1.2, (pageWidth - (margin * 2)) / Math.max(1, totalRaw));
+        const colWidths = rawWidths.map(w => (w + 12) * scale);
+        const totalTableWidth = colWidths.reduce((a, b) => a + b, 0);
 
-            // Draw text with clipping/truncation
-            const avail = cw - 8;
-            let disp = txt;
-            if (font.widthOfTextAtSize(txt, fontSize) > avail) {
-                disp = txt.substring(0, Math.floor(avail / (fontSize * 0.5))) + '...';
+        for (let rIdx = 0; rIdx < data.length; rIdx++) {
+            if (onProgress) {
+                const fileProgress = rIdx / data.length;
+                onProgress(((fIdx + fileProgress) / files.length) * 100);
+            }
+            const row = data[rIdx];
+
+            if (rIdx === 0) {
+                page.drawRectangle({
+                    x: margin, y: y - 2,
+                    width: totalTableWidth, height: rowHeight,
+                    color: rgb(0.95, 0.95, 0.95)
+                });
             }
 
-            page.drawText(disp, { x: x + 4, y: y + 5, size: fontSize, font: cellFont });
+            let x = margin;
+            for (let cIdx = 0; cIdx < colCount; cIdx++) {
+                const cell = row[cIdx] || '';
+                const txt = safeText(cell);
+                const cw = colWidths[cIdx] || 50;
+                const cellFont = rIdx === 0 ? fontBold : font;
 
-            // Draw vertical cell line
+                const avail = cw - 8;
+                let disp = txt;
+                if (font.widthOfTextAtSize(txt, fontSize) > avail) {
+                    disp = txt.substring(0, Math.max(0, Math.floor(avail / (fontSize * 0.5)))) + '...';
+                }
+
+                page.drawText(disp, { x: x + 4, y: y + 5, size: fontSize, font: cellFont });
+
+                page.drawLine({
+                    start: { x, y: y - 2 },
+                    end: { x, y: y + rowHeight - 2 },
+                    thickness: 0.5,
+                    color: rgb(0.8, 0.8, 0.8)
+                });
+                x += cw;
+            }
+
             page.drawLine({
-                start: { x, y: y - 2 },
-                end: { x, y: y + rowHeight - 2 },
-                thickness: 0.5,
-                color: rgb(0.8, 0.8, 0.8)
-            });
-
-            x += cw;
-        });
-
-        // Final vertical line
-        page.drawLine({
-            start: { x: margin + totalTableWidth, y: y - 2 },
-            end: { x: margin + totalTableWidth, y: y + rowHeight - 2 },
-            thickness: 0.5,
-            color: rgb(0.8, 0.8, 0.8)
-        });
-
-        // Draw horizontal line
-        page.drawLine({
-            start: { x: margin, y: y - 2 },
-            end: { x: margin + totalTableWidth, y: y - 2 },
-            thickness: 0.5,
-            color: rgb(0.8, 0.8, 0.8)
-        });
-
-        y -= rowHeight;
-        if (y < margin + rowHeight) {
-            page = pdfDoc.addPage();
-            y = page.getHeight() - margin;
-            // Re-draw top table line for new page
-            page.drawLine({
-                start: { x: margin, y: y + rowHeight - 2 },
+                start: { x: margin + totalTableWidth, y: y - 2 },
                 end: { x: margin + totalTableWidth, y: y + rowHeight - 2 },
                 thickness: 0.5,
                 color: rgb(0.8, 0.8, 0.8)
             });
+
+            page.drawLine({
+                start: { x: margin, y: y - 2 },
+                end: { x: margin + totalTableWidth, y: y - 2 },
+                thickness: 0.5,
+                color: rgb(0.8, 0.8, 0.8)
+            });
+
+            y -= rowHeight;
+            if (y < margin + rowHeight) {
+                page = pdfDoc.addPage();
+                y = page.getHeight() - margin;
+                page.drawLine({
+                    start: { x: margin, y: y + rowHeight - 2 },
+                    end: { x: margin + totalTableWidth, y: y + rowHeight - 2 },
+                    thickness: 0.5,
+                    color: rgb(0.8, 0.8, 0.8)
+                });
+            }
         }
     }
 
+    if (onProgress) onProgress(100);
     return pdfDoc.save();
 };
 

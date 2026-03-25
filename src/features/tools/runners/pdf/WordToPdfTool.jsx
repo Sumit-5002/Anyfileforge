@@ -20,9 +20,9 @@ function WordToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         setProcessing(true);
         setProgress(0);
         try {
-            // Process the first file for simplicity in this version
-            const data = await pdfService.wordToPDF(files[0], (p) => setProgress(p));
-            const outputName = files[0].name.replace(/\.[^/.]+$/, '') + '.pdf';
+            // Process all selected files into a single merged PDF
+            const data = await pdfService.wordToPDF(files, (p) => setProgress(p));
+            const outputName = files.length > 1 ? 'Merged_Word_Docs.pdf' : files[0].name.replace(/\.[^/.]+$/, '') + '.pdf';
             pdfService.downloadPDF(data, outputName);
         } catch (err) {
             console.error('Word to PDF error:', err);
@@ -34,7 +34,7 @@ function WordToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     };
 
     if (files.length === 0) {
-        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} accept=".docx" />;
+        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={true} accept=".docx" />;
     }
 
     return (
@@ -46,13 +46,13 @@ function WordToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             processing={processing}
             progress={progress}
             onProcess={handleProcess}
-            actionLabel="Convert Word to PDF"
+            actionLabel={files.length > 1 ? "Merge & Convert to PDF" : "Convert Word to PDF"}
             sidebar={
                 <div className="sidebar-info">
-                    <p className="hint-text">This tool converts DOCX files to PDF directly in your browser.</p>
+                    <p className="hint-text">This tool converts DOCX files to PDF directly in your browser. Add multiple files to merge them.</p>
                     <div className="mt-3 d-flex align-items-center gap-2">
                         <FileType className="text-primary" size={20} />
-                        <span>Ready to convert <strong>{files[0].name}</strong></span>
+                        <span>Ready to convert <strong>{files.length}</strong> file(s)</span>
                     </div>
                 </div>
             }

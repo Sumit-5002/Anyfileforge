@@ -1,5 +1,5 @@
 .tool-detail-page {
-    padding: 40px 0;
+    padding: 12px 0;
     min-height: calc(100vh - 70px);
 }
 
@@ -9,9 +9,9 @@
     gap: 8px;
     text-decoration: none;
     color: var(--text-secondary);
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin-bottom: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 20px;
     transition: var(--transition-smooth);
 }
 
@@ -22,8 +22,8 @@
 
 .tool-header {
     text-align: center;
-    margin-bottom: 50px;
-    max-width: 800px;
+    margin-bottom: 20px;
+    max-width: 900px;
     margin-left: auto;
     margin-right: auto;
     display: flex;
@@ -88,9 +88,10 @@
 }
 
 .tool-header h1 {
-    font-size: clamp(2.5rem, 6vw, 4rem);
-    margin-bottom: 20px;
-    letter-spacing: -2px;
+    font-size: clamp(1.75rem, 8vw, 4rem);
+    margin-bottom: clamp(12px, 2vw, 20px);
+    letter-spacing: -1.5px;
+    line-height: 1.1;
 }
 
 .tool-header p {
@@ -229,9 +230,10 @@
 }
 
 .server-mode-content p {
-    font-size: 1.15rem;
+    font-size: clamp(0.95rem, 3vw, 1.15rem);
     color: var(--text-secondary);
     max-width: 620px;
+    line-height: 1.5;
 }
 
 .server-mode-premium {
@@ -320,7 +322,28 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 40px;
-    margin-bottom: 50px;
+    margin-bottom: 60px;
+}
+
+@media (max-width: 900px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+}
+
+.info-item {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 40px;
+    border-radius: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: var(--transition-smooth);
+}
+
+.info-item:hover {
+    border-color: rgba(var(--primary-rgb), 0.2);
+    background: rgba(255, 255, 255, 0.03);
+    transform: translateY(-5px);
 }
 
 .info-item h3 {
@@ -356,6 +379,7 @@
 .enterprise-banner p {
     font-size: 1.15rem;
     color: var(--text-secondary);
+    max-width: unset;
 }
 
 /* Premium Access Modal */

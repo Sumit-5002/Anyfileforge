@@ -22,7 +22,7 @@ function PdfToWordTool({ tool, onFilesAdded }) {
         setProgress(0);
         try {
             const data = await pdfService.pdfToWord(file, (p) => setProgress(p));
-            pdfService.downloadBlob(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), file.name.replace('.pdf', '.docx'));
+            pdfService.downloadBlob(data, file.name.replace(/\.pdf$/i, '.docx'));
             setDone(true);
         } catch (error) {
             console.error('PDF to Word error:', error);

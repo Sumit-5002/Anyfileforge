@@ -58,8 +58,8 @@ export const pdfToWord = async (file, onProgress) => {
             }],
         });
 
-        const buffer = await Packer.toBuffer(doc);
-        return new Uint8Array(buffer);
+        const blob = await Packer.toBlob(doc);
+        return blob;
     } catch (error) {
         console.error("Internal PDF-to-Word Error:", error);
         throw new Error("Unable to parse PDF structure or generate Word document. " + error.message);

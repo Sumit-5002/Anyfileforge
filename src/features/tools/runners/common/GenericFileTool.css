@@ -146,10 +146,34 @@
 .tool-field input,
 .tool-field select,
 .tool-field textarea {
+    min-height: 42px;
     padding: 10px 14px;
     border-radius: 10px;
     border: 1px solid var(--border-bright);
     background: rgba(15, 23, 42, 0.6);
+    color: var(--text-primary);
+}
+
+.tool-field select option,
+.tool-field select optgroup {
+    color: #0f172a;
+    background: #ffffff;
+}
+
+.tool-field select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 36px;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #94a3b8 50%),
+        linear-gradient(135deg, #94a3b8 50%, transparent 50%);
+    background-position:
+        calc(100% - 18px) calc(50% + 1px),
+        calc(100% - 12px) calc(50% + 1px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    cursor: pointer;
 }
 
 .tool-inline {

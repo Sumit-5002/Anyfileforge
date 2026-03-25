@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import imageService from '../../../../services/imageService';
 import ToolWorkspace from '../common/ToolWorkspace';
 import FileUploader from '../../../../components/ui/FileUploader';
-import { EyeOff, Settings, MousePointer2, ShieldCheck, ImageIcon } from 'lucide-react';
+import FileThumbnail from '../../../../components/tools/shared/FileThumbnail';
+import { MousePointer2, Settings, ShieldCheck, X } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
 const getBaseName = (name) => name.replace(/\.[^/.]+$/, '');
 
 function ImageBlurFaceTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [file, setFile] = useState(null);
-    const [mode, setMode] = useState('auto'); // 'auto' or 'manual'
+    const [mode, setMode] = useState('auto');
     const [sensitivity, setSensitivity] = useState('medium');
     const [x, setX] = useState('100');
     const [y, setY] = useState('100');
@@ -17,34 +18,67 @@ function ImageBlurFaceTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [height, setHeight] = useState('200');
     const [radius, setRadius] = useState('25');
     const [processing, setProcessing] = useState(false);
+    const [results, setResults] = useState([]);
+    const [preview, setPreview] = useState(null);
 
-    const handleFilesSelected = (newFiles) => {
+    const handleFilesSelected = useCallback((newFiles) => {
         if (newFiles.length > 0) {
             setFile(newFiles[0]);
+            setResults([]);
             if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
         }
-    };
+    }, [parentOnFilesAdded]);
+
+    const openPreview = useCallback((sourceFile) => {
+        const url = URL.createObjectURL(sourceFile);
+        setPreview((prev) => {
+            if (prev?.url) URL.revokeObjectURL(prev.url);
+            return { url, name: sourceFile.name };
+        });
+    }, []);
+
+    const closePreview = useCallback(() => {
+        setPreview((prev) => {
+            if (prev?.url) URL.revokeObjectURL(prev.url);
+            return null;
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!preview) return undefined;
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') closePreview();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [preview, closePreview]);
+
+    useEffect(() => () => {
+        if (preview?.url) URL.revokeObjectURL(preview.url);
+    }, [preview]);
 
     const handleProcess = async () => {
         if (!file) return;
         setProcessing(true);
         try {
-            let blob;
-            if (mode === 'auto') {
-                blob = await imageService.autoDetectFaces(file, sensitivity);
-            } else {
-                blob = await imageService.blurRegion(file, {
+            const blob = mode === 'auto'
+                ? await imageService.autoDetectFaces(file, sensitivity)
+                : await imageService.blurRegion(file, {
                     x: Number(x) || 0,
                     y: Number(y) || 0,
                     width: Number(width) || 200,
                     height: Number(height) || 200,
                     radius: Math.max(0, Number(radius) || 25)
                 });
-            }
-            imageService.downloadBlob(blob, `${getBaseName(file.name)}_blurred.png`);
+
+            setResults([{
+                type: 'image',
+                data: blob,
+                name: `${getBaseName(file.name)}_blurred.png`
+            }]);
         } catch (error) {
             console.error('Blur operation failed:', error);
-            alert('Failed to apply blur.');
+            alert(error?.message || 'Failed to apply blur.');
         } finally {
             setProcessing(false);
         }
@@ -58,11 +92,12 @@ function ImageBlurFaceTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         <ToolWorkspace
             tool={tool}
             files={[file]}
+            results={results}
             onFilesSelected={handleFilesSelected}
-            onReset={() => setFile(null)}
+            onReset={() => { setFile(null); setResults([]); }}
             processing={processing}
             onProcess={handleProcess}
-            actionLabel={mode === 'auto' ? "Auto Blur" : "Apply Blur"}
+            actionLabel={mode === 'auto' ? 'Auto Blur' : 'Apply Blur'}
             sidebar={
                 <div className="sidebar-settings">
                     <div className="sidebar-label-group mb-3">
@@ -82,7 +117,7 @@ function ImageBlurFaceTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                         <div className="tool-field">
                             <label>Sensitivity</label>
                             <div className="levels-horizontal mt-2">
-                                {['low', 'medium', 'high'].map(s => (
+                                {['low', 'medium', 'high'].map((s) => (
                                     <button
                                         key={s}
                                         className={`level-btn ${sensitivity === s ? 'active' : ''}`}
@@ -125,22 +160,51 @@ function ImageBlurFaceTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 </div>
             }
         >
-            <div className="files-list-view">
-                <div className="file-item-horizontal">
-                    <ImageIcon size={24} className="text-primary" />
-                    <div className="file-item-info">
-                        <div className="file-item-name">{file.name}</div>
-                        <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
+            <div className="pages-grid image-pages-grid">
+                <div className="page-item-card">
+                    <div className="page-item-preview image-page-preview">
+                        <FileThumbnail file={file} className="w-full h-full rounded-none border-0 shadow-none" />
+                        <button
+                            className="page-view-btn"
+                            type="button"
+                            onClick={() => openPreview(file)}
+                            title="View Full"
+                            aria-label={`View ${file.name} full screen`}
+                        >
+                            View
+                        </button>
+                        <button
+                            className="page-remove-btn"
+                            type="button"
+                            onClick={() => setFile(null)}
+                            disabled={processing}
+                            title="Remove Image"
+                            aria-label={`Remove ${file.name}`}
+                        >
+                            <X size={14} />
+                        </button>
                     </div>
-                    <button className="btn-icon-danger" onClick={() => setFile(null)} disabled={processing}>×</button>
-                </div>
-                <div className="mt-4 p-4 text-center opacity-70 border rounded-lg border-dashed">
-                    <p>{mode === 'auto' ? "AI will attempt to find and blur faces automatically." : "Manually define the region to blur using the fields on the right."}</p>
+                    <div className="page-item-label image-page-label" title={file.name}>
+                        <div className="image-page-index">Source Image</div>
+                        <div className="image-page-name">{file.name}</div>
+                    </div>
                 </div>
             </div>
+
+            {preview && (
+                <div className="image-fullscreen-modal" role="dialog" aria-modal="true" aria-label="Image preview">
+                    <button className="image-fullscreen-backdrop" type="button" onClick={closePreview} aria-label="Close full screen preview" />
+                    <div className="image-fullscreen-content">
+                        <div className="image-fullscreen-header">
+                            <span className="image-fullscreen-name" title={preview.name}>{preview.name}</span>
+                            <button className="image-fullscreen-close" type="button" onClick={closePreview}>Close</button>
+                        </div>
+                        <img src={preview.url} alt={preview.name} className="image-fullscreen-image" />
+                    </div>
+                </div>
+            )}
         </ToolWorkspace>
     );
 }
 
 export default ImageBlurFaceTool;
-

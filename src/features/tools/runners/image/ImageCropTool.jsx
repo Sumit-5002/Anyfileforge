@@ -3,6 +3,7 @@ import imageService from '../../../../services/imageService';
 import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
+import FileThumbnail from '../../../../components/tools/shared/FileThumbnail';
 import { Crop, Settings, Layout, FileImage } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
@@ -15,6 +16,7 @@ function ImageCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [quality] = useState(0.9);
     const [processing, setProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [results, setResults] = useState([]);
 
     const extension = format === 'image/png' ? 'png' : format === 'image/webp' ? 'webp' : 'jpg';
 
@@ -46,7 +48,13 @@ function ImageCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 })
                 : await imageService.cropImage(file, cropData.x, cropData.y, cropData.width, cropData.height, format, normalizedQuality);
 
-            imageService.downloadBlob(blob, `${getBaseName(file.name)}_crop.${extension}`);
+            const outName = `${getBaseName(file.name)}_crop.${extension}`;
+            setResults(prev => [...prev, {
+                id: file.name + Date.now(),
+                name: outName,
+                data: blob,
+                type: 'image'
+            }]);
             setProgress(100);
         } finally {
             setProcessing(false);
@@ -62,8 +70,9 @@ function ImageCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         <ToolWorkspace
             tool={tool}
             files={[file]}
+            results={results}
             onFilesSelected={handleFilesSelected}
-            onReset={() => { setFile(null); setProgress(0); }}
+            onReset={() => { setFile(null); setResults([]); setProgress(0); }}
             processing={processing}
             progress={progress}
             onProcess={handleProcess}
@@ -120,8 +129,8 @@ function ImageCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             }
         >
             <div className="files-list-view">
-                <div className="file-item-horizontal">
-                    <FileImage size={24} className="text-primary" />
+                <div className="file-item-horizontal p-4 bg-white/5 rounded-2xl">
+                    <FileThumbnail file={file} />
                     <div className="file-item-info">
                         <div className="file-item-name">{file.name}</div>
                         <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>

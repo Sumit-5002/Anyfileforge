@@ -46,9 +46,11 @@ function PdfRemovePagesTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             sidebar={
                 <div className="sidebar-info">
                     <p className="hint-text">Select the pages you want to delete from the PDF.</p>
-                    <div className="selection-summary mt-3">
-                        <Trash2 size={16} className="text-danger" />
-                        <span><strong>{selectedPages.size}</strong> pages to be removed</span>
+                    <div className="selection-summary mt-5 flex items-center gap-3">
+                        <Trash2 size={20} className="text-red-500" />
+                        <span className="text-sm font-bold text-slate-300">
+                            <strong className="text-red-500">{selectedPages.size}</strong> {selectedPages.size === 1 ? 'page' : 'pages'} flagged for removal
+                        </span>
                     </div>
                 </div>
             }

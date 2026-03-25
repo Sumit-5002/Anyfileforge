@@ -17,45 +17,56 @@ import './Hdf5ViewerTool.css';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const DatasetNode = ({ name, node, path, onSelect, selectedPaths, level = 0 }) => {
+    // In jsfive, nodes can be Group or Dataset
     const isGroup = node instanceof hdf5.Group;
     const [isExpanded, setIsExpanded] = useState(level < 1);
     const isSelected = selectedPaths.includes(path);
 
     let keys = [];
     if (isGroup) {
-        if (typeof node.keys === 'function') keys = node.keys();
-        else if (Array.isArray(node.keys)) keys = node.keys;
-        else if (node._links) keys = Object.keys(node._links);
+        try {
+            if (typeof node.keys === 'function') keys = node.keys();
+            else if (Array.isArray(node.keys)) keys = node.keys;
+            else if (node._links) keys = Object.keys(node._links);
+        } catch (e) {
+            console.warn("Could not read keys for group:", name, e);
+        }
     }
 
     return (
         <div className="tree-node-wrapper">
             <div 
                 className={`tree-node-item ${isSelected ? 'selected' : ''}`}
-                style={{ paddingLeft: `${level * 16 + 10}px` }}
-                onClick={isGroup ? () => setIsExpanded(!isExpanded) : () => onSelect(path, node)}
+                style={{ paddingLeft: `${level * 16 + 10}px`, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', transition: 'background 0.2s', background: isSelected ? 'rgba(139, 92, 246, 0.2)' : 'transparent' }}
+                onClick={isGroup ? () => setIsExpanded(!isExpanded) : () => onSelect(path, node, name)}
             >
-                <div className={`node-chevron ${isExpanded ? 'expanded' : ''}`} style={{ width: 14 }}>
-                    {isGroup ? <ChevronRight size={14} /> : null}
+                <div className={`node-chevron ${isExpanded ? 'expanded' : ''}`} style={{ width: 14, transition: 'transform 0.2s', transform: isExpanded && isGroup ? 'rotate(90deg)' : 'none', display: isGroup ? 'block' : 'none' }}>
+                    <ChevronRight size={14} />
                 </div>
                 <div className="node-type-icon">
-                    {isGroup ? <Boxes size={14} color="#8b5cf6" /> : <Network size={14} color="#3b82f6" />}
+                    {isGroup ? <Boxes size={14} color="#a78bfa" /> : <Network size={14} color="#60a5fa" />}
                 </div>
-                <div className="node-label-text font-mono text-[11px] font-bold tracking-tight truncate">{name}</div>
+                <div className="node-label-text font-mono text-[11px] font-bold tracking-tight truncate overflow-hidden" title={name}>{name}</div>
             </div>
             {isGroup && isExpanded && (
                 <div className="node-children">
-                    {keys.map((key) => (
-                        <DatasetNode 
-                            key={path + key} 
-                            name={key} 
-                            node={node.get(key)} 
-                            path={path === '/' ? `/${key}` : `${path}/${key}`} 
-                            onSelect={onSelect} 
-                            selectedPaths={selectedPaths}
-                            level={level + 1}
-                        />
-                    ))}
+                    {keys.sort().map((key) => {
+                        let childNode;
+                        try {
+                            childNode = node.get(key);
+                        } catch(e) { return null; }
+                        return (
+                            <DatasetNode 
+                                key={path + key} 
+                                name={key} 
+                                node={childNode} 
+                                path={path === '/' ? `/${key}` : `${path}/${key}`} 
+                                onSelect={onSelect} 
+                                selectedPaths={selectedPaths}
+                                level={level + 1}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -96,15 +107,19 @@ const Hdf5ViewerTool = ({ tool }) => {
 
     const activeH5 = currentFile ? loadedFiles[currentFile] : null;
 
-    const handleSelectNode = (path, node) => {
+    const handleSelectNode = (path, node, name) => {
         if (node instanceof hdf5.Dataset) {
-            const isMulti = window.event && window.event.shiftKey;
+            const isMulti = window.event && (window.event.ctrlKey || window.event.metaKey || window.event.shiftKey);
+            
+            // In jsfive, node.value might need to be accessed. 
+            // It could be a typed array.
+            const rawValue = node.value;
             const ds = {
-                name: path.split('/').pop(),
+                name: name || path.split('/').pop(),
                 path,
-                shape: node.shape,
-                dtype: node.dtype,
-                data: node.value,
+                shape: node.shape || [],
+                dtype: node.dtype || 'mixed',
+                data: Array.isArray(rawValue) ? rawValue : (rawValue.buffer ? Array.from(rawValue) : [rawValue]),
                 attributes: node.attrs || {}
             };
 
@@ -124,20 +139,20 @@ const Hdf5ViewerTool = ({ tool }) => {
 
     const previewData = useMemo(() => {
         if (selectedDatasets.length === 0) return [];
-        return Array.from(selectedDatasets[0].data).slice(0, 1000);
+        return selectedDatasets[0].data.slice(0, 1000);
     }, [selectedDatasets]);
 
     const chartData = useMemo(() => {
         if (selectedDatasets.length === 0) return null;
         
         const datasets = selectedDatasets.map((ds, idx) => {
-            const data = Array.from(ds.data).slice(0, 1000);
-            const colors = ['#8b5cf6', '#3b82f6', '#f97316', '#10b981'];
+            const dataSlice = ds.data.slice(0, 1000);
+            const colors = ['#8b5cf6', '#3b82f6', '#f97316', '#10b981', '#ef4444'];
             return {
                 label: ds.name,
-                data: data.map(v => typeof v === 'number' ? v : 0),
+                data: dataSlice.map(v => typeof v === 'number' ? v : 0),
                 borderColor: colors[idx % colors.length],
-                backgroundColor: `${colors[idx % colors.length]}11`,
+                backgroundColor: `${colors[idx % colors.length]}22`,
                 fill: selectedDatasets.length === 1,
                 tension: 0.1,
                 pointRadius: 0
@@ -158,9 +173,40 @@ const Hdf5ViewerTool = ({ tool }) => {
         const n = data.length;
         if (n === 0) return null;
         let sum = 0, min = data[0], max = data[0];
-        for (let v of data) { sum += v; if (v < min) min = v; if (v > max) max = v; }
+        for (let i = 0; i < n; i++) {
+            const v = data[i];
+            sum += v;
+            if (v < min) min = v;
+            if (v > max) max = v;
+        }
         return { mean: sum/n, min, max, count: n };
     }, [selectedDatasets]);
+
+    const handleExport = (format) => {
+        if (selectedDatasets.length === 0) return;
+        const ds = selectedDatasets[0];
+        let content = '';
+        let fileName = `${ds.name}.${format}`;
+
+        if (format === 'csv') {
+            content = ds.data.join('\n');
+            const blob = new Blob([content], { type: 'text/csv' });
+            triggerDownload(blob, fileName);
+        } else if (format === 'json') {
+            content = JSON.stringify(ds, null, 2);
+            const blob = new Blob([content], { type: 'application/json' });
+            triggerDownload(blob, fileName);
+        }
+    };
+
+    const triggerDownload = (blob, fileName) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
 
     return (
         <ToolWorkspace
@@ -212,11 +258,17 @@ const Hdf5ViewerTool = ({ tool }) => {
                     <div className="dataset-panel h-full flex flex-col fade-in overflow-hidden gap-2">
                         <div className="dataset-header mb-6">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="breadcrumb-nav"><span className="breadcrumb-part font-mono text-[10px]">{currentFile}</span><span className="opacity-30">/</span><span className="breadcrumb-part font-mono text-[10px] text-primary-400">{selectedDatasets[0].path}</span>{selectedDatasets.length > 1 && <span className="text-secondary-400 font-bold ml-2"> (+{selectedDatasets.length-1} Comparative)</span>}</div>
+                                <div className="breadcrumb-nav bg-white/5 px-4 py-2 rounded-full border border-white/10 flex items-center gap-2 overflow-hidden max-w-[70%]">
+                                    <Database size={12} className="text-slate-500 flex-shrink-0"/>
+                                    <span className="breadcrumb-part font-mono text-[10px] text-slate-400 truncate">{currentFile}</span>
+                                    <ChevronRight size={10} className="text-slate-600"/>
+                                    <span className="breadcrumb-part font-mono text-[10px] text-primary-400 font-bold truncate">{selectedDatasets[0].path}</span>
+                                    {selectedDatasets.length > 1 && <span className="bg-secondary-500/20 text-secondary-400 text-[9px] px-2 py-0.5 rounded-full font-bold">+{selectedDatasets.length-1}</span>}
+                                </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => {}} className="btn btn-secondary p-2"><CSVIcon size={14}/></button>
-                                    <button onClick={() => {}} className="btn btn-secondary p-2"><FileJson size={14}/></button>
-                                    <span className="badge-pill bg-primary/10 text-primary border border-primary/20 font-mono text-[10px]">HDF-Binary</span>
+                                    <button onClick={() => handleExport('csv')} className="btn btn-secondary p-2.5 rounded-xl hover:bg-secondary-500/10 hover:text-secondary-400 transition-all border-white/5 shadow-premium" title="CSV Export"><CSVIcon size={16}/></button>
+                                    <button onClick={() => handleExport('json')} className="btn btn-secondary p-2.5 rounded-xl hover:bg-secondary-500/10 hover:text-secondary-400 transition-all border-white/5 shadow-premium" title="JSON Export"><FileJson size={16}/></button>
+                                    <div className="bg-primary/10 text-primary border border-primary/20 font-bold tracking-widest px-3 py-1.5 rounded-full text-[9px] uppercase ml-2">HDF-5 Binary</div>
                                 </div>
                             </div>
                             <div className="custom-tabs">

@@ -194,7 +194,10 @@ function Header() {
                     {user ? (
                         <>
                             <Link to="/profile" className="nav-link login-link">Profile</Link>
-                            <button className="btn btn-secondary signup-btn" onClick={logout}>Logout</button>
+                            <button className="btn btn-secondary logout-btn flex items-center gap-2" onClick={logout}>
+                                <LogOut size={16} />
+                                <span>Logout</span>
+                            </button>
                         </>
                     ) : (
                         <>
@@ -380,8 +383,9 @@ function Header() {
                                                 <div className="navbar__item__icon"><User size={20} /></div>
                                                 <div className="navbar__item__title">Profile Settings</div>
                                             </Link>
-                                            <button className="btn btn-secondary btn-full mt-8" onClick={() => { logout(); setIsMenuOpen(false); }}>
-                                                Logout
+                                            <button className="btn btn-secondary btn-full logout-btn mt-8 flex items-center justify-center gap-2" onClick={() => { logout(); setIsMenuOpen(false); }}>
+                                                <LogOut size={20}/>
+                                                <span>Logout</span>
                                             </button>
                                         </div>
                                     ) : (
@@ -436,6 +440,54 @@ function Header() {
                                     <h3 className="section-divider-text">IMAGE TOOLS</h3>
                                     {TOOLS.image.map((category, idx) => (
                                         <li key={`img-${idx}`} className="grid-suite-item">
+                                            <div className="grid-category-title">{category.category}</div>
+                                            <ul className="grid-sub-list">
+                                                {category.tools.map(tool => (
+                                                    <li key={tool.id}>
+                                                        <Link
+                                                            to={`/tools/${tool.id}`}
+                                                            className="grid-tool-link"
+                                                            onClick={() => setIsGridOpen(false)}
+                                                        >
+                                                            <tool.icon size={16} className="tool-ico" style={{ color: tool.color }} />
+                                                            <span>{tool.name}</span>
+                                                        </Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </li>
+                                    ))}
+                                </div>
+
+                                {/* Engineer Tools Grid */}
+                                <div className="grid-suite-section border-top mt-24 pt-24">
+                                    <h3 className="section-divider-text">ENGINEER TOOLS</h3>
+                                    {TOOLS.engineer.map((category, idx) => (
+                                        <li key={`eng-${idx}`} className="grid-suite-item">
+                                            <div className="grid-category-title">{category.category}</div>
+                                            <ul className="grid-sub-list">
+                                                {category.tools.map(tool => (
+                                                    <li key={tool.id}>
+                                                        <Link
+                                                            to={`/tools/${tool.id}`}
+                                                            className="grid-tool-link"
+                                                            onClick={() => setIsGridOpen(false)}
+                                                        >
+                                                            <tool.icon size={16} className="tool-ico" style={{ color: tool.color }} />
+                                                            <span>{tool.name}</span>
+                                                        </Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </li>
+                                    ))}
+                                </div>
+
+                                {/* Researcher Tools Grid */}
+                                <div className="grid-suite-section border-top mt-24 pt-24">
+                                    <h3 className="section-divider-text">RESEARCHER TOOLS</h3>
+                                    {TOOLS.researcher.map((category, idx) => (
+                                        <li key={`res-${idx}`} className="grid-suite-item">
                                             <div className="grid-category-title">{category.category}</div>
                                             <ul className="grid-sub-list">
                                                 {category.tools.map(tool => (

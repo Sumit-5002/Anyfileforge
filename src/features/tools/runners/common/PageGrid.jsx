@@ -15,7 +15,8 @@ function PageGrid({
     onRotatePage,
     onDeletePage,
     onReorder,
-    order = null // Optional custom order [3, 1, 2]
+    order = null, // Optional custom order [3, 1, 2]
+    renderOverlay = null // Function to render custom overlays over the thumbnail
 }) {
     const [pageData, setPageData] = useState([]); // Array of { pageNumber, thumbnail }
     const [loading, setLoading] = useState(false);
@@ -93,7 +94,7 @@ function PageGrid({
         const abortController = new AbortController();
         loadPages(abortController);
         return () => abortController.abort();
-    }, [loadPages]);
+    }, [file, loadPages]);
 
     const [draggedItem, setDraggedItem] = useState(null);
 
@@ -136,21 +137,23 @@ function PageGrid({
             {displayPages.map(page => (
                 <div
                     key={page.pageNumber}
-                    className={`page-item-card ${selectedPages?.has(page.pageNumber) ? 'selected' : ''}`}
+                    className={`page-item-card ${selectedPages && selectedPages.has(page.pageNumber) ? 'selected' : ''}`}
                     onClick={() => onTogglePage && onTogglePage(page.pageNumber)}
                     onKeyDown={(e) => onTogglePage && (e.key === 'Enter' || e.key === ' ') && onTogglePage(page.pageNumber)}
                     role={onTogglePage ? "button" : undefined}
                     tabIndex={onTogglePage ? "0" : undefined}
-                    aria-label={`Page ${page.pageNumber}${selectedPages?.has(page.pageNumber) ? ', selected' : ''}`}
+                    aria-label={`Page ${page.pageNumber}${selectedPages && selectedPages.has(page.pageNumber) ? ', selected' : ''}`}
                     draggable={!!onReorder}
                     onDragStart={(e) => handleDragStart(e, page.pageNumber)}
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, page.pageNumber)}
                 >
-                    <div className="page-item-preview" style={{ transform: `rotate(${rotations[page.pageNumber] || 0}deg)` }}>
+                    <div className="page-item-preview" style={{ transform: `rotate(${rotations[page.pageNumber] || 0}deg)`, position: 'relative' }}>
                         {page.thumbnail ? <img src={page.thumbnail} alt="" /> : <div className="page-skeleton" />}
 
-                        {selectedPages?.has(page.pageNumber) && (
+                        {renderOverlay && renderOverlay(page)}
+
+                        {selectedPages && selectedPages.has(page.pageNumber) && (
                             <div className="selection-badge"><Check size={14} /></div>
                         )}
 

@@ -4,6 +4,7 @@ import serverProcessingService from '../../../../services/serverProcessingServic
 import ToolWorkspace from '../common/ToolWorkspace';
 import FileUploader from '../../../../components/ui/FileUploader';
 import useParallelFileProcessor from '../../../../hooks/useParallelFileProcessor';
+import FileThumbnail from '../../../../components/tools/shared/FileThumbnail';
 import { Maximize, Settings, ImageIcon, Check } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
@@ -17,6 +18,7 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [noEnlarge, setNoEnlarge] = useState(true);
     const [format, setFormat] = useState('image/jpeg');
     const [quality] = useState(0.9);
+    const [results, setResults] = useState([]);
 
     const extension = format === 'image/png' ? 'png' : format === 'image/webp' ? 'webp' : 'jpg';
 
@@ -35,7 +37,13 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 unit
             });
 
-        imageService.downloadBlob(blob, `${getBaseName(file.name)}_resized.${extension}`);
+        const outName = `${getBaseName(file.name)}_resized.${extension}`;
+        setResults(prev => [...prev, {
+            id: file.name + Date.now(),
+            name: outName,
+            data: blob,
+            type: 'image'
+        }]);
     }, [tool.mode, width, height, unit, noEnlarge, format, keepAspect, quality, extension]);
 
     const {
@@ -64,8 +72,9 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         <ToolWorkspace
             tool={tool}
             files={toolFiles}
+            results={results}
             onFilesSelected={onFilesSelected}
-            onReset={reset}
+            onReset={() => { reset(); setResults([]); }}
             processing={processing}
             progress={progress}
             onProcess={processFiles}
@@ -122,8 +131,8 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         >
             <div className="files-list-view">
                 {files.map(({ id, file }) => (
-                    <div key={id} className="file-item-horizontal">
-                        <ImageIcon size={24} className="text-primary" />
+                    <div key={id} className="file-item-horizontal p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all mb-4">
+                        <FileThumbnail file={file} />
                         <div className="file-item-info">
                             <div className="file-item-name">{file.name}</div>
                             <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>

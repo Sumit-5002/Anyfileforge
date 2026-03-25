@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import imageService from '../../../../services/imageService';
 import serverProcessingService from '../../../../services/serverProcessingService';
 import ToolWorkspace from '../common/ToolWorkspace';
 import FileUploader from '../../../../components/ui/FileUploader';
 import useParallelFileProcessor from '../../../../hooks/useParallelFileProcessor';
-import { ImageIcon, Settings } from 'lucide-react';
+import FileThumbnail from '../../../../components/tools/shared/FileThumbnail';
+import { Settings, X } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
 const getBaseName = (name) => name.replace(/\.[^/.]+$/, '');
@@ -12,6 +13,7 @@ const getBaseName = (name) => name.replace(/\.[^/.]+$/, '');
 function ImageFromJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [format, setFormat] = useState('image/png');
     const [quality, setQuality] = useState('0.9');
+    const [preview, setPreview] = useState(null);
 
     const extension = format === 'image/webp' ? 'webp' : 'png';
 
@@ -43,6 +45,34 @@ function ImageFromJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         handleFilesSelected(newFiles);
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
     }, [handleFilesSelected, parentOnFilesAdded]);
+
+    const openPreview = useCallback((file) => {
+        const url = URL.createObjectURL(file);
+        setPreview((prev) => {
+            if (prev?.url) URL.revokeObjectURL(prev.url);
+            return { url, name: file.name };
+        });
+    }, []);
+
+    const closePreview = useCallback(() => {
+        setPreview((prev) => {
+            if (prev?.url) URL.revokeObjectURL(prev.url);
+            return null;
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!preview) return undefined;
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') closePreview();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [preview, closePreview]);
+
+    useEffect(() => () => {
+        if (preview?.url) URL.revokeObjectURL(preview.url);
+    }, [preview]);
 
     if (files.length === 0) {
         return <FileUploader tool={tool} onFilesSelected={onFilesSelected} multiple={true} accept="image/jpeg" />;
@@ -78,20 +108,52 @@ function ImageFromJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 </div>
             }
         >
-            <div className="files-list-view">
-                {files.map(({ id, file }) => (
-                    <div key={id} className="file-item-horizontal">
-                        <ImageIcon size={24} className="text-primary" />
-                        <div className="file-item-info">
-                            <div className="file-item-name">{file.name}</div>
-                            <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
+            <div className="pages-grid image-pages-grid">
+                {files.map(({ id, file }, idx) => (
+                    <div key={id} className={`page-item-card ${completedIds.has(id) ? 'selected' : ''}`}>
+                        <div className="page-item-preview image-page-preview">
+                            <FileThumbnail file={file} className="w-full h-full rounded-none border-0 shadow-none" />
+                            <button
+                                className="page-view-btn"
+                                type="button"
+                                onClick={() => openPreview(file)}
+                                title="View Full"
+                                aria-label={`View ${file.name} full screen`}
+                            >
+                                View
+                            </button>
+                            <button
+                                className="page-remove-btn"
+                                type="button"
+                                onClick={() => removeFile(id)}
+                                disabled={processing}
+                                title="Remove Image"
+                                aria-label={`Remove ${file.name}`}
+                            >
+                                <X size={14} />
+                            </button>
                         </div>
-                        {completedIds.has(id) && <div className="status-badge">Converted!</div>}
-                        {failedIds.has(id) && <div className="status-badge error">Error</div>}
-                        <button className="btn-icon-danger" onClick={() => removeFile(id)} disabled={processing}>×</button>
+                        <div className="page-item-label image-page-label" title={file.name}>
+                            <div className="image-page-index">Image {idx + 1}</div>
+                            <div className="image-page-name">{file.name}</div>
+                            {failedIds.has(id) && <div className="text-danger small">Failed</div>}
+                        </div>
                     </div>
                 ))}
             </div>
+
+            {preview && (
+                <div className="image-fullscreen-modal" role="dialog" aria-modal="true" aria-label="Image preview">
+                    <button className="image-fullscreen-backdrop" type="button" onClick={closePreview} aria-label="Close full screen preview" />
+                    <div className="image-fullscreen-content">
+                        <div className="image-fullscreen-header">
+                            <span className="image-fullscreen-name" title={preview.name}>{preview.name}</span>
+                            <button className="image-fullscreen-close" type="button" onClick={closePreview}>Close</button>
+                        </div>
+                        <img src={preview.url} alt={preview.name} className="image-fullscreen-image" />
+                    </div>
+                </div>
+            )}
         </ToolWorkspace>
     );
 }

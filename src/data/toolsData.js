@@ -31,7 +31,14 @@ export const TOOLS = {
         {
             category: 'Organize PDF',
             tools: [
-                { id: 'pdf-merge', name: 'Merge PDF', description: 'Combine PDFs in the order you want.', icon: Layers, color: '#e5322d' },
+                { 
+                    id: 'pdf-merge', 
+                    name: 'Merge PDF', 
+                    description: 'Combine PDFs in the order you want.', 
+                    icon: Layers, color: '#e5322d',
+                    about: 'Combine PDFs in the order you want. This organize pdf tool operates entirely within your browser\'s private sandbox, ensuring no data ever touches our servers.',
+                    privacy: '100% Client-Side execution. We use WebAssembly and modern browser APIs to process your files locally. Your sensitive data residency remains on your machine.'
+                },
                 { id: 'pdf-split', name: 'Split PDF', description: 'Separate pages into independent files.', icon: Scissors, color: '#f59e0b' },
                 { id: 'pdf-organize', name: 'Organize PDF', description: 'Sort, delete or add pages to your PDF.', icon: Layout, color: '#09c1d5' },
                 { id: 'pdf-remove-pages', name: 'Remove PDF Pages', description: 'Remove specific pages from your document.', icon: Eraser, color: '#ef4444' }

@@ -26,14 +26,26 @@ export const parsePcap = async (file) => {
         // const tsSec = dataView.getUint32(offset, isLittleEndian);
         // const tsUsec = dataView.getUint32(offset + 4, isLittleEndian);
         const inclLen = dataView.getUint32(offset + 8, isLittleEndian);
-        // const origLen = dataView.getUint32(offset + 12, isLittleEndian);
+        const tsSec = dataView.getUint32(offset, isLittleEndian);
         
-        if (inclLen > 65535 || inclLen < 0) break; // Defensive skip
+        if (inclLen > 65535 || inclLen <= 0) break; // Defensive skip
         
+        // Extract Hex Preview
+        const payloadOffset = offset + 16;
+        const previewLen = Math.min(inclLen, 32);
+        const hexArr = [];
+        for (let j = 0; j < previewLen; j++) {
+            if (payloadOffset + j < ab.byteLength) {
+                hexArr.push(dataView.getUint8(payloadOffset + j).toString(16).padStart(2, '0'));
+            }
+        }
+
         packets.push({
             id: packetCount + 1,
             length: inclLen,
-            offset: offset + 16
+            offset: payloadOffset,
+            timestamp: new Date(tsSec * 1000).toLocaleTimeString(),
+            payloadHex: hexArr.join(' ')
         });
         
         offset += 16 + inclLen;
@@ -43,8 +55,8 @@ export const parsePcap = async (file) => {
     return {
         totalBytes: ab.byteLength,
         packetCount,
-        network: network === 1 ? "Ethernet" : `Network Type ${network}`,
-        status: "Analysis complete",
-        packets: packets.slice(0, 50) // Preview first 50
+        network: network === 1 ? "Ethernet" : `Network Link ${network}`,
+        status: "Protocol Summary Ready",
+        packets: packets
     };
 };

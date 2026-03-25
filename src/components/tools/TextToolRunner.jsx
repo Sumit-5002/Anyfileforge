@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Copy, Check, Play, CornerDownRight, AlertCircle, FileCode2, Maximize2, Minimize2 } from 'lucide-react';
+import { Copy, Check, Play, CornerDownRight, AlertCircle, FileCode2 } from 'lucide-react';
 import './TextToolRunner.css';
 
 const safeText = (text) =>
@@ -21,7 +21,6 @@ function TextToolRunner({ tool }) {
 
     // UI states
     const [copied, setCopied] = useState(false);
-    const [isFullscreen, setIsFullscreen] = useState(false);
 
     const inputRef = useRef(null);
     const outputRef = useRef(null);
@@ -162,7 +161,7 @@ function TextToolRunner({ tool }) {
     const isMarkdown = tool.id === 'markdown-preview';
 
     return (
-        <div className={`text-tool-container ${isFullscreen ? 'fullscreen' : ''}`}>
+        <div className="text-tool-container">
 
             <div className="text-tool-glass-card">
                 <div className="text-tool-header">
@@ -176,9 +175,6 @@ function TextToolRunner({ tool }) {
                         </div>
                     </div>
 
-                    <button className="btn-icon" onClick={() => setIsFullscreen(!isFullscreen)} title="Toggle Fullscreen">
-                        {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-                    </button>
                 </div>
 
                 <div className="text-tool-controls">

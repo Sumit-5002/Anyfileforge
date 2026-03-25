@@ -1,15 +1,35 @@
 import * as pdfjs from 'pdfjs-dist';
 
+// Pure NLP ML Concept: Term Frequency Difference (Bag of Words)
+// Computes exact word additions and removals in O(N) time for massive documents
 const getDiff = (textA, textB) => {
-    const wordsA = textA.split(/\s+/).filter(Boolean); // Filter(Boolean) to remove empty strings from split
+    const wordsA = textA.split(/\s+/).filter(Boolean); 
     const wordsB = textB.split(/\s+/).filter(Boolean);
-    const added = wordsB.filter(w => !wordsA.includes(w));
-    const removed = wordsA.filter(w => !wordsB.includes(w));
+    
+    const freqA = {};
+    for (const w of wordsA) freqA[w] = (freqA[w] || 0) + 1;
+    
+    const freqB = {};
+    for (const w of wordsB) freqB[w] = (freqB[w] || 0) + 1;
+    
+    const added = [];
+    const removed = [];
+    
+    for (const w in freqB) {
+        let diff = freqB[w] - (freqA[w] || 0);
+        while(diff > 0) { added.push(w); diff--; }
+    }
+    
+    for (const w in freqA) {
+        let diff = freqA[w] - (freqB[w] || 0);
+        while(diff > 0) { removed.push(w); diff--; }
+    }
+    
     return { added, removed };
 };
 
 /**
- * Compares two PDF documents textually
+ * Compares two PDF documents textually using Bag of Words Analysis
  */
 export const comparePDFs = async (fileA, fileB, onProgress) => {
     const [pdfA, pdfB] = await Promise.all([

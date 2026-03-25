@@ -13,11 +13,13 @@ export const parseFASTQStream = async (file, progressCallback) => {
 
     let buffer = '';
     let lineIdx = 0; // 0=Header, 1=Seq, 2=+, 3=Qual
-    
     let currentSeq = '';
-    
+    let currentHeader = '';
     let bytesRead = 0;
     const totalBytes = file.size;
+
+    const reads = [];
+    const maxReadsToCapture = 5000;
 
     while (true) {
         const { done, value } = await reader.read();
@@ -37,7 +39,10 @@ export const parseFASTQStream = async (file, progressCallback) => {
 
                 // Process line based on lineIdx
                 if (lineIdx === 0) {
-                    if (line.startsWith('@')) lineIdx = 1; 
+                    if (line.startsWith('@')) {
+                        currentHeader = line;
+                        lineIdx = 1; 
+                    }
                 } else if (lineIdx === 1) {
                     currentSeq = line.toUpperCase();
                     lineIdx = 2;
@@ -50,6 +55,15 @@ export const parseFASTQStream = async (file, progressCallback) => {
                         totalSequences++;
                         const seqLen = currentSeq.length;
                         lengthDist[seqLen] = (lengthDist[seqLen] || 0) + 1;
+
+                        if (reads.length < maxReadsToCapture) {
+                            reads.push({
+                                id: currentHeader,
+                                seq: currentSeq,
+                                qual: qual,
+                                len: seqLen
+                            });
+                        }
 
                         for (let j = 0; j < seqLen; j++) {
                             const base = currentSeq[j];
@@ -91,6 +105,7 @@ export const parseFASTQStream = async (file, progressCallback) => {
         totalBases,
         gcContent,
         meanQualities,
-        lengthData
+        lengthData,
+        reads // Return captured reads for export
     };
 };

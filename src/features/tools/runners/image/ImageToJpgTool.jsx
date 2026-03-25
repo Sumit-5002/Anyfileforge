@@ -1,27 +1,18 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import imageService from '../../../../services/imageService';
 import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
 import useParallelFileProcessor from '../../../../hooks/useParallelFileProcessor';
-import { ImageIcon, CheckCircle, AlertCircle } from 'lucide-react';
+import FileThumbnail from '../../../../components/tools/shared/FileThumbnail';
+import { X } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
-/**
- * Tool component for converting multiple images to JPG format in parallel.
- * Supports both client-side (browser) and server-side processing modes.
- *
- * @param {Object} props
- * @param {Object} props.tool - Tool definition object
- * @param {Function} props.onFilesAdded - Optional callback when files are selected
- */
 function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [quality, setQuality] = useState(0.9);
+    const [results, setResults] = useState([]);
+    const [preview, setPreview] = useState(null);
 
-    /**
-     * Processing callback for a single file.
-     * Decides between server and client processing based on tool mode.
-     */
     const processFile = useCallback(async ({ file }) => {
         const blob = tool.mode === 'server'
             ? await serverProcessingService.convertImage(file, {
@@ -31,7 +22,14 @@ function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             : await imageService.convertImage(file, 'image/jpeg', quality);
 
         const baseName = file.name.replace(/\.[^/.]+$/, '');
-        imageService.downloadBlob(blob, `${baseName}.jpg`);
+        const outName = `${baseName}.jpg`;
+
+        setResults((prev) => [...prev, {
+            id: `${file.name}-${Date.now()}`,
+            name: outName,
+            data: blob,
+            type: 'image'
+        }]);
     }, [tool.mode, quality]);
 
     const {
@@ -47,13 +45,38 @@ function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         processFiles
     } = useParallelFileProcessor(processFile, 5);
 
-    /**
-     * Stable callback for handling file selection.
-     */
     const onFilesSelected = useCallback((newFiles) => {
         handleFilesSelected(newFiles);
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
     }, [handleFilesSelected, parentOnFilesAdded]);
+
+    const openPreview = useCallback((file) => {
+        const url = URL.createObjectURL(file);
+        setPreview((prev) => {
+            if (prev?.url) URL.revokeObjectURL(prev.url);
+            return { url, name: file.name };
+        });
+    }, []);
+
+    const closePreview = useCallback(() => {
+        setPreview((prev) => {
+            if (prev?.url) URL.revokeObjectURL(prev.url);
+            return null;
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!preview) return undefined;
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') closePreview();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [preview, closePreview]);
+
+    useEffect(() => () => {
+        if (preview?.url) URL.revokeObjectURL(preview.url);
+    }, [preview]);
 
     if (files.length === 0) {
         return <FileUploader tool={tool} onFilesSelected={onFilesSelected} multiple={true} accept="image/*" />;
@@ -63,8 +86,9 @@ function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         <ToolWorkspace
             tool={tool}
             files={toolFiles}
+            results={results}
             onFilesSelected={onFilesSelected}
-            onReset={reset}
+            onReset={() => { reset(); setResults([]); }}
             processing={processing}
             progress={progress}
             onProcess={processFiles}
@@ -78,7 +102,7 @@ function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                         max="1"
                         step="0.05"
                         value={quality}
-                        onChange={e => setQuality(Number(e.target.value))}
+                        onChange={(e) => setQuality(Number(e.target.value))}
                         className="w-full"
                     />
                     <div className="d-flex justify-content-between mt-1 text-muted small">
@@ -89,26 +113,52 @@ function ImageToJpgTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 </div>
             }
         >
-            <div className="files-list-view">
-                {files.map(({ id, file }) => (
-                    <div key={id} className="file-item-horizontal">
-                        <ImageIcon size={24} className="text-primary" />
-                        <div className="file-item-info">
-                            <div className="file-item-name">{file.name}</div>
-                            <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
+            <div className="pages-grid image-pages-grid">
+                {files.map(({ id, file }, idx) => (
+                    <div key={id} className={`page-item-card ${completedIds.has(id) ? 'selected' : ''}`}>
+                        <div className="page-item-preview image-page-preview">
+                            <FileThumbnail file={file} className="w-full h-full rounded-none border-0 shadow-none" />
+                            <button
+                                className="page-view-btn"
+                                type="button"
+                                onClick={() => openPreview(file)}
+                                title="View Full"
+                                aria-label={`View ${file.name} full screen`}
+                            >
+                                View
+                            </button>
+                            <button
+                                className="page-remove-btn"
+                                type="button"
+                                onClick={() => removeFile(id)}
+                                disabled={processing}
+                                title="Remove Image"
+                                aria-label={`Remove ${file.name}`}
+                            >
+                                <X size={14} />
+                            </button>
                         </div>
-                        {completedIds.has(id) && <div className="status-badge text-success"><CheckCircle size={14} /> Converted!</div>}
-                        {failedIds.has(id) && <div className="status-badge text-danger"><AlertCircle size={14} /> Failed</div>}
-                        <button
-                            className="btn-icon-danger"
-                            disabled={processing}
-                            onClick={() => removeFile(id)}
-                        >
-                            ×
-                        </button>
+                        <div className="page-item-label image-page-label" title={file.name}>
+                            <div className="image-page-index">Image {idx + 1}</div>
+                            <div className="image-page-name">{file.name}</div>
+                            {failedIds.has(id) && <div className="text-danger small">Failed</div>}
+                        </div>
                     </div>
                 ))}
             </div>
+
+            {preview && (
+                <div className="image-fullscreen-modal" role="dialog" aria-modal="true" aria-label="Image preview">
+                    <button className="image-fullscreen-backdrop" type="button" onClick={closePreview} aria-label="Close full screen preview" />
+                    <div className="image-fullscreen-content">
+                        <div className="image-fullscreen-header">
+                            <span className="image-fullscreen-name" title={preview.name}>{preview.name}</span>
+                            <button className="image-fullscreen-close" type="button" onClick={closePreview}>Close</button>
+                        </div>
+                        <img src={preview.url} alt={preview.name} className="image-fullscreen-image" />
+                    </div>
+                </div>
+            )}
         </ToolWorkspace>
     );
 }

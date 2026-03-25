@@ -1,22 +1,45 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import imageService from '../../../../services/imageService';
 import ToolWorkspace from '../common/ToolWorkspace';
 import FileUploader from '../../../../components/ui/FileUploader';
 import useParallelFileProcessor from '../../../../hooks/useParallelFileProcessor';
-import { Type, ImageIcon, Settings } from 'lucide-react';
+import FileThumbnail from '../../../../components/tools/shared/FileThumbnail';
+import { ImageIcon, Settings, Type, X } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
 const getBaseName = (name) => name.replace(/\.[^/.]+$/, '');
 
+const WatermarkTilePreview = ({ file, resultBlob }) => {
+    const [previewUrl, setPreviewUrl] = useState(null);
+
+    useEffect(() => {
+        if (!(resultBlob instanceof Blob)) {
+            setPreviewUrl(null);
+            return undefined;
+        }
+        const url = URL.createObjectURL(resultBlob);
+        setPreviewUrl(url);
+        return () => URL.revokeObjectURL(url);
+    }, [resultBlob]);
+
+    if (previewUrl) {
+        return <img src={previewUrl} alt={file.name} className="w-full h-full object-cover" />;
+    }
+
+    return <FileThumbnail file={file} className="w-full h-full rounded-none border-0 shadow-none" />;
+};
+
 function ImageWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
-    const [type, setType] = useState('text'); // 'text' or 'image'
+    const [type, setType] = useState('text');
     const [text, setText] = useState('CONFIDENTIAL');
     const [wmFile, setWmFile] = useState(null);
     const [position, setPosition] = useState('bottom-right');
     const [opacity, setOpacity] = useState('0.35');
     const [fontSize, setFontSize] = useState('32');
+    const [results, setResults] = useState([]);
+    const [preview, setPreview] = useState(null);
 
-    const processFile = useCallback(async ({ file }) => {
+    const processFile = useCallback(async ({ id, file }) => {
         const blob = await imageService.watermarkImage(file, {
             type,
             text,
@@ -26,7 +49,12 @@ function ImageWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             fontSize: Number(fontSize) || 32
         });
 
-        imageService.downloadBlob(blob, `${getBaseName(file.name)}_watermarked.png`);
+        setResults((prev) => [...prev, {
+            sourceId: id,
+            type: 'image',
+            data: blob,
+            name: `${getBaseName(file.name)}_watermarked.png`
+        }]);
     }, [type, text, wmFile, position, opacity, fontSize]);
 
     const {
@@ -47,6 +75,41 @@ function ImageWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         if (parentOnFilesAdded) parentOnFilesAdded(newFiles);
     }, [handleFilesSelected, parentOnFilesAdded]);
 
+    const handleProcess = useCallback(async () => {
+        setResults([]);
+        await processFiles();
+    }, [processFiles]);
+
+    const openPreview = useCallback((file, processedResult = null) => {
+        const sourceBlob = processedResult?.data instanceof Blob ? processedResult.data : file;
+        const sourceName = processedResult?.name || file.name;
+        const url = URL.createObjectURL(sourceBlob);
+        setPreview((prev) => {
+            if (prev?.url) URL.revokeObjectURL(prev.url);
+            return { url, name: sourceName };
+        });
+    }, []);
+
+    const closePreview = useCallback(() => {
+        setPreview((prev) => {
+            if (prev?.url) URL.revokeObjectURL(prev.url);
+            return null;
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!preview) return undefined;
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') closePreview();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [preview, closePreview]);
+
+    useEffect(() => () => {
+        if (preview?.url) URL.revokeObjectURL(preview.url);
+    }, [preview]);
+
     if (files.length === 0) {
         return <FileUploader tool={tool} onFilesSelected={onFilesSelected} multiple={true} accept="image/*" />;
     }
@@ -55,11 +118,12 @@ function ImageWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         <ToolWorkspace
             tool={tool}
             files={toolFiles}
+            results={results}
             onFilesSelected={onFilesSelected}
-            onReset={reset}
+            onReset={() => { reset(); setResults([]); }}
             processing={processing}
             progress={progress}
-            onProcess={processFiles}
+            onProcess={handleProcess}
             actionLabel="Add Watermarks"
             sidebar={
                 <div className="sidebar-settings">
@@ -112,20 +176,54 @@ function ImageWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 </div>
             }
         >
-            <div className="files-list-view">
-                {files.map(({ id, file }) => (
-                    <div key={id} className="file-item-horizontal">
-                        <ImageIcon size={24} className="text-primary" />
-                        <div className="file-item-info">
-                            <div className="file-item-name">{file.name}</div>
-                            <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
+            <div className="pages-grid image-pages-grid">
+                {files.map(({ id, file }, idx) => {
+                    const processedResult = results.find((result) => result.sourceId === id) || null;
+                    return (
+                    <div key={id} className={`page-item-card ${completedIds.has(id) ? 'selected' : ''}`}>
+                        <div className="page-item-preview image-page-preview">
+                            <WatermarkTilePreview file={file} resultBlob={processedResult?.data} />
+                            <button
+                                className="page-view-btn"
+                                type="button"
+                                onClick={() => openPreview(file, processedResult)}
+                                title="View Full"
+                                aria-label={`View ${file.name} full screen`}
+                            >
+                                View
+                            </button>
+                            <button
+                                className="page-remove-btn"
+                                type="button"
+                                onClick={() => removeFile(id)}
+                                disabled={processing}
+                                title="Remove Image"
+                                aria-label={`Remove ${file.name}`}
+                            >
+                                <X size={14} />
+                            </button>
                         </div>
-                        {completedIds.has(id) && <div className="status-badge">Done!</div>}
-                        {failedIds.has(id) && <div className="status-badge error">Error</div>}
-                        <button className="btn-icon-danger" onClick={() => removeFile(id)} disabled={processing}>×</button>
+                        <div className="page-item-label image-page-label" title={file.name}>
+                            <div className="image-page-index">Image {idx + 1}</div>
+                            <div className="image-page-name">{file.name}</div>
+                            {failedIds.has(id) && <div className="text-danger small">Failed</div>}
+                        </div>
                     </div>
-                ))}
+                )})}
             </div>
+
+            {preview && (
+                <div className="image-fullscreen-modal" role="dialog" aria-modal="true" aria-label="Image preview">
+                    <button className="image-fullscreen-backdrop" type="button" onClick={closePreview} aria-label="Close full screen preview" />
+                    <div className="image-fullscreen-content">
+                        <div className="image-fullscreen-header">
+                            <span className="image-fullscreen-name" title={preview.name}>{preview.name}</span>
+                            <button className="image-fullscreen-close" type="button" onClick={closePreview}>Close</button>
+                        </div>
+                        <img src={preview.url} alt={preview.name} className="image-fullscreen-image" />
+                    </div>
+                </div>
+            )}
         </ToolWorkspace>
     );
 }

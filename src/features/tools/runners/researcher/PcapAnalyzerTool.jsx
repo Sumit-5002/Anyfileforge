@@ -2,12 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { useFileList } from '../../../../components/tools/shared/useFileList';
 import { parsePcap } from '../../../../services/researcher/pcapService';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { Globe, ShieldAlert, Zap, Activity, File as FileIcon } from 'lucide-react';
+import { Globe, ShieldAlert, Zap, Activity, File as FileIcon, Search, Database, Download, Terminal, Network, ListFilter } from 'lucide-react';
 import './PcapAnalyzerTool.css';
+
+const csvEscape = (value) => {
+    const str = String(value ?? '');
+    if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+    return str;
+};
+
+const downloadBlob = (blob, name) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+};
+
+const payloadPreview = (hex = '', limit = 96) => {
+    if (!hex) return '';
+    if (hex.length <= limit) return hex;
+    return `${hex.slice(0, limit)}...`;
+};
 
 const PcapAnalyzerTool = ({ onFilesAdded }) => {
     const { files, addFiles, removeFile } = useFileList();
-    const [loadedPcaps, setLoadedPcaps] = useState({}); // { fileName: pcapData }
+    const [loadedPcaps, setLoadedPcaps] = useState({}); 
     const [currentFile, setCurrentFile] = useState(null);
     const [activeTab, setActiveTab] = useState('summary');
 
@@ -34,102 +57,156 @@ const PcapAnalyzerTool = ({ onFilesAdded }) => {
     }, [files]);
 
     const currentData = currentFile ? loadedPcaps[currentFile] : null;
-    const handleFilesSelected = (newFiles) => {
-        addFiles(newFiles);
-        if (typeof onFilesAdded === 'function') onFilesAdded(newFiles);
+
+    const handleExport = (format) => {
+        if (!currentData) return;
+        let blob;
+        let fileName = `${currentFile}_analysis.${format}`;
+
+        if (format === 'csv') {
+            const header = 'ID,Timestamp,Length,Protocol,Source,Destination,PayloadPreview\n';
+            const rows = currentData.packets
+                .map((p) => [
+                    p.id,
+                    p.timestamp,
+                    p.length,
+                    p.protocol || 'N/A',
+                    p.source || 'N/A',
+                    p.destination || 'N/A',
+                    p.payloadHex?.substring(0, 50) || ''
+                ].map(csvEscape).join(','))
+                .join('\n');
+            blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8' });
+        } else if (format === 'json') {
+            blob = new Blob([JSON.stringify(currentData, null, 2)], { type: 'application/json;charset=utf-8' });
+        }
+
+        if (!blob) return;
+        downloadBlob(blob, fileName);
+
     };
 
     return (
         <ToolWorkspace
             tool={{ name: 'PCAP Analyzer' }}
             files={files.map(f => f.file)}
-            onFilesSelected={handleFilesSelected}
+            onFilesSelected={addFiles}
             accept=".pcap,.cap"
             multiple={true}
             layout="research"
-            showHeaderActions={false}
             onReset={() => { files.forEach(f => removeFile(f.id)); setLoadedPcaps({}); setCurrentFile(null); }}
+            sidebarTitle="WIRE_SENTRY"
             sidebar={
-                <div className="pcap-sidebar h-full flex flex-col gap-6">
-                    <div className="pcap-side-card">
-                        <div className="pcap-side-title">Loaded Captures</div>
+                <div className="pcap-sidebar h-full flex flex-col gap-8">
+                    <div className="section">
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">Traffic_Archives</div>
                         <div className="flex flex-col gap-2">
-                            {files.map(f => (
-                                <div key={f.file.name} 
-                                     className={`pcap-file-tab ${currentFile === f.file.name ? 'active' : ''}`}
+                             {files.map(f => (
+                                <button key={f.file.name} 
+                                     className={`p-4 rounded-2xl flex items-center gap-4 transition-all border text-left overflow-hidden ${currentFile === f.file.name ? 'bg-primary-500 border-primary-400 text-white shadow-xl' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'}`}
                                      onClick={() => { setCurrentFile(f.file.name); setActiveTab('summary'); }}
                                 >
-                                    <div className="d-flex align-items-center gap-2 overflow-hidden">
-                                        <FileIcon size={14} className={currentFile === f.file.name ? 'text-primary' : 'text-muted'} />
-                                        <span className="text-xs truncate font-medium">{f.file.name}</span>
-                                    </div>
-                                </div>
-                            ))}
+                                    <FileIcon size={16} />
+                                    <span className="text-[11px] font-black uppercase truncate">{f.file.name}</span>
+                                </button>
+                             ))}
                         </div>
                     </div>
 
                     {currentData && (
-                        <div className="pcap-side-card flex-grow">
-                             <div className="pcap-metric">
-                                <span className="text-muted small block uppercase font-bold text-xs tracking-tighter">TOTAL PACKETS</span>
-                                <div className="text-primary font-bold">{currentData.packetCount.toLocaleString()}</div>
-                            </div>
-                            <div className="pcap-metric">
-                                <span className="text-muted small block uppercase font-bold text-xs tracking-tighter">NETWORK</span>
-                                <div className="text-primary font-bold">{currentData.network}</div>
-                            </div>
-                            <div className="pcap-metric">
-                                <span className="text-muted small block uppercase font-bold text-xs tracking-tighter">SIZE</span>
-                                <div className="text-primary font-bold">{(currentData.totalBytes / 1024 / 1024).toFixed(2)} MB</div>
+                    <div className="section mt-auto">
+                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">Extraction_Service</div>
+                            <div className="pcap-export-grid">
+                                <button className="pcap-export-btn" onClick={() => handleExport('csv')}>
+                                    <Database size={20} className="text-primary-400 group-hover:scale-110 transition-transform"/>
+                                    <span className="text-[8px] font-black uppercase">CSV_EXPORT</span>
+                                </button>
+                                <button className="pcap-export-btn" onClick={() => handleExport('json')}>
+                                    <Terminal size={20} className="text-amber-400 group-hover:scale-110 transition-transform"/>
+                                    <span className="text-[8px] font-black uppercase">JSON_DUMP</span>
+                                </button>
                             </div>
                         </div>
                     )}
                 </div>
             }
         >
-            <div className="pcap-main h-full researcher-tool-container">
+            <div className="pcap-panel h-full flex flex-col">
                 {!currentFile ? (
-                    <div className="empty-state text-center p-12"><Globe size={64} className="opacity-10 mx-auto mb-4"/><h3>Network Traffic Hub</h3><p className="text-muted">Drop multiple .pcap files to analyze flow.</p></div>
+                   <div className="empty-state h-full flex items-center justify-center flex-col opacity-20 p-20 text-center uppercase">
+                        <Globe size={80} className="mb-6 stroke-1 text-slate-500"/>
+                        <p className="text-2xl font-black italic tracking-tighter mb-2">Ingress_Null</p>
+                        <p className="text-[9px] font-black tracking-[3px] text-slate-500">Inject .pcap streams for forensic DPI.</p>
+                   </div>
                 ) : (
-                    <div className="pcap-panel fade-in h-full">
-                        <div className="dataset-header mb-6">
-                            <div className="d-flex align-items-center justify-content-between">
-                                <div className="breadcrumb-nav d-flex align-items-center gap-2">
-                                    <span className="breadcrumb-part truncate" style={{maxWidth:120}}>{currentFile}</span>
-                                    <span className="opacity-30">/</span>
-                                    <span className="breadcrumb-part">FRAME_PREVIEW</span>
-                                </div>
-                                <span className="badge-pill bg-success-400/10 text-success border border-success-400/20 uppercase font-bold text-xs" style={{ padding: '4px 12px', borderRadius: '20px' }}>
-                                    Offline Parser
-                                </span>
+                    <div className="dataset-panel fade-in h-grow flex flex-col gap-6 overflow-hidden">
+                        <div className="flex items-center justify-between">
+                            <div className="pcap-tab-row">
+                                <button className={`pcap-tab-btn ${activeTab === 'summary' ? 'active' : ''}`} onClick={() => setActiveTab('summary')}>METRICS</button>
+                                <button className={`pcap-tab-btn ${activeTab === 'packets' ? 'active' : ''}`} onClick={() => setActiveTab('packets')}>PACKETS ({currentData.packetCount})</button>
+                            </div>
+                            <div className="flex items-center gap-3 px-6 py-2 bg-black/40 border border-white/5 rounded-full">
+                                <Network size={12} className="text-primary-500"/>
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{currentData.network} Stack</span>
                             </div>
                         </div>
 
-                        <div className="pcap-tabs d-flex gap-1 mb-6 p-1 rounded-lg w-fit">
-                            <button className={`tab-pill ${activeTab === 'summary' ? 'active' : ''}`} onClick={() => setActiveTab('summary')}>Statistics</button>
-                            <button className={`tab-pill ${activeTab === 'packets' ? 'active' : ''}`} onClick={() => setActiveTab('packets')}>Packet List ({currentData.packetCount})</button>
-                        </div>
-
-                        <div className="tab-content h-full">
+                        <div className="flex-grow min-h-0">
                             {activeTab === 'summary' ? (
-                                <div className="overview-grid d-grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-                                    <div className="overview-card p-4 flex flex-col gap-2"><Zap size={20} className="text-primary"/><div className="text-muted text-xs uppercase font-bold">Byte Stream</div><div className="text-xl font-mono">{(currentData.totalBytes/1024).toFixed(1)} KB</div></div>
-                                    <div className="overview-card p-4 flex flex-col gap-2"><Activity size={20} className="text-success"/><div className="text-muted text-xs uppercase font-bold">Density</div><div className="text-xl font-mono">{(currentData.packetCount / (currentData.totalBytes/1024/1024)).toFixed(0)} p/MB</div></div>
-                                    <div className="overview-card p-4 flex flex-col gap-2"><ShieldAlert size={20} className="text-warning"/><div className="text-muted text-xs uppercase font-bold">Status</div><div className="text-xl font-mono">{currentData.status}</div></div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div className="bg-slate-900/60 p-8 rounded-[32px] border border-white/10 relative overflow-hidden group">
+                                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 blur-[60px] rounded-full"></div>
+                                         <div className="text-[10px] uppercase font-black text-slate-500 mb-4 tracking-widest flex items-center gap-2"><Zap size={14}/> THROUGHPUT</div>
+                                         <div className="text-3xl font-mono text-primary-400 font-black">{(currentData.totalBytes/1024).toFixed(1)} <span className="text-sm opacity-40">KB</span></div>
+                                    </div>
+                                    <div className="bg-slate-900/60 p-8 rounded-[32px] border border-white/10 relative overflow-hidden group">
+                                         <div className="absolute top-0 right-0 w-32 h-32 bg-success-500/10 blur-[60px] rounded-full"></div>
+                                         <div className="text-[10px] uppercase font-black text-slate-500 mb-4 tracking-widest flex items-center gap-2"><Activity size={14}/> FREQUENCY</div>
+                                         <div className="text-3xl font-mono text-emerald-400 font-black">{currentData.packetCount} <span className="text-sm opacity-40">PKTS</span></div>
+                                    </div>
+                                    <div className="bg-slate-900/60 p-8 rounded-[32px] border border-white/10 relative overflow-hidden group md:col-span-2 lg:col-span-1">
+                                         <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 blur-[60px] rounded-full"></div>
+                                         <div className="text-[10px] uppercase font-black text-slate-500 mb-4 tracking-widest flex items-center gap-2"><ShieldAlert size={14}/> STATUS</div>
+                                         <div className="text-xl font-mono text-amber-500/80 font-black italic">{currentData.status}</div>
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="packet-view bg-black/20 rounded-xl overflow-hidden border border-white/5">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-white/5"><tr className="border-b border-white/10"><th className="p-4 text-xs font-bold uppercase tracking-wider text-muted">No.</th><th className="p-4 text-xs font-bold uppercase tracking-wider text-muted">Len</th><th className="p-4 text-xs font-bold uppercase tracking-wider text-muted">Offset</th><th className="p-4 text-xs font-bold uppercase tracking-wider text-muted">Payload</th></tr></thead>
-                                        <tbody className="divide-y divide-white/5 font-mono text-sm">
-                                            {currentData.packets.slice(0, 100).map((pkt, idx) => (
-                                                <tr key={idx} className="hover:bg-white/5 transition-colors">
-                                                    <td className="p-4 text-primary">{pkt.id}</td><td className="p-4">{pkt.length} B</td><td className="p-4">0x{pkt.offset.toString(16)}</td><td className="p-4 text-secondary truncate" style={{maxWidth:200}}>{idx % 2 ? 'IPv4 Flow...' : 'ARP Query...'}</td>
+                                <div className="h-full bg-black/40 rounded-[40px] border border-white/5 shadow-inner overflow-hidden flex flex-col">
+                                    <div className="overflow-auto no-scrollbar flex-grow pcap-table-wrap">
+                                        <table className="w-full text-left font-mono text-[10px] border-separate border-spacing-0 pcap-packet-table">
+                                            <colgroup>
+                                                <col className="pcap-col-seq" />
+                                                <col className="pcap-col-time" />
+                                                <col className="pcap-col-size" />
+                                                <col className="pcap-col-payload" />
+                                            </colgroup>
+                                            <thead className="bg-slate-950 sticky top-0 z-10 border-b border-white/10">
+                                                <tr>
+                                                    <th className="p-4 px-6 text-primary-500/60 font-black uppercase tracking-widest border-b border-white/5 pcap-th">SEQ</th>
+                                                    <th className="p-4 px-6 text-primary-500/60 font-black uppercase tracking-widest border-b border-white/5 pcap-th">TIMESTAMP</th>
+                                                    <th className="p-4 px-6 text-primary-500/60 font-black uppercase tracking-widest border-b border-white/5 pcap-th">SIZE</th>
+                                                    <th className="p-4 px-6 text-primary-500/60 font-black uppercase tracking-widest border-b border-white/5 pcap-th">PAYLOAD_STREAM</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                    {currentData.packetCount > 100 && <div className="p-4 text-center text-muted small border-t border-white/5">Showing first 100 packets.</div>}
+                                            </thead>
+                                            <tbody className="divide-y divide-white/[0.03]">
+                                                {currentData.packets.slice(0, 500).map((pkt) => (
+                                                    <tr key={pkt.id} className="hover:bg-primary-500/5 transition-colors group">
+                                                        <td className="p-4 px-6 text-slate-500 font-bold pcap-td">{pkt.id}</td>
+                                                        <td className="p-4 px-6 text-slate-400 pcap-td">{pkt.timestamp}</td>
+                                                        <td className="p-4 px-6 text-white font-black pcap-td">{pkt.length} B</td>
+                                                        <td className="p-4 px-6 text-slate-500 text-[9px] tracking-tight group-hover:text-primary-300 leading-normal pcap-td pcap-td-payload" title={pkt.payloadHex}>
+                                                            {payloadPreview(pkt.payloadHex)}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {currentData.packetCount > 500 && (
+                                        <div className="p-4 text-center bg-slate-950/50 border-t border-white/5 text-[9px] font-black uppercase text-slate-600 tracking-[3px]">
+                                            STREAM_OVERFLOW: VIEW TRUNCATED TO FIRST 500 CHUNKS
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -139,4 +216,5 @@ const PcapAnalyzerTool = ({ onFilesAdded }) => {
         </ToolWorkspace>
     );
 };
+
 export default PcapAnalyzerTool;

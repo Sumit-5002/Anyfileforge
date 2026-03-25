@@ -4,6 +4,7 @@ import serverProcessingService from '../../../../services/serverProcessingServic
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
 import useParallelFileProcessor from '../../../../hooks/useParallelFileProcessor';
+import FileThumbnail from '../../../../components/tools/shared/FileThumbnail';
 import { ImageIcon, Zap, CheckCircle2, ShieldCheck } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
@@ -23,6 +24,7 @@ const LEVELS = [
  */
 function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [level, setLevel] = useState('medium');
+    const [results, setResults] = useState([]);
 
     /**
      * Processing callback for a single file.
@@ -35,7 +37,14 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             : await imageService.convertImage(file, 'image/jpeg', quality);
 
         const baseName = file.name.replace(/\.[^/.]+$/, '');
-        imageService.downloadBlob(blob, `${baseName}_compressed.jpg`);
+        const outName = `${baseName}_compressed.jpg`;
+        
+        setResults(prev => [...prev, {
+            id: file.name + Date.now(),
+            name: outName,
+            data: blob,
+            type: 'image'
+        }]);
     }, [tool.mode, level]);
 
     const {
@@ -67,8 +76,9 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         <ToolWorkspace
             tool={tool}
             files={toolFiles}
+            results={results}
             onFilesSelected={onFilesSelected}
-            onReset={reset}
+            onReset={() => { reset(); setResults([]); }}
             processing={processing}
             progress={progress}
             onProcess={processFiles}
@@ -97,8 +107,8 @@ function ImageCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         >
             <div className="files-list-view">
                 {files.map(({ id, file }) => (
-                    <div key={id} className="file-item-horizontal">
-                        <ImageIcon size={24} className="text-primary" />
+                    <div key={id} className="file-item-horizontal p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all mb-4">
+                        <FileThumbnail file={file} />
                         <div className="file-item-info">
                             <div className="file-item-name">{file.name}</div>
                             <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>

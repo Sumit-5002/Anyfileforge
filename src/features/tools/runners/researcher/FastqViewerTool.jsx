@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useFileList } from '../../../../components/tools/shared/useFileList';
 import { parseFASTQStream } from '../../../../services/researcher/fastqService';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { Download, Activity, BarChart3, Binary, Dna, FileText, Trash2, File as FileIcon, Loader2 } from 'lucide-react';
+import { Download, Activity, BarChart3, Binary, Dna, FileText, Trash2, File as FileIcon, Loader2, Database, Zap } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -29,16 +29,15 @@ ChartJS.register(
   Filler
 );
 
-import './Hdf5ViewerTool.css'; // Reuse premium researcher base styles
-
-const FastqViewerTool = () => {
+const FastqViewerTool = ({ tool }) => {
     const { files, addFiles, removeFile } = useFileList();
-    const [loadedStats, setLoadedStats] = useState({}); // { fileName: statsData }
+    const [loadedStats, setLoadedStats] = useState({});
     const [currentFile, setCurrentFile] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState('');
-    const [activeTab, setActiveTab] = useState('quality'); // 'quality', 'length', 'base'
+    const [activeTab, setActiveTab] = useState('quality');
+    const [results, setResults] = useState([]);
 
     useEffect(() => {
         const processNewFiles = async () => {
@@ -57,7 +56,6 @@ const FastqViewerTool = () => {
                         setError(`Failed to parse ${f.file.name}: ${err.message}`);
                     } finally {
                         setIsProcessing(false);
-                        setProgress(0);
                     }
                 }
             }
@@ -78,190 +76,152 @@ const FastqViewerTool = () => {
 
     const handleExport = (format) => {
         if (!activeStats) return;
-        let content = format === 'csv' ? "Metric,Value\n" : "=== FASTQ QC REPORT ===\n\n";
+        let content = "";
+        let fileName = `${currentFile.split('.')[0]}_qc.${format === 'raw_csv' ? 'csv' : format}`;
         
-        const metrics = [
-            ["Total Sequences", activeStats.totalSequences.toLocaleString()],
-            ["Total Bases", activeStats.totalBases.toLocaleString()],
-            ["GC Content (%)", activeStats.gcContent.toFixed(2) + "%"]
-        ];
+        if (format === 'csv') {
+            content = "Metric,Value\n";
+            content += `Total Sequences,${activeStats.totalSequences}\n`;
+            content += `Total Bases,${activeStats.totalBases}\n`;
+            content += `GC Content (%),${activeStats.gcContent.toFixed(4)}\n`;
+        } else if (format === 'raw_csv') {
+            content = "identifier,sequence,quality,length\n";
+            activeStats.reads.forEach(r => {
+                content += `"${r.id}","${r.seq}","${r.qual}",${r.len}\n`;
+            });
+            fileName = `${currentFile.split('.')[0]}_dataset.csv`;
+        } else if (format === 'fasta') {
+            activeStats.reads.forEach(r => {
+                content += `>${r.id.substring(1)}\n${r.seq}\n`;
+            });
+            fileName = `${currentFile.split('.')[0]}.fasta`;
+        } else {
+            content = "=== FASTQ GENOMIC REPORT ===\n\n";
+            content += `Sequences: ${activeStats.totalSequences.toLocaleString()}\n`;
+            content += `Bases:     ${activeStats.totalBases.toLocaleString()}\n`;
+            content += `GC (%):    ${activeStats.gcContent.toFixed(4)}%\n`;
+        }
 
-        metrics.forEach(([k, v]) => {
-            content += format === 'csv' ? `${k},${v}\n` : `${k}: ${v}\n`;
-        });
-
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `${currentFile}_qc.${format}`; a.click();
+        const blob = new Blob([content], { type: format === 'raw_csv' ? 'text/csv' : 'text/plain' });
+        setResults(prev => [...prev, {
+            id: `fastq-${Date.now()}`,
+            name: fileName,
+            data: blob,
+            type: 'data'
+        }]);
     };
 
     return (
         <ToolWorkspace
-            tool={{ name: 'FASTQ QC Analyzer' }}
+            tool={tool || { name: 'FASTQ QC Analyzer' }}
             files={files.map(f => f.file)}
             onFilesSelected={addFiles}
             accept=".fastq,.fq"
             multiple={true}
             layout="research"
-            onReset={() => { files.forEach(f => removeFile(f.id)); setLoadedStats({}); setCurrentFile(null); }}
+            results={results}
+            onReset={() => { files.forEach(f => removeFile(f.id)); setLoadedStats({}); setCurrentFile(null); setResults([]); }}
+            sidebarTitle="FASTQ_TERMINAL"
             sidebar={
-                <div className="sidebar-info researcher-tool-container h-full flex flex-col gap-6">
-                    <div className="opened-files shadow-sm">
-                        <div className="text-muted text-xs uppercase mb-3 font-bold tracking-wider">Sequencing Libraries</div>
+                <div className="fastq-sidebar p-2 flex flex-col gap-10">
+                    <div className="section">
+                        <div className="section-title text-[10px] uppercase font-black tracking-widest text-slate-500 mb-4">Sample_Registry</div>
                         <div className="flex flex-col gap-2">
-                            {files.map(f => (
+                             {files.map(f => (
                                 <div key={f.file.name} 
-                                     className={`file-tab d-flex align-items-center justify-content-between p-2 rounded-lg cursor-pointer transition-all ${currentFile === f.file.name ? 'bg-primary/20 border-primary/30' : 'bg-white/5 border-white/5'}`}
-                                     style={{ border: '1px solid currentColor' }}
+                                     className={`p-4 rounded-[20px] cursor-pointer border transition-all flex items-center justify-between group ${currentFile === f.file.name ? 'bg-primary-500/10 border-primary-500/30' : 'bg-white/5 border-white/5'}`}
                                      onClick={() => setCurrentFile(f.file.name)}
                                 >
-                                    <div className="d-flex align-items-center gap-2 overflow-hidden">
-                                        <Dna size={14} className={currentFile === f.file.name ? 'text-primary' : 'text-muted'} />
-                                        <span className="text-xs truncate font-medium">{f.file.name}</span>
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <Dna size={16} className={currentFile === f.file.name ? 'text-primary-400' : 'text-slate-500'} />
+                                        <span className="text-[11px] font-bold text-white truncate max-w-[150px]">{f.file.name}</span>
                                     </div>
-                                    <button className="p-1 hover:text-danger opacity-50 hover:opacity-100" onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}>
-                                        <Trash2 size={12}/>
-                                    </button>
+                                    <button className="p-2 text-red-500/40 opacity-0 group-hover:opacity-100 transition-all" onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}>×</button>
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     {isProcessing && (
-                        <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl animation-pulse">
-                            <div className="d-flex align-items-center gap-2 mb-2">
-                                <Loader2 size={16} className="spinning text-primary" />
-                                <span className="text-xs font-bold text-primary">ANALYZING DNA {progress}%</span>
+                        <div className="p-6 bg-primary-500/5 border border-primary-500/10 rounded-[30px] animate-pulse">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Loader2 size={16} className="text-primary-400 animate-spin" />
+                                <span className="text-[10px] font-black uppercase text-primary-400">DECIPHERING_GENOME {progress}%</span>
                             </div>
-                            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                                <div className="h-full bg-primary-500 transition-all duration-300" style={{ width: `${progress}%` }} />
+                            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-primary-500 transition-all duration-300 shadow-[0_0_10px_rgba(59,130,246,0.8)]" style={{ width: `${progress}%` }} />
                             </div>
                         </div>
                     )}
 
                     {activeStats && (
-                        <div className="quick-stats-card p-4 bg-black/20 border border-white/5 rounded-xl">
-                            <h5 className="text-xs uppercase font-bold text-muted mb-4">Library Summary</h5>
+                        <div className="section mt-auto">
+                            <div className="section-title text-[10px] uppercase font-black tracking-widest text-slate-500 mb-6">Pipeline_Export</div>
                             <div className="flex flex-col gap-3">
-                                <div className="d-flex justify-content-between text-sm"><span className="text-muted">Sequences:</span><span className="font-mono">{activeStats.totalSequences.toLocaleString()}</span></div>
-                                <div className="d-flex justify-content-between text-sm"><span className="text-muted">Bases:</span><span className="font-mono">{activeStats.totalBases.toLocaleString()}</span></div>
-                                <div className="d-flex justify-content-between text-sm"><span className="text-muted">GC Content:</span><span className="font-mono text-primary font-bold">{activeStats.gcContent.toFixed(2)}%</span></div>
-                            </div>
-                            <div className="mt-6 pt-4 border-t border-white/5 d-flex gap-2">
-                                <button className="btn-secondary flex-1 py-2 text-xs" onClick={() => handleExport('csv')}><Download size={12}/> CSV</button>
-                                <button className="btn-secondary flex-1 py-2 text-xs" onClick={() => handleExport('txt')}><Download size={12}/> TXT</button>
+                                <button 
+                                    className="w-full py-5 bg-gradient-to-r from-primary-600 to-indigo-600 border-none rounded-[24px] text-[10px] font-black uppercase tracking-widest text-white shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    onClick={() => handleExport('raw_csv')}
+                                >
+                                    <Database size={16}/> COMMIT_BULK_DATASET
+                                </button>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button className="py-4 bg-white/5 border border-white/5 rounded-[20px] text-[9px] font-black uppercase text-slate-400 hover:text-white" onClick={() => handleExport('fasta')}>
+                                        To_FASTA
+                                    </button>
+                                    <button className="py-4 bg-white/5 border border-white/5 rounded-[20px] text-[9px] font-black uppercase text-slate-400 hover:text-white" onClick={() => handleExport('csv')}>
+                                        QC_Report
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
                 </div>
             }
         >
-            <div className="fastq-main researcher-tool-container h-full">
+            <div className="fastq-main h-full p-4 flex flex-col gap-6">
                 {!currentFile ? (
-                    <div className="empty-state text-center p-12">
-                        <Binary size={64} className="opacity-10 mx-auto mb-4" />
-                        <h3>Bioinformatics Sequence QC</h3>
-                        <p className="text-muted">Drop FASTQ files to perform phred quality analysis and GC content distribution.</p>
-                        {error && <div className="mt-4 p-3 bg-danger/10 text-danger rounded-lg text-sm">{error}</div>}
+                    <div className="empty-state h-full flex items-center justify-center flex-col opacity-20 p-20 text-center uppercase">
+                         <Binary size={80} className="mb-6 stroke-1 text-slate-500"/>
+                         <p className="text-2xl font-black italic tracking-tighter mb-2">Awaiting_Sequences</p>
+                         <p className="text-[9px] font-black tracking-[3px] text-slate-500">Mount .fastq / .fq datasets for Phred analysis.</p>
                     </div>
                 ) : !activeStats ? (
-                    <div className="empty-state text-center p-12">
-                        <Loader2 size={48} className="spinning opacity-10 mx-auto mb-4" />
-                        <p>Processing genomic data... {progress}%</p>
+                    <div className="h-full flex flex-col items-center justify-center gap-6 opacity-40">
+                         <Zap size={64} className="text-primary-500 animate-pulse"/>
+                         <p className="text-[10px] font-black uppercase tracking-widest">Hydrating sequencing buffer [{progress}%]</p>
                     </div>
                 ) : (
-                    <div className="dataset-panel fade-in h-full flex flex-col">
-                        <div className="dataset-header mb-6">
-                            <div className="d-flex align-items-center justify-content-between">
-                                <div className="breadcrumb-nav d-flex align-items-center gap-2">
-                                    <span className="breadcrumb-part truncate" style={{maxWidth:180}}>{currentFile}</span>
-                                    <span className="opacity-30">/</span>
-                                    <span className="breadcrumb-part">GENOME_QC</span>
-                                </div>
-                                <div className="badge-pill bg-primary/10 text-primary border border-primary/20 uppercase font-bold text-xs" style={{ padding: '4px 12px', borderRadius: '20px' }}>
-                                    Illumina / Sanger
-                                </div>
-                            </div>
+                    <div className="dataset-panel h-full flex flex-col gap-8 animate-in fade-in">
+                        <div className="flex items-center justify-between px-4">
+                             <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-white/5 rounded-[20px]">
+                                <button className={`px-6 py-3 rounded-[16px] text-[10px] font-black uppercase transition-all flex items-center gap-2 ${activeTab === 'quality' ? 'bg-primary-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`} onClick={() => setActiveTab('quality')}><Activity size={14}/> Mean_Phred</button>
+                                <button className={`px-6 py-3 rounded-[16px] text-[10px] font-black uppercase transition-all flex items-center gap-2 ${activeTab === 'reads' ? 'bg-primary-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`} onClick={() => setActiveTab('reads')}><FileText size={14}/> Read_Matrix</button>
+                                <button className={`px-6 py-3 rounded-[16px] text-[10px] font-black uppercase transition-all flex items-center gap-2 ${activeTab === 'length' ? 'bg-primary-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`} onClick={() => setActiveTab('length')}><BarChart3 size={14}/> Distr</button>
+                             </div>
+                             <div className="hidden lg:flex items-center gap-4">
+                                 <div className="flex flex-col items-end">
+                                     <span className="text-[9px] font-black uppercase text-slate-600 tracking-tighter">Library_Id</span>
+                                     <span className="text-xs font-mono font-black text-white">{currentFile}</span>
+                                 </div>
+                                 <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+                             </div>
                         </div>
 
-                        <div className="custom-tabs d-flex gap-1 mb-6 p-1 bg-black/20 rounded-lg w-fit">
-                            <button className={`tab-pill ${activeTab === 'quality' ? 'active' : ''}`} onClick={() => setActiveTab('quality')}><Activity size={14}/> Per-Base Quality</button>
-                            <button className={`tab-pill ${activeTab === 'length' ? 'active' : ''}`} onClick={() => setActiveTab('length')}><BarChart3 size={14}/> Length Dist.</button>
-                        </div>
-
-                        <div className="tab-content flex-grow">
-                            {activeTab === 'quality' && (
-                                <div className="chart-container h-full bg-black/20 p-6 rounded-2xl border border-white/5 shadow-2xl" style={{ height: '450px' }}>
+                        <div className="flex-grow min-h-0 bg-black/40 rounded-[40px] border border-white/5 shadow-2xl relative overflow-hidden group">
+                             {activeTab === 'quality' && (
+                                <div className="p-10 h-full">
                                     <Line 
                                         data={{
                                             labels: activeStats.meanQualities.map((_, i) => i + 1),
                                             datasets: [{
-                                                label: 'Mean Phred Quality Score',
+                                                label: 'Mean Phred Score',
                                                 data: activeStats.meanQualities,
-                                                borderColor: '#3b82f6',
-                                                backgroundColor: (context) => {
-                                                    const ctx = context.chart.ctx;
-                                                    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                                                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
-                                                    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-                                                    return gradient;
-                                                },
+                                                borderColor: '#8b5cf6',
+                                                backgroundColor: 'rgba(139, 92, 246, 0.05)',
                                                 fill: true,
-                                                tension: 0.4,
-                                                pointRadius: (ctx) => ctx.dataIndex % 5 === 0 ? 3 : 0,
-                                                borderWidth: 3
-                                            }]
-                                        }}
-                                        options={{
-                                            responsive: true,
-                                            maintainAspectRatio: false,
-                                            plugins: {
-                                                legend: { display: false },
-                                                tooltip: {
-                                                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                                    padding: 12,
-                                                    titleFont: { size: 14, family: 'JetBrains Mono' },
-                                                    bodyFont: { size: 13, family: 'Inter' },
-                                                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                                                    borderWidth: 1
-                                                }
-                                            },
-                                            scales: {
-                                                y: { 
-                                                    beginAtZero: true, 
-                                                    suggestedMax: 40, 
-                                                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                                                    ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 } },
-                                                    title: { display: true, text: 'PHRED QUALITY SCORE (Q)', color: 'rgba(255,255,255,0.6)', font: { size: 10, weight: 'bold' } }
-                                                },
-                                                x: { 
-                                                    grid: { display: false }, 
-                                                    ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 } },
-                                                    title: { display: true, text: 'POSITION IN READ (BP)', color: 'rgba(255,255,255,0.6)', font: { size: 10, weight: 'bold' } }
-                                                }
-                                            }
-                                        }}
-                                    />
-                                    <div className="mt-4 d-flex gap-4">
-                                        <div className="d-flex align-items-center gap-2"><div className="w-3 h-3 rounded-sm bg-success-500"></div><span className="text-xs text-muted">Q30+ (Excellent)</span></div>
-                                        <div className="d-flex align-items-center gap-2"><div className="w-3 h-3 rounded-sm bg-warning-500"></div><span className="text-xs text-muted">Q20-Q30 (Acceptable)</span></div>
-                                        <div className="d-flex align-items-center gap-2"><div className="w-3 h-3 rounded-sm bg-danger-500"></div><span className="text-xs text-muted">{'< Q20 (Poor)'}</span></div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'length' && (
-                                <div className="chart-container h-full bg-black/20 p-6 rounded-2xl border border-white/5" style={{ height: '450px' }}>
-                                    <Bar 
-                                        data={{
-                                            labels: activeStats.lengthData.map(d => d.length),
-                                            datasets: [{
-                                                label: 'Sequence Count',
-                                                data: activeStats.lengthData.map(d => d.count),
-                                                backgroundColor: '#10b981',
-                                                borderRadius: 4,
-                                                hoverBackgroundColor: '#34d399'
+                                                tension: 0.3,
+                                                pointRadius: 0,
+                                                borderWidth: 2
                                             }]
                                         }}
                                         options={{
@@ -269,13 +229,68 @@ const FastqViewerTool = () => {
                                             maintainAspectRatio: false,
                                             plugins: { legend: { display: false } },
                                             scales: {
-                                                y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: 'rgba(255,255,255,0.4)' } },
-                                                x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.4)' } }
+                                                y: { suggestedMax: 42, grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: 'rgba(255,255,255,0.2)' } },
+                                                x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.2)' } }
                                             }
                                         }}
                                     />
                                 </div>
-                            )}
+                             )}
+
+                             {activeTab === 'reads' && (
+                                <div className="h-full flex flex-col p-4">
+                                     <div className="flex-grow overflow-auto no-scrollbar rounded-[30px] border border-white/5">
+                                         <table className="w-full text-left font-mono text-[9px] border-separate border-spacing-0">
+                                             <thead className="bg-slate-900 sticky top-0 z-10">
+                                                 <tr>
+                                                     <th className="p-4 px-8 text-slate-600 font-black uppercase border-b border-white/5">id_identifier</th>
+                                                     <th className="p-4 px-8 text-slate-600 font-black uppercase border-b border-white/5">chemical_sequence</th>
+                                                     <th className="p-4 px-8 text-slate-600 font-black uppercase border-b border-white/5">score_buffer</th>
+                                                 </tr>
+                                             </thead>
+                                             <tbody className="divide-y divide-white/[0.03]">
+                                                 {activeStats.reads.slice(0, 50).map((r, i) => (
+                                                     <tr key={i} className="hover:bg-primary-500/5 transition-colors group">
+                                                         <td className="p-4 px-8 text-primary-400 font-bold">{r.id.substring(0, 20)}...</td>
+                                                         <td className="p-4 px-8 text-slate-300 tracking-[1px] break-all max-w-lg">{r.seq}</td>
+                                                         <td className="p-4 px-8 text-slate-600 break-all">{r.qual}</td>
+                                                     </tr>
+                                                 ))}
+                                             </tbody>
+                                         </table>
+                                     </div>
+                                     <div className="p-6 text-center">
+                                         <p className="text-[10px] font-black uppercase text-slate-600 tracking-widest italic leading-relaxed">
+                                             Buffer snapshot: Displaying 50/{activeStats.totalSequences.toLocaleString()} regions. <br/> Use "COMMIT_BULK_DATASET" for full spectral export.
+                                         </p>
+                                     </div>
+                                </div>
+                             )}
+
+                             {activeTab === 'length' && (
+                                <div className="p-10 h-full">
+                                    <Bar 
+                                        data={{
+                                            labels: activeStats.lengthData.map(d => d.length),
+                                            datasets: [{
+                                                label: 'Count',
+                                                data: activeStats.lengthData.map(d => d.count),
+                                                backgroundColor: '#3b82f6',
+                                                borderRadius: 20
+                                            }]
+                                        }}
+                                        options={{
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            plugins: { legend: { display: false } },
+                                            scales: {
+                                                y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: 'rgba(255,255,255,0.2)' } },
+                                                x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.2)' } }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                             )}
                         </div>
                     </div>
                 )}

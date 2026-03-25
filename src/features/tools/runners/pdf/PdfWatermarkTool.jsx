@@ -104,7 +104,26 @@ function PdfWatermarkTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 </div>
             }
         >
-            <PageGrid file={file} />
+            <PageGrid 
+                file={file} 
+                renderOverlay={(page) => (
+                    <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: `translate(-50%, -50%) rotate(${angle}deg)`,
+                        opacity: opacity,
+                        fontSize: `${Math.max(8, size * 0.25)}px`, // scaled down for thumbnail roughly
+                        color: 'rgba(128, 128, 128, 0.8)',
+                        pointerEvents: 'none',
+                        whiteSpace: 'nowrap',
+                        fontWeight: 'bold',
+                        zIndex: 10
+                    }}>
+                        {text}
+                    </div>
+                )}
+            />
         </ToolWorkspace>
     );
 }

@@ -2,117 +2,50 @@
 
 ## Current State
 
-- Tool architecture was started with per-tool runner files under `src/features/tools/runners/`.
-- `ToolDetailPage` already routes to runner components using `TOOL_RUNNERS`.
-- Some files are still partially wired due an interrupted edit session.
+- Tool architecture standardized with per-tool runner files under `src/features/tools/runners/`.
+- `ToolDetailPage` fully routes to runner components using `TOOL_RUNNERS`.
+- Researcher & Scientific tools are being prioritized for academic workflows.
 
-## P0: Must Fix First (Build/Runtime Blocking)
+## P0: Completed & Verified
 
-- Fix broken relative imports in runner files.
-- Current issue:
-- Many runners still import from `../../../services/...`, `../../../utils/...`, and `../../../components/tools/TextToolRunner`.
-- Correct paths should be:
-- From `src/features/tools/runners/pdf/*` and `src/features/tools/runners/image/*`: `../../../../services/...`
-- From `src/features/tools/runners/pdf/*` for page range: `../../../../utils/pageRange`
-- From `src/features/tools/runners/text/*`: `../../../../components/tools/TextToolRunner`
-- Affected files:
-- `src/features/tools/runners/pdf/*.jsx` (except already patched files)
-- `src/features/tools/runners/image/*.jsx`
-- `src/features/tools/runners/text/*.jsx`
+- [x] **Fix broken relative imports**: All runner files patched to use `../../../../services/` and `../../../../components/tools/`.
+- [x] **PDF to Word (Offline)**: Fixed browser compatibility issues (Blob vs Buffer) in `pdfToWordConverter.js`.
+- [x] **Parquet Viewer**: Upgraded with SQL querying, Visualization (Charts), and Schema stats.
+- [x] **HDF5 Viewer**: Repaired tree traversal and implemented CSV/JSON export handlers.
+- [x] **NetCDF Viewer**: Added "Global Export" for multi-variable synchronization and Panoply-style UI.
+- [x] **DOI to BibTeX**: Verified offline-first logic and UI refinements.
+- [x] **Jupyter (.ipynb) to PDF**: Implemented high-fidelity client-side rendering via html2canvas.
 
-## P0: Verify Functional Tool Coverage
+## P1: Immediate Research & Science (Bioinformatics)
 
-- Confirm serverless tools have a runner and actual logic:
-- `pdf-merge`, `pdf-split`, `pdf-organize`, `pdf-remove-pages`, `pdf-compress`, `pdf-rotate`, `pdf-pagenumber`, `pdf-watermark`, `pdf-unlock`, `pdf-crop`, `jpg-to-pdf`
-- `image-compress`, `image-to-jpg`, `image-from-jpg`, `image-resize`, `image-crop`, `image-rotate`, `image-watermark`, `image-meme`
-- `json-formatter`, `json-to-csv`, `base64-encode`, `code-minifier`, `regex-tester`, `markdown-preview`, `csv-plotter`, `latex-editor`, `bibtex-manager`
+- [ ] **FASTQ QC**: Refactor to export raw dataset (CSV/JSON/FASTQ) instead of just the summary report.
+- [ ] **FASTA Analyzer**: Verify biological library integration (e.g., biotypes/sequences) and ensure offline reliability.
+- [ ] **MAT Viewer**: Fix multi-file (.mat) support and improve nested structure visibility.
+- [ ] **PCAP Analyzer**: Fix UI overflow in packet list and improve frame detailed view.
+- [ ] **LaTeX Editor**: Build split-pane editor/preview interface with offline PDF export.
+- [ ] **BibTeX Manager**: Fix parsing logic and implement proper citation exports.
 
-## P1: Server Mode Integration (Backend)
+## P1: Server Mode Integration (Backend Gating)
 
 - Current server-mode tools are intentionally gated and show "Coming Soon".
-- Integrate real backend execution for:
-- `word-to-pdf`, `excel-to-pdf`, `pp-to-pdf`, `html-to-pdf`
-- `pdf-ocr`, `pdf-repair`, `pdf-to-word`, `pdf-to-excel`, `pdf-to-pp`, `pdf-to-jpg`
-- `pdf-edit`, `pdf-sign`, `pdf-redact`, `pdf-protect`, `pdf-compare`, `pdf-pdfa`
-- `image-upscale`, `image-remove-bg`, `image-blur-face`, `image-editor`
+- [ ] **Backend Setup**: Initialize Firebase Cloud Functions (2nd gen) for heavy processing.
+- [ ] **Tools to Integrate**:
+    - `pdf-ocr`, `pdf-repair`, `pdf-redact` (for massive files), `pdf-protect`, `pdf-compare`.
+    - `word-to-pdf`, `excel-to-pdf`, `pp-to-pdf`, `html-to-pdf`.
+    - `image-upscale`, `image-remove-bg`.
 
-### Recommended backend for this project
+## P2: UX and UI Excellence 
 
-- Best fit now: Firebase stack.
-- `Firebase Hosting` for frontend deploy.
-- `Cloud Functions (2nd gen)` for server-mode processing endpoints.
-- `Firestore` for user metadata, tool jobs, feedback.
-- `Cloud Storage` for temporary job files.
-- Reason:
-- Already using Firebase in project.
-- Fastest integration path with least migration cost.
-- Good free/start tier for demo.
-
-## P1: Auth and Entitlement Enforcement
-
-- Keep free usage without login for serverless tools.
-- Enforce login + plan check for:
-- `tool.mode === 'server'`
-- `tool.isPro === true`
-- Confirm `userData.tier` is reliably loaded before gating decision.
-- Add route guards for profile/projects pages if required.
-
-## P1: Payments and Coupons
-
-- Current checkout is demo-level.
-- Integrate real payment provider:
-- Recommended: `Stripe Checkout` (test mode for free demo).
-- Required:
-- Product/price IDs in env.
-- Webhook endpoint to upgrade tier in Firestore.
-- Coupon validation source of truth in backend, not frontend-only.
-
-## P1: Data Integrations
-
-- Feedback persistence:
-- Add/verify Firestore write path + validation.
-- Projects persistence:
-- Confirm create/list/update/delete flow and security rules.
-- Add usage logging for tool runs (optional but useful for analytics + debugging).
-
-## P2: UX and Tool Logic Enhancements
-
-- PDF tools:
-- Add page thumbnail preview for split/organize/remove/crop.
-- Add drag-and-drop reorder UI in organize tool.
-- Add "selected pages" visual confirmation.
-- Image tools:
-- Add live preview for crop, rotate, watermark, meme.
-- Show before/after size and compression ratio.
-- Improve validation messages for invalid numeric inputs.
-
-## P2: Stability and Quality
-
-- Add automated checks:
-- `npm run lint`
-- build check in CI
-- Add test coverage for service utilities:
-- `src/services/pdfService.js`
-- `src/services/imageService.js`
-- `src/utils/pageRange.js`
-- Add smoke tests for top tools (merge/split/compress/convert).
-
-## P2: Deployment and Ops
-
-- Add environment strategy:
-- `.env.example` complete and current.
-- No secrets in repo.
-- Add production deploy docs:
-- Firebase hosting + functions deploy commands.
-- Add error logging/monitoring:
-- Firebase Crashlytics alternatives for web or basic logging pipeline.
+- [ ] **PDF Thumbnails**: Add thumbnail rendering for `pdf-organize` and `pdf-split`.
+- [ ] **Drag & Drop**: Implement `react-dnd` for PDF page reordering.
+- [ ] **Bio-Visuals**: Add sequence alignment visualizations for FASTA/FASTQ.
+- [ ] **PWA Enhancement**: Improve offline manifest for heavy scientific libraries.
 
 ## Suggested Execution Order
 
-1. Fix runner import paths and compile.
-2. Run lint/build and fix all blocking issues.
-3. Validate all serverless tools end-to-end.
-4. Integrate Firebase Functions for one server-mode vertical first (`html-to-pdf` + `pdf-ocr`).
-5. Integrate Stripe test payments + tier update webhook.
-6. Complete remaining server-mode tools in phases.
+1. Complete FASTQ/FASTA bioinformatics upgrades.
+2. Fix PCAP/MAT viewer UI and deep-structure bugs.
+3. Build the LaTeX/BibTeX academic suite.
+4. Scale to Backend (Firebase Functions) for OCR and Office conversions.
+5. Integrate Payments (Stripe) for Pro features.
 

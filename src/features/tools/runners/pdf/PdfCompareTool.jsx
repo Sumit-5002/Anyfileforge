@@ -95,120 +95,96 @@ function PdfCompareTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     }
 
     return (
-        <ToolWorkspace
-            tool={tool}
-            files={files}
-            onFilesSelected={handleFilesSelected}
-            onReset={() => { setFiles([]); setReport(null); setSearchTerm(''); }}
-            processing={processing}
-            progress={progress}
-            onProcess={handleProcess}
-            actionLabel="Run Semantic Comparison"
-            sidebar={
-                <div className="sidebar-settings">
-                    <div className="tool-field">
-                        <label className="tool-checkbox">
-                            <input
-                                type="checkbox"
-                                checked={includeHashes}
-                                onChange={(e) => setIncludeHashes(e.target.checked)}
-                            />
-                            <span>Compare Binary Signatures</span>
-                        </label>
-                    </div>
-                    {report && (
-                        <div className="tool-field mt-3">
-                            <label className="sidebar-label">Search in Report</label>
-                            <input
-                                type="text"
-                                placeholder="Filter differences..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="search-input"
-                            />
+        <div className="custom-tool-wrapper overflow-hidden h-full flex flex-col bg-slate-950" style={{ minHeight: '80vh' }}>
+            <ToolWorkspace
+                tool={tool}
+                files={files}
+                onFilesSelected={handleFilesSelected}
+                onReset={() => { setFiles([]); setReport(null); setSearchTerm(''); }}
+                processing={processing}
+                progress={progress}
+                onProcess={handleProcess}
+                actionLabel="INITIATE SYNC ANALYTICS"
+                layout="research"
+                sidebar={
+                    <div className="sidebar-settings flex flex-col h-full gap-8 p-4">
+                        <div className="section-title text-[10px] uppercase font-black tracking-widest text-primary-500/60 mb-2">Operation Mode</div>
+                        <div className="tool-field bg-white/5 p-4 rounded-2xl border border-white/5">
+                            <label className="tool-checkbox flex items-center gap-3 cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    className="w-5 h-5 rounded-lg bg-black border-white/20 checked:bg-primary-500 transition-all cursor-pointer"
+                                    checked={includeHashes}
+                                    onChange={(e) => setIncludeHashes(e.target.checked)}
+                                />
+                                <span className="text-[11px] font-bold text-slate-300 group-hover:text-white transition-colors">BINARY_SIG_VALIDATION</span>
+                            </label>
                         </div>
-                    )}
-                    <p className="tool-help">Performs word-level semantic analysis to detect content changes even if the layout differs.</p>
-                </div>
-            }
-        >
-            <div className="files-list-view">
-                {files.map((file, i) => (
-                    <div key={i} className="file-item-horizontal">
-                        <FileSearch size={24} className="text-primary" />
-                        <div className="file-item-info">
-                            <div className="file-item-name">{file.name}</div>
-                            <div className="file-item-size">{(file.size / 1024).toFixed(1)} KB</div>
-                        </div>
-                        <button className="btn-icon-danger" onClick={() => setFiles(files.filter((_, idx) => idx !== i))}>×</button>
-                    </div>
-                ))}
-            </div>
-
-            {report && (
-                <div className="report-preview fade-in card mt-4 p-4 border-0 shadow-sm" style={{ background: 'var(--bg-secondary)' }}>
-                    <div className="d-flex align-items-center justify-content-between mb-4">
-                        <div className="d-flex align-items-center gap-2">
-                            <FileJson className="text-primary" />
-                            <h4 className="m-0">Change Report ({report.summary.totalDifferences})</h4>
-                        </div>
-                        <span className="badge-pill" style={{ background: report.summary.identicalContent ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: report.summary.identicalContent ? '#10b981' : '#ef4444' }}>
-                            {report.summary.identicalContent ? 'Documents are Identical' : 'Content Discrepants Detected'}
-                        </span>
-                    </div>
-
-                    <div className="report-grid-detailed">
-                        <div className="res-stat-card">
-                            <div className="stat-val">
-                                {report.summary.samePageCount ? <CheckCircle2 size={18} className="text-success" /> : <XCircle size={18} className="text-danger" />}
-                            </div>
-                            <div className="stat-lab">Structure</div>
-                        </div>
-                        <div className="res-stat-card">
-                            <div className="stat-val">
-                                {report.summary.totalDifferences === 0 ? <CheckCircle2 size={18} className="text-success" /> : <span className="text-danger" style={{ fontSize: '1rem' }}>{report.summary.totalDifferences}</span>}
-                            </div>
-                            <div className="stat-lab">Changes</div>
-                        </div>
-                        {report.summary.sameSha256 !== null && (
-                            <div className="res-stat-card">
-                                <div className="stat-val">
-                                    {report.summary.sameSha256 ? <CheckCircle2 size={18} className="text-success" /> : <XCircle size={18} className="text-danger" />}
+                        
+                        {report && (
+                            <div className="report-summary-box flex flex-col gap-4 mt-auto">
+                                <div className="section-title text-[10px] uppercase font-black tracking-widest text-primary-500/60 mb-2">Sync Report</div>
+                                <div className="bg-primary/10 border border-primary/20 p-6 rounded-3xl">
+                                    <div className="text-3xl font-black font-mono text-primary-400 mb-1">{report.summary.totalDifferences}</div>
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-primary-500/60 opacity-60">Delta Discrepancies</div>
                                 </div>
-                                <div className="stat-lab">Binary</div>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase px-2">
+                                        <span>Structure</span>
+                                        {report.summary.samePageCount ? <CheckCircle2 size={12} className="text-emerald-400" /> : <XCircle size={12} className="text-red-400" />}
+                                    </div>
+                                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase px-2">
+                                        <span>Content</span>
+                                        {report.summary.identicalContent ? <CheckCircle2 size={12} className="text-emerald-400" /> : <Info size={12} className="text-primary-400" />}
+                                    </div>
+                                </div>
                             </div>
                         )}
+                        <p className="tool-help text-[10px] text-slate-500 mt-4 leading-relaxed italic border-t border-white/5 pt-4">Zero-Server comparison. Uses Phred-style word scoring to isolate semantic drift between PDF revisions.</p>
                     </div>
-
-                    {!report.summary.identicalContent && (
-                        <div className="diff-details-section mt-4">
-                            <h5 className="sidebar-label mb-3">Content Overlay Details</h5>
-                            <div className="diff-pages-grid">
-                                {filteredPages.map(p => (
-                                    <div key={p.pageNumber} className="page-diff-card p-3 mb-3" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
-                                        <div className="d-flex justify-content-between align-items-center mb-2">
-                                            <strong>Page {p.pageNumber}</strong>
-                                            <div className="small text-muted">+{p.addedCount} / -{p.removedCount}</div>
-                                        </div>
-                                        <div className="diff-tags-container d-flex flex-wrap gap-1">
-                                            {p.diff.added.slice(0, 10).map((w, idx) => (
-                                                <span key={`a-${idx}`} className="badge bg-success-subtle text-success border border-success-subtle" style={{ fontSize: '0.7rem' }}>+{w}</span>
-                                            ))}
-                                            {p.diff.removed.slice(0, 10).map((w, idx) => (
-                                                <span key={`r-${idx}`} className="badge bg-danger-subtle text-danger border border-danger-subtle" style={{ fontSize: '0.7rem' }}>-{w}</span>
-                                            ))}
-                                            {(p.addedCount + p.removedCount > 20) && <span className="small text-muted">...and more</span>}
-                                        </div>
+                }
+            >
+                {!report ? (
+                    <div className="files-selection-view h-full flex flex-col items-center justify-center p-12">
+                         <div className="mb-8 p-10 bg-primary/5 rounded-[60px] border border-primary/10 shadow-inner relative group">
+                            <div className="absolute inset-0 bg-primary-500/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <FileSearch size={80} className="text-primary-500/40 relative z-10" strokeWidth={1}/>
+                         </div>
+                         <h3 className="text-4xl font-black tracking-tighter text-white mb-4 italic">PDF_QUANTUM_SYNC</h3>
+                         <div className="flex gap-4 mb-12">
+                            {files.map((file, i) => (
+                                <div key={i} className="px-6 py-4 bg-white/5 border border-white/10 rounded-3xl flex items-center gap-4 group hover:border-primary-500/30 transition-all">
+                                    <div className="p-2 bg-primary/20 rounded-xl"><FileText size={18} className="text-primary-400"/></div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{i === 0 ? 'Document A' : 'Document B'}</span>
+                                        <span className="text-sm font-mono text-white truncate max-w-[150px]">{file.name}</span>
                                     </div>
-                                ))}
-                                {filteredPages.length === 0 && <p className="text-muted small">No pages match your search.</p>}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-        </ToolWorkspace>
+                                    <button className="p-2 hover:bg-white/10 rounded-lg text-red-500/40 hover:text-red-500 transition-colors" onClick={() => setFiles(files.filter((_, idx) => idx !== i))}>×</button>
+                                </div>
+                            ))}
+                            {files.length < 2 && (
+                                <div className="px-6 py-4 border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center text-slate-600 text-[10px] font-black uppercase tracking-widest w-[250px]">
+                                    Awaiting Target {files.length === 0 ? 'A' : 'B'}
+                                </div>
+                            )}
+                         </div>
+                         {files.length === 2 && (
+                             <div className="badge-pill bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-6 py-2 rounded-full text-[11px] font-black tracking-widest animate-bounce">
+                                COMPARISON READY
+                             </div>
+                         )}
+                    </div>
+                ) : (
+                    <div className="report-mode h-full flex flex-col p-4">
+                        <PdfDiffViewer fileA={files[0]} fileB={files[1]} differingPages={report.summary.differingPages} />
+                    </div>
+                )}
+            </ToolWorkspace>
+        </div>
     );
 }
+
+import PdfDiffViewer from './PdfDiffViewer';
+import { Info, FileText } from 'lucide-react';
 
 export default PdfCompareTool;

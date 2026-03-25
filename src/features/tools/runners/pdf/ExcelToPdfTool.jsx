@@ -20,8 +20,8 @@ function ExcelToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
         setProcessing(true);
         setProgress(0);
         try {
-            const data = await pdfService.excelToPDF(files[0], (p) => setProgress(p));
-            const outputName = files[0].name.replace(/\.[^/.]+$/, '') + '.pdf';
+            const data = await pdfService.excelToPDF(files, (p) => setProgress(p));
+            const outputName = files.length > 1 ? 'Merged_Excel_Docs.pdf' : files[0].name.replace(/\.[^/.]+$/, '') + '.pdf';
             pdfService.downloadPDF(data, outputName);
         } catch (err) {
             console.error('Excel to PDF error:', err);
@@ -33,7 +33,7 @@ function ExcelToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     };
 
     if (files.length === 0) {
-        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={false} accept=".xls,.xlsx" />;
+        return <FileUploader tool={tool} onFilesSelected={handleFilesSelected} multiple={true} accept=".xls,.xlsx" />;
     }
 
     return (
@@ -45,13 +45,13 @@ function ExcelToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             processing={processing}
             progress={progress}
             onProcess={handleProcess}
-            actionLabel="Convert Excel to PDF"
+            actionLabel={files.length > 1 ? "Merge & Convert to PDF" : "Convert Excel to PDF"}
             sidebar={
                 <div className="sidebar-info">
-                    <p className="hint-text">This tool converts Excel spreadsheets to PDF directly in your browser.</p>
+                    <p className="hint-text">This tool converts Excel spreadsheets to PDF directly in your browser. Add multiple files to merge them.</p>
                     <div className="mt-3 d-flex align-items-center gap-2">
                         <FileType className="text-primary" size={20} />
-                        <span>Ready to convert <strong>{files[0].name}</strong></span>
+                        <span>Ready to convert <strong>{files.length}</strong> file(s)</span>
                     </div>
                 </div>
             }

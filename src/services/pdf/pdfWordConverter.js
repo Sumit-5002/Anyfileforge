@@ -9,76 +9,83 @@ if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {
     pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 }
 
-export const wordToPDF = async (file, onProgress) => {
-    const images = [];
-    const options = {
-        convertImage: mammoth.images.inline((element) => {
-            return element.read("base64").then((imageBuffer) => {
-                const id = `img-${images.length}`;
-                images.push({ id, data: imageBuffer, contentType: element.contentType });
-                return { src: id };
-            });
-        })
-    };
-
-    const { value: html } = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() }, options);
-    const pdf = await PDFDocument.create(),
-        fontN = await pdf.embedFont(StandardFonts.Helvetica);
-
+export const wordToPDF = async (filesInput, onProgress) => {
+    const files = Array.isArray(filesInput) ? filesInput : [filesInput];
+    const pdf = await PDFDocument.create();
+    const fontN = await pdf.embedFont(StandardFonts.Helvetica);
     const margin = 50, fontSize = 11, lineH = 15;
-    let page = pdf.addPage(), y = page.getHeight() - margin, maxW = page.getWidth() - (margin * 2);
 
-    // Split by block tags
-    const blocks = html.split(/<\/p>|<br\s*\/?>|<\/h[1-6]>|<\/div>/i);
+    for (let fIdx = 0; fIdx < files.length; fIdx++) {
+        const file = files[fIdx];
+        const images = [];
+        const options = {
+            convertImage: mammoth.images.inline((element) => {
+                return element.read("base64").then((imageBuffer) => {
+                    const id = `img-${images.length}`;
+                    images.push({ id, data: imageBuffer, contentType: element.contentType });
+                    return { src: id };
+                });
+            })
+        };
 
-    for (let i = 0; i < blocks.length; i++) {
-        if (onProgress) onProgress((i / blocks.length) * 100);
-        const block = blocks[i];
+        const { value: html } = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() }, options);
+        let page = pdf.addPage();
+        let y = page.getHeight() - margin, maxW = page.getWidth() - (margin * 2);
 
-        // Check for images in this block
-        const imgMatch = block.match(/<img\s+src="([^"]+)"/i);
-        if (imgMatch) {
-            const imgId = imgMatch[1];
-            const imgData = images.find(img => img.id === imgId);
-            if (imgData) {
-                try {
-                    const bytes = Uint8Array.from(atob(imgData.data), c => c.charCodeAt(0));
-                    let pdfImg;
-                    if (imgData.contentType === 'image/png') pdfImg = await pdf.embedPng(bytes);
-                    else pdfImg = await pdf.embedJpg(bytes);
+        const blocks = html.split(/<\/p>|<br\s*\/?>|<\/h[1-6]>|<\/div>/i);
 
-                    const dims = pdfImg.scale(0.5); // scale down to fit
-                    const fitW = Math.min(maxW, dims.width);
-                    const fitH = (fitW / dims.width) * dims.height;
+        for (let i = 0; i < blocks.length; i++) {
+            if (onProgress) {
+                const fileProgress = i / blocks.length;
+                const totalProgress = ((fIdx + fileProgress) / files.length) * 100;
+                onProgress(totalProgress);
+            }
+            const block = blocks[i];
 
-                    if (y - fitH < margin) { page = pdf.addPage(); y = page.getHeight() - margin; }
-                    page.drawImage(pdfImg, { x: margin, y: y - fitH, width: fitW, height: fitH });
-                    y -= (fitH + lineH);
-                } catch (e) {
-                    console.warn("Failed to embed image in Word conversion", e);
+            const imgMatch = block.match(/<img\s+src="([^"]+)"/i);
+            if (imgMatch) {
+                const imgId = imgMatch[1];
+                const imgData = images.find(img => img.id === imgId);
+                if (imgData) {
+                    try {
+                        const bytes = Uint8Array.from(atob(imgData.data), c => c.charCodeAt(0));
+                        let pdfImg;
+                        if (imgData.contentType === 'image/png') pdfImg = await pdf.embedPng(bytes);
+                        else pdfImg = await pdf.embedJpg(bytes);
+
+                        const dims = pdfImg.scale(0.5);
+                        const fitW = Math.min(maxW, dims.width);
+                        const fitH = (fitW / dims.width) * dims.height;
+
+                        if (y - fitH < margin) { page = pdf.addPage(); y = page.getHeight() - margin; }
+                        page.drawImage(pdfImg, { x: margin, y: y - fitH, width: fitW, height: fitH });
+                        y -= (fitH + lineH);
+                    } catch (e) {
+                        console.warn("Failed to embed image in Word conversion", e);
+                    }
                 }
             }
-        }
 
-        const cleanPara = block.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-        if (!cleanPara) { y -= (lineH * 0.5); continue; }
+            const cleanPara = block.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            if (!cleanPara) { y -= (lineH * 0.5); continue; }
 
-        let curX = margin;
-        const text = safeText(cleanPara);
-        const words = text.split(/\s+/);
+            let curX = margin;
+            const text = safeText(cleanPara);
+            const words = text.split(/\s+/);
 
-        for (const word of words) {
-            if (!word) continue;
-            const wTxt = word + ' ', wW = fontN.widthOfTextAtSize(wTxt, fontSize);
-            if (curX + wW > margin + maxW) {
-                curX = margin; y -= lineH;
-                if (y < margin) { page = pdf.addPage(); y = page.getHeight() - margin; }
+            for (const word of words) {
+                if (!word) continue;
+                const wTxt = word + ' ', wW = fontN.widthOfTextAtSize(wTxt, fontSize);
+                if (curX + wW > margin + maxW) {
+                    curX = margin; y -= lineH;
+                    if (y < margin) { page = pdf.addPage(); y = page.getHeight() - margin; }
+                }
+                page.drawText(wTxt, { x: curX, y, size: fontSize, font: fontN });
+                curX += wW;
             }
-            page.drawText(wTxt, { x: curX, y, size: fontSize, font: fontN });
-            curX += wW;
+            y -= (lineH * 1.2);
+            if (y < margin) { page = pdf.addPage(); y = page.getHeight() - margin; }
         }
-        y -= (lineH * 1.2);
-        if (y < margin) { page = pdf.addPage(); y = page.getHeight() - margin; }
     }
     if (onProgress) onProgress(100);
     return pdf.save();

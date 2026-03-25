@@ -1,21 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import pdfService from '../../../../services/pdfService';
 import { parsePageRange } from '../../../../utils/pageRange';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
 import { Crop, FileText, Layout } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import '../common/ToolWorkspace.css';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 function PdfCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [file, setFile] = useState(null);
     const [margins, setMargins] = useState({ top: 0, right: 0, bottom: 0, left: 0 });
     const [pageRange, setPageRange] = useState('');
     const [processing, setProcessing] = useState(false);
+    
+    // Preview state
+    const canvasRef = useRef(null);
+    const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
+    const [scale, setScale] = useState(1);
 
     const handleFilesSelected = (files) => {
         if (files[0]) setFile(files[0]);
         if (parentOnFilesAdded) parentOnFilesAdded(files);
     };
+
+    useEffect(() => {
+        if (!file) return;
+        let active = true;
+
+        const renderPreview = async () => {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const page = await pdf.getPage(1);
+                
+                // Adjust scale to fit inside UI
+                const tempViewport = page.getViewport({ scale: 1.0 });
+                const renderScale = Math.min(1.0, 400 / tempViewport.width);
+                const viewport = page.getViewport({ scale: renderScale });
+                
+                if (active) {
+                    setPdfDimensions({ width: tempViewport.width, height: tempViewport.height });
+                    setScale(renderScale);
+                }
+
+                if (canvasRef.current) {
+                    const canvas = canvasRef.current;
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    await page.render(renderContext).promise;
+                }
+            } catch (err) {
+                console.error("Preview render failed", err);
+            }
+        };
+        renderPreview();
+
+        return () => { active = false; };
+    }, [file]);
 
     const handleProcess = async () => {
         setProcessing(true);
@@ -60,22 +110,22 @@ function PdfCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     <div className="tool-inline mt-2">
                         <div className="tool-field">
                             <label>Top</label>
-                            <input type="number" value={margins.top} onChange={e => setMargins({ ...margins, top: e.target.value })} />
+                            <input type="number" min="0" value={margins.top} onChange={e => setMargins({ ...margins, top: e.target.value })} />
                         </div>
                         <div className="tool-field">
                             <label>Bottom</label>
-                            <input type="number" value={margins.bottom} onChange={e => setMargins({ ...margins, bottom: e.target.value })} />
+                            <input type="number" min="0" value={margins.bottom} onChange={e => setMargins({ ...margins, bottom: e.target.value })} />
                         </div>
                     </div>
 
                     <div className="tool-inline">
                         <div className="tool-field">
                             <label>Left</label>
-                            <input type="number" value={margins.left} onChange={e => setMargins({ ...margins, left: e.target.value })} />
+                            <input type="number" min="0" value={margins.left} onChange={e => setMargins({ ...margins, left: e.target.value })} />
                         </div>
                         <div className="tool-field">
                             <label>Right</label>
-                            <input type="number" value={margins.right} onChange={e => setMargins({ ...margins, right: e.target.value })} />
+                            <input type="number" min="0" value={margins.right} onChange={e => setMargins({ ...margins, right: e.target.value })} />
                         </div>
                     </div>
 
@@ -88,18 +138,42 @@ function PdfCropTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             placeholder="e.g. 1-5, 8 (blank for all)"
                         />
                     </div>
+                    
+                    <div className="tool-help mt-4">
+                        <small>1pt = 1/72 inch. Use the preview area to visualize the crop box.</small>
+                    </div>
                 </div>
             }
         >
-            <div className="file-item-horizontal">
+            <div className="crop-preview-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <h4 style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>Visual Preview (Page 1)</h4>
+                
+                <div style={{ position: 'relative', display: 'inline-block', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <canvas ref={canvasRef} style={{ display: 'block', background: '#fff' }} />
+                    
+                    {/* Render visual semi-transparent crop overlay over the canvas */}
+                    {pdfDimensions.width > 0 && (
+                        <div style={{
+                            position: 'absolute',
+                            top: `${Number(margins.top) * scale}px`,
+                            left: `${Number(margins.left) * scale}px`,
+                            right: `${Number(margins.right) * scale}px`,
+                            bottom: `${Number(margins.bottom) * scale}px`,
+                            border: '2px solid #ef4444',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            pointerEvents: 'none',
+                            boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' // Dim the outer uncropped area
+                        }} />
+                    )}
+                </div>
+            </div>
+            
+            <div className="file-item-horizontal mt-4" style={{ maxWidth: '400px', margin: '24px auto 0' }}>
                 <FileText size={24} className="text-danger" />
                 <div className="file-item-info">
                     <div className="file-item-name">{file.name}</div>
                     <div className="file-item-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
                 </div>
-            </div>
-            <div className="tool-help text-center mt-4">
-                Crop margins are applied relative to the current MediaBox. 1pt = 1/72 inch.
             </div>
         </ToolWorkspace>
     );

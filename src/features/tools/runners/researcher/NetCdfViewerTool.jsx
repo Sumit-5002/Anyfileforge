@@ -23,6 +23,7 @@ const NetCdfViewerTool = ({ tool, onFilesAdded }) => {
     const [selectedVar, setSelectedVar] = useState(null);
     const [varData, setVarData] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [results, setResults] = useState([]);
     const [activeTab, setActiveTab] = useState('overview');
     const [varQuery, setVarQuery] = useState('');
     const [showVarSearch, setShowVarSearch] = useState(false);
@@ -132,32 +133,70 @@ const NetCdfViewerTool = ({ tool, onFilesAdded }) => {
         if (!varData || !selectedVar) return;
         const data = Array.from(varData);
         let content = '';
-        let fileName = `${selectedVar.name.split('/').pop()}.${format}`;
+        const shortName = selectedVar.name.split('/').pop();
+        let fileName = `${shortName}.${format === 'csv' ? 'csv' : format === 'json' ? 'json' : 'py'}`;
         
         if (format === 'csv') {
-            content = data.join('\n');
+            const header = `index,${shortName}`;
+            const rows = data.map((v, i) => `${i},${typeof v === 'number' ? v : `"${v}"`}`);
+            content = [header, ...rows].join('\n');
         } else if (format === 'json') {
             content = JSON.stringify({
                 name: selectedVar.name,
                 dimensions: selectedVar.dimensions,
                 type: selectedVar.type,
+                attributes: selectedVar.attributes,
                 data: data
             }, null, 2);
         } else if (format === 'python') {
-            content = `import netCDF4\nimport numpy as np\n\n# Load variable from NetCDF file\nnc = netCDF4.Dataset('${currentFile}', 'r')\nvar = nc.variables['${selectedVar.name.split('/').pop()}']\ndata = var[:]\n\nprint(f"Shape: {data.shape}")\nprint(f"Attributes: {var.__dict__}")`;
-            fileName = `extract_${selectedVar.name.split('/').pop()}.py`;
+            content = `import netCDF4\nimport numpy as np\n\n# Load variable from NetCDF file\nnc = netCDF4.Dataset('${currentFile}', 'r')\nvar = nc.variables['${shortName}']\ndata = var[:]\n\nprint(f"Shape: {data.shape}")\nprint(f"Attributes: {var.__dict__}")`;
+            fileName = `extract_${shortName}.py`;
         } else if (format === 'ncdump') {
-            content = `ncdump -v ${selectedVar.name.split('/').pop()} ${currentFile}`;
+            content = `ncdump -v ${shortName} ${currentFile}`;
             fileName = `ncdump_command.sh`;
         }
 
         const blob = new Blob([content], { type: format === 'python' ? 'text/plain' : (format === 'csv' ? 'text/csv' : 'application/json') });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
+        setResults(prev => [...prev, {
+            id: `nc-var-${Date.now()}`,
+            name: fileName,
+            data: blob,
+            type: 'data'
+        }]);
+    };
+
+    const exportAllToCsv = () => {
+        if (!activeNc || !activeNc.variables) return;
+        
+        // Find all variables that share the same length as the selected one (or just the first one)
+        const varsToExport = activeNc.variables.filter(v => v.dimensions && v.dimensions.length > 0);
+        if (varsToExport.length === 0) return;
+
+        // Header
+        const headers = ['index', ...varsToExport.map(v => v.name.split('/').pop())];
+        let csvRows = [headers.join(',')];
+
+        // This is a naive join by index
+        // We assume they share dimensions or at least are 1D
+        const maxLen = 10000; // Limit for memory safety
+        const firstVarData = getVariableData(activeNc.reader, varsToExport[0].name, activeNc.isHdf5);
+        const len = Math.min(firstVarData?.length || 0, maxLen);
+
+        const allData = varsToExport.map(v => getVariableData(activeNc.reader, v.name, activeNc.isHdf5));
+
+        for (let i = 0; i < len; i++) {
+            const row = [i, ...allData.map(data => (data && data[i] !== undefined) ? data[i] : '')];
+            csvRows.push(row.join(','));
+        }
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const outName = `${currentFile.split('.')[0]}_all_vars.csv`;
+        setResults(prev => [...prev, {
+            id: `nc-all-${Date.now()}`,
+            name: outName,
+            data: blob,
+            type: 'data'
+        }]);
     };
     const selectedVarShort = selectedVar ? selectedVar.name.split('/').pop() : '';
     const selectedVarDimsText = selectedVar?.dimensions?.length ? `[${selectedVar.dimensions.join(', ')}]` : '[]';
@@ -173,6 +212,7 @@ const NetCdfViewerTool = ({ tool, onFilesAdded }) => {
         <ToolWorkspace
             tool={tool}
             files={fileEntries.map(f => f.file)}
+            results={results}
             onFilesSelected={handleFilesSelected}
             accept=".nc,.netcdf"
             multiple={true}
@@ -184,6 +224,7 @@ const NetCdfViewerTool = ({ tool, onFilesAdded }) => {
                 setCurrentFile(null);
                 setSelectedVar(null);
                 setVarData(null);
+                setResults([]);
             }}
             sidebar={
                 <div className="netcdf-ocean-explorer">
@@ -278,29 +319,27 @@ const NetCdfViewerTool = ({ tool, onFilesAdded }) => {
                         </div>
                     )}
 
-                    {selectedVar && (
                         <div className="ocean-section ocean-export-section">
                             <div className="ocean-title"><Download size={14}/> EXPORT</div>
                             <div className="ocean-export-grid">
                                 <button onClick={() => exportVariable('csv')} className="ocean-export-btn" title="CSV Export">
                                     <CSVIcon size={14} />
-                                    <span>CSV</span>
+                                    <span>VAR.CSV</span>
                                 </button>
                                 <button onClick={() => exportVariable('json')} className="ocean-export-btn" title="JSON Export">
                                     <FileJson size={14} />
-                                    <span>JSON</span>
+                                    <span>VAR.JSON</span>
+                                </button>
+                                <button onClick={() => exportAllToCsv()} className="ocean-export-btn ocean-export-primary" title="Export All Variables to CSV">
+                                    <TableProperties size={14} />
+                                    <span>ALL VARS</span>
                                 </button>
                                 <button onClick={() => exportVariable('python')} className="ocean-export-btn" title="Python Script">
                                     <Code2 size={14} />
-                                    <span>Python</span>
-                                </button>
-                                <button onClick={() => exportVariable('ncdump')} className="ocean-export-btn" title="ncDump Command">
-                                    <Terminal size={14} />
-                                    <span>ncDump</span>
+                                    <span>SCRIPT</span>
                                 </button>
                             </div>
                         </div>
-                    )}
                 </div>
             }
         >
