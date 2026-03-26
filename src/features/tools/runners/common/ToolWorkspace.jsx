@@ -168,9 +168,18 @@ function ToolWorkspace({
                         </>
                     )}
                     {showHeaderActions && onReset && (
-                        <button className="btn-reset-workspace bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2" onClick={onReset}>
+                        <button
+                            className="btn-reset-workspace bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                            onClick={() => {
+                                if (window.confirm('Are you sure you want to clear all files? This action cannot be undone.')) {
+                                    onReset();
+                                }
+                            }}
+                            title="Clear all files from workspace"
+                            aria-label="Clear all files from workspace"
+                        >
                             <Trash2 size={14} />
-                            <span>Clear_All</span>
+                            <span>Clear All</span>
                         </button>
                     )}
                 </div>
