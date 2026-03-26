@@ -5,7 +5,7 @@ import ToolWorkspace from '../common/ToolWorkspace';
 import FileUploader from '../../../../components/ui/FileUploader';
 import useParallelFileProcessor from '../../../../hooks/useParallelFileProcessor';
 import FileThumbnail from '../../../../components/tools/shared/FileThumbnail';
-import { Maximize, Settings, ImageIcon, Check } from 'lucide-react';
+import { Maximize, Settings, ImageIcon, Check, X } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
 const getBaseName = (name) => name.replace(/\.[^/.]+$/, '');
@@ -179,7 +179,15 @@ function ImageResizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                                     <div className="text-slate-600 text-[10px] font-black uppercase tracking-widest">Queued</div>
                                 )}
                             </div>
-                            <button className="text-slate-500 hover:text-red-500 p-1 rounded-lg hover:bg-red-500/10 transition-colors" onClick={() => removeFile(id)} disabled={processing}>x</button>
+                            <button
+                                className="text-slate-500 hover:text-red-500 p-1 rounded-lg hover:bg-red-500/10 transition-colors"
+                                onClick={() => removeFile(id)}
+                                disabled={processing}
+                                title={`Remove ${file.name}`}
+                                aria-label={`Remove ${file.name}`}
+                            >
+                                <X size={14} />
+                            </button>
                         </div>
                     </div>
                 ))}

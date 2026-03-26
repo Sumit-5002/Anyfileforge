@@ -3,7 +3,7 @@ import pdfService from '../../../../services/pdfService';
 import serverProcessingService from '../../../../services/serverProcessingService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
-import { FileText, ArrowUpDown, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { FileText, ArrowUpDown, ChevronUp, ChevronDown, Eye, X } from 'lucide-react';
 import '../common/ToolWorkspace.css';
 
 function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
@@ -112,7 +112,8 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <button
                                 className="btn-icon"
                                 onClick={() => handlePreview(file)}
-                                title="Preview PDF"
+                                title={`Preview ${file.name}`}
+                                aria-label={`Preview ${file.name}`}
                             >
                                 <Eye size={16} />
                             </button>
@@ -121,7 +122,8 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                                     className="btn-icon"
                                     onClick={() => handleMove(i, -1)}
                                     disabled={i === 0}
-                                    title="Move Up"
+                                    title={`Move ${file.name} Up`}
+                                    aria-label={`Move ${file.name} Up`}
                                 >
                                     <ChevronUp size={14} />
                                 </button>
@@ -129,7 +131,8 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                                     className="btn-icon"
                                     onClick={() => handleMove(i, 1)}
                                     disabled={i === files.length - 1}
-                                    title="Move Down"
+                                    title={`Move ${file.name} Down`}
+                                    aria-label={`Move ${file.name} Down`}
                                 >
                                     <ChevronDown size={14} />
                                 </button>
@@ -137,9 +140,10 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                             <button
                                 className="btn-icon-danger"
                                 onClick={() => setFiles(files.filter((_, idx) => idx !== i))}
-                                title="Remove File"
+                                title={`Remove ${file.name}`}
+                                aria-label={`Remove ${file.name}`}
                             >
-                                ×
+                                <X size={16} />
                             </button>
                         </div>
                     </div>
