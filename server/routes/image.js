@@ -1,8 +1,30 @@
 import express from 'express';
 import sharp from 'sharp';
 import fs from 'fs/promises';
+import dns from 'dns';
 
 const router = express.Router();
+
+const isInternalIP = (ip) => {
+    if (!ip) return false;
+    // Normalize IPv4-mapped IPv6 addresses (e.g., ::ffff:127.0.0.1)
+    const normalizedIP = ip.startsWith('::ffff:') ? ip.slice(7) : ip;
+
+    // Check for loopback (127.0.0.0/8, ::1)
+    if (normalizedIP === '::1' || normalizedIP.startsWith('127.')) return true;
+    // Check for private ranges
+    if (normalizedIP.startsWith('10.') ||
+        normalizedIP.startsWith('192.168.') ||
+        normalizedIP.startsWith('169.254.') ||
+        (normalizedIP.startsWith('172.') && (() => {
+            const second = parseInt(normalizedIP.split('.')[1], 10);
+            return second >= 16 && second <= 31;
+        })())) return true;
+    // Check for IPv6 unique local/link-local addresses
+    if (normalizedIP.startsWith('fe80:') || normalizedIP.startsWith('fc00:') || normalizedIP.startsWith('fd00:') || normalizedIP === '::' || normalizedIP === '0.0.0.0') return true;
+
+    return false;
+};
 
 const escapeXml = (value = '') =>
     String(value)
@@ -246,10 +268,25 @@ router.post('/html-to-image', async (req, res) => {
             return res.status(400).json({ error: 'Only http/https URLs are supported.' });
         }
 
-        const response = await fetch(parsed.toString(), {
+        // SSRF protection: Resolve hostname and check for internal IPs
+        let resolvedIP;
+        try {
+            const { address } = await dns.promises.lookup(parsed.hostname);
+            if (isInternalIP(address)) {
+                return res.status(403).json({ error: 'Access to internal network is forbidden.' });
+            }
+            resolvedIP = address;
+        } catch (dnsErr) {
+            return res.status(400).json({ error: 'Could not resolve hostname.' });
+        }
+
+        // Mitigate DNS rebinding: Fetch using the resolved IP and a Host header
+        const targetUrl = `${parsed.protocol}//${resolvedIP}${parsed.pathname}${parsed.search}`;
+        const response = await fetch(targetUrl, {
             redirect: 'follow',
             headers: {
-                'User-Agent': 'AnyFileForge-Server/1.0 (+html-to-image)'
+                'User-Agent': 'AnyFileForge-Server/1.0 (+html-to-image)',
+                'Host': parsed.hostname
             }
         });
 
