@@ -21,3 +21,7 @@
 ## 2026-03-22 - Incremental and Parallel PDF Thumbnail Generation
 **Learning:** Sequential page rendering for PDF thumbnails creates a linear bottleneck where the user sees a blank screen or a loader until *all* pages are processed. Parallelizing rendering in small chunks (e.g., 4) and updating state incrementally allows the UI to populate immediately, drastically improving perceived speed. Furthermore, using `AbortController` is critical to prevent race conditions and memory leaks when the user switches files or unmounts the component during processing.
 **Action:** Use chunked `Promise.all` for multi-page rendering and update the page state after each chunk completes. Always wrap long-running async tasks in `useEffect` with an `AbortController` for safe cleanup.
+
+## 2026-03-26 - Optimized Line Number Rendering in TextToolRunner
+**Learning:** Rendering line numbers by mapping over an array of indices to create individual `div` elements (e.g., `{lines.map((_, i) => <div key={i}>{i+1}</div>)}`) creates O(N) DOM nodes. This becomes a significant performance bottleneck for large text files, increasing memory usage and React reconciliation time. Using a single `div` with `white-space: pre` and a newline-separated string reduces DOM nodes to O(1) per editor.
+**Action:** Always prefer a single pre-formatted string for line numbers or similar repeating indicators instead of individual DOM nodes per line to ensure consistent performance with large inputs.
