@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useMemo } from 'react';
 import { Copy, Check, Play, CornerDownRight, AlertCircle, FileCode2, BarChart3, Calculator, Eye, Upload, FileText } from 'lucide-react';
 import {
     Chart as ChartJS,
@@ -32,6 +32,26 @@ const safeText = (text) =>
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
+
+/**
+ * Performance-optimized line number component.
+ * Uses a single pre-formatted string to avoid O(N) DOM nodes.
+ */
+const LineNumbers = React.memo(({ text }) => {
+    const lineCount = (text || ' ').split('\n').length;
+    const numbers = useMemo(() => {
+        // O(N) string building using array join
+        return Array.from({ length: lineCount }, (_, i) => i + 1).join('\n') + '\n';
+    }, [lineCount]);
+
+    return (
+        <div className="line-numbers">
+            {numbers}
+        </div>
+    );
+});
+
+LineNumbers.displayName = 'LineNumbers';
 
 function TextToolRunner({ tool }) {
     const [input, setInput] = useState('');
@@ -293,9 +313,7 @@ function TextToolRunner({ tool }) {
                             {error && <div className="error-badge flex items-center gap-1.5 text-xs text-red-500 font-bold bg-red-500/10 px-3 py-1 rounded-full"><AlertCircle size={12} /> {error}</div>}
                         </div>
                         <div className="editor-container">
-                            <div className="line-numbers">
-                                {(input || ' ').split('\n').map((_, i) => <div key={i}>{i + 1}</div>)}
-                            </div>
+                            <LineNumbers text={input} />
                             <textarea
                                 ref={inputRef}
                                 className="code-textarea"
@@ -355,9 +373,7 @@ function TextToolRunner({ tool }) {
                                 <div className="markdown-preview-content p-8" dangerouslySetInnerHTML={{ __html: output || '<div class="empty-state">Preview will appear here</div>' }} />
                             ) : (
                                 <>
-                                    <div className="line-numbers">
-                                        {(output || ' ').split('\n').map((_, i) => <div key={i}>{i + 1}</div>)}
-                                    </div>
+                                    <LineNumbers text={output} />
                                     <textarea
                                         ref={outputRef}
                                         className="code-textarea output-textarea"
