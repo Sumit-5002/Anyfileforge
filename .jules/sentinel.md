@@ -22,3 +22,8 @@
 **Vulnerability:** The PDF merge and split routes did not limit the number of pages that could be produced. An attacker could request a split operation that duplicates pages thousands of times, or merge many large PDFs, leading to high CPU/memory usage and potential DoS.
 **Learning:** Resource-intensive file operations must have secondary limits beyond simple file size checks, specifically on the complexity or count of output elements.
 **Prevention:** Enforce hard limits on the total number of pages (e.g., 1000) that can be generated or processed in a single request.
+
+## 2026-03-26 - [Bypassable SSRF and DNS Rebinding in URL Capture]
+**Vulnerability:** The `/api/image/html-to-image` endpoint was vulnerable to Server-Side Request Forgery (SSRF). Initial mitigation was bypassable via DNS rebinding and non-standard loopback addresses (e.g., 127.0.0.2).
+**Learning:** Checking a resolved IP before fetching is insufficient due to TOCTOU (Time-of-Check Time-of-Use) vulnerabilities where the DNS record changes between check and fetch.
+**Prevention:** Use the resolved and validated IP directly in the `fetch` call and provide the original hostname in the `Host` header. Ensure IP validation covers the entire `127.0.0.0/8` range and IPv4-mapped IPv6 addresses.
