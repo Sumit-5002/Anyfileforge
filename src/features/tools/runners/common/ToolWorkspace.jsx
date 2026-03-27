@@ -48,8 +48,8 @@ const ResultItem = ({ res, idx }) => {
                     <>
                         <img src={itemUrl} alt={res.name} className="artifact-img" />
                         <div className="artifact-overlay">
-                            <button className="artifact-btn artifact-btn-view" onClick={() => window.open(itemUrl, '_blank')} title="Inspect Full Resolution"><Eye size={20}/></button>
-                            <button className="artifact-btn artifact-btn-download" onClick={handleDownload} title="Commence Download"><Download size={20}/></button>
+                            <button className="artifact-btn artifact-btn-view" onClick={() => window.open(itemUrl, '_blank')} title="Inspect Full Resolution" aria-label="Inspect Full Resolution"><Eye size={20}/></button>
+                            <button className="artifact-btn artifact-btn-download" onClick={handleDownload} title="Commence Download" aria-label="Commence Download"><Download size={20}/></button>
                         </div>
                     </>
                 ) : (
@@ -57,7 +57,7 @@ const ResultItem = ({ res, idx }) => {
                         <FileText size={48} />
                         <span className="binary-label">{isImg ? 'Preparing' : 'Result File'}</span>
                         <div className="artifact-overlay">
-                            <button className="artifact-btn artifact-btn-download" onClick={handleDownload}>
+                            <button className="artifact-btn artifact-btn-download" onClick={handleDownload} title="Commence Download" aria-label="Commence Download">
                                 <Download size={20}/>
                             </button>
                         </div>

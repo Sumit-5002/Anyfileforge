@@ -1301,7 +1301,8 @@
     transition: opacity 0.3s ease;
 }
 
-.result-artifact-card:hover .artifact-overlay {
+.result-artifact-card:hover .artifact-overlay,
+.result-artifact-card:focus-within .artifact-overlay {
     opacity: 1;
 }
 
