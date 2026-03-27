@@ -59,19 +59,21 @@ router.post('/resize', async (req, res) => {
                 return res.status(400).json({ error: 'Image file is required' });
             }
 
-            const { width, height, format = 'jpeg' } = req.body;
+            let { width, height, format = 'jpeg' } = req.body;
 
             if (!ALLOWED_IMAGE_FORMATS.has(format)) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Unsupported image format' });
             }
+
+            if (format === 'jpg') format = 'jpeg';
 
             const w = width ? parseInt(width) : null;
             const h = height ? parseInt(height) : null;
 
             if ((w !== null && (isNaN(w) || w <= 0 || w > 10000)) ||
                 (h !== null && (isNaN(h) || h <= 0 || h > 10000))) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Invalid dimensions. Width and height must be between 1 and 10000.' });
             }
 
@@ -120,17 +122,19 @@ router.post('/compress', async (req, res) => {
                 return res.status(400).json({ error: 'Image file is required' });
             }
 
-            const { quality = 80, format = 'jpeg' } = req.body;
+            let { quality = 80, format = 'jpeg' } = req.body;
 
             if (!ALLOWED_IMAGE_FORMATS.has(format)) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Unsupported image format' });
             }
+
+            if (format === 'jpg') format = 'jpeg';
 
             const q = parseInt(quality);
 
             if (isNaN(q) || q < 1 || q > 100) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Invalid quality. Must be between 1 and 100.' });
             }
 
@@ -172,17 +176,19 @@ router.post('/convert', async (req, res) => {
                 return res.status(400).json({ error: 'Image file is required' });
             }
 
-            const { format = 'png', quality } = req.body;
+            let { format = 'png', quality } = req.body;
 
             if (!ALLOWED_IMAGE_FORMATS.has(format)) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Unsupported image format' });
             }
+
+            if (format === 'jpg') format = 'jpeg';
 
             const q = quality ? parseInt(quality) : null;
 
             if (q !== null && (isNaN(q) || q < 1 || q > 100)) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Invalid quality. Must be between 1 and 100.' });
             }
 
@@ -225,12 +231,14 @@ router.post('/crop', async (req, res) => {
                 return res.status(400).json({ error: 'Image file is required' });
             }
 
-            const { left, top, width, height, format = 'jpeg' } = req.body;
+            let { left, top, width, height, format = 'jpeg' } = req.body;
 
             if (!ALLOWED_IMAGE_FORMATS.has(format)) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Unsupported image format' });
             }
+
+            if (format === 'jpg') format = 'jpeg';
 
             const l = parseInt(left);
             const t = parseInt(top);
@@ -238,7 +246,7 @@ router.post('/crop', async (req, res) => {
             const h = parseInt(height);
 
             if (isNaN(l) || isNaN(t) || isNaN(w) || isNaN(h) || l < 0 || t < 0 || w <= 0 || h <= 0 || w > 10000 || h > 10000) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Invalid crop parameters.' });
             }
 
@@ -307,13 +315,14 @@ router.post('/html-to-image', async (req, res) => {
         // Mitigate DNS rebinding: Fetch using the resolved IP and a Host header
         // Wrap IPv6 addresses in square brackets
         const ipPart = resolvedIP.includes(':') ? `[${resolvedIP}]` : resolvedIP;
-        const targetUrl = `${parsed.protocol}//${ipPart}${parsed.pathname}${parsed.search}`;
+        const portPart = parsed.port ? `:${parsed.port}` : '';
+        const targetUrl = `${parsed.protocol}//${ipPart}${portPart}${parsed.pathname}${parsed.search}`;
 
         const response = await fetch(targetUrl, {
             redirect: 'manual',
             headers: {
                 'User-Agent': 'AnyFileForge-Server/1.0 (+html-to-image)',
-                'Host': parsed.hostname
+                'Host': parsed.host
             }
         });
 
