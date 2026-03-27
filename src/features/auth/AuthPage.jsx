@@ -147,6 +147,7 @@ function AuthPage({ initialMode = 'login' }) {
                                     <input
                                         type="text"
                                         placeholder="Full Name"
+                                        aria-label="Full Name"
                                         required
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     />
@@ -157,6 +158,7 @@ function AuthPage({ initialMode = 'login' }) {
                                 <input
                                     type="email"
                                     placeholder="work@email.com"
+                                    aria-label="Email Address"
                                     required
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 />
@@ -166,6 +168,7 @@ function AuthPage({ initialMode = 'login' }) {
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Password"
+                                    aria-label="Password"
                                     required
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 />
@@ -173,6 +176,7 @@ function AuthPage({ initialMode = 'login' }) {
                                     type="button"
                                     className="password-toggle"
                                     onClick={() => setShowPassword(!showPassword)}
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -186,6 +190,7 @@ function AuthPage({ initialMode = 'login' }) {
                                         required
                                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                         defaultValue=""
+                                        aria-label="Select your Professional Role"
                                     >
                                         <option value="" disabled>Select your Role</option>
                                         <option value="engineer">Software Engineer</option>
@@ -205,6 +210,7 @@ function AuthPage({ initialMode = 'login' }) {
                                         <input
                                             type="text"
                                             placeholder="Institution / University"
+                                            aria-label="Institution or University"
                                             onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
                                         />
                                     </div>
@@ -213,6 +219,7 @@ function AuthPage({ initialMode = 'login' }) {
                                         <input
                                             type="text"
                                             placeholder="Field of Study (e.g. Physics)"
+                                            aria-label="Field of Study"
                                             onChange={(e) => setFormData({ ...formData, fieldOfStudy: e.target.value })}
                                         />
                                     </div>
@@ -225,6 +232,7 @@ function AuthPage({ initialMode = 'login' }) {
                                     <input
                                         type="text"
                                         placeholder="Primary Language (e.g. Python, JS)"
+                                        aria-label="Primary Programming Language"
                                         onChange={(e) => setFormData({ ...formData, primaryLanguage: e.target.value })}
                                     />
                                 </div>
