@@ -152,6 +152,7 @@ function ToolDetailPage() {
                         <div className="server-mode-card tool-dev-card">
                             <div className="server-mode-content">
                                 <Terminal size={56} className="tool-dev-icon" />
+                                <span className="tool-dev-status">Status: In Development</span>
                                 <h2 className="tool-dev-title">Under Development</h2>
                                 <p className="tool-dev-description">
                                     <strong>{effectiveTool.name}</strong> is in active development.
@@ -162,6 +163,7 @@ function ToolDetailPage() {
                                     <li>Stable offline processing with clear progress UX</li>
                                     <li>Final export actions and error-safe handling</li>
                                 </ul>
+                                <p className="tool-dev-note">This placeholder is intentional so the app stays stable while this module is being built.</p>
                                 <div className="tool-dev-actions">
                                     <Link to="/tools" className="btn btn-primary btn-large">
                                         Back to Tools

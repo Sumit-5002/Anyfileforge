@@ -274,6 +274,21 @@
     color: var(--text-primary);
 }
 
+.tool-dev-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(var(--primary-rgb), 0.14);
+    border: 1px solid rgba(var(--primary-rgb), 0.35);
+    color: var(--primary-500);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
 .tool-dev-description {
     max-width: 600px;
     color: var(--text-secondary);
@@ -303,6 +318,12 @@
 
 .tool-dev-actions {
     margin-top: 6px;
+}
+
+.tool-dev-note {
+    margin: 2px 0 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 /* Premium Gate - High Impact */
