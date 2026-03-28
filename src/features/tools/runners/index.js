@@ -1,5 +1,4 @@
 import { lazy } from 'react';
-import SimulationRunner from './pdf/SimulationRunner';
 
 /**
  * TOOL_RUNNERS is a registry of all tool runner components.
