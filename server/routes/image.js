@@ -12,15 +12,31 @@ const isInternalIP = (ip) => {
 
     // Check for loopback (127.0.0.0/8, ::1)
     if (normalizedIP === '::1' || normalizedIP.startsWith('127.')) return true;
-    // Check for private ranges
+
+    // Private ranges (RFC 1918)
     if (normalizedIP.startsWith('10.') ||
         normalizedIP.startsWith('192.168.') ||
-        normalizedIP.startsWith('169.254.') ||
         (normalizedIP.startsWith('172.') && (() => {
             const second = parseInt(normalizedIP.split('.')[1], 10);
             return second >= 16 && second <= 31;
         })())) return true;
-    // Check for IPv6 unique local/link-local addresses
+
+    // Link-local (RFC 3927)
+    if (normalizedIP.startsWith('169.254.')) return true;
+
+    // Carrier-grade NAT (RFC 6598)
+    if (normalizedIP.startsWith('100.') && (() => {
+        const second = parseInt(normalizedIP.split('.')[1], 10);
+        return second >= 64 && second <= 127;
+    })()) return true;
+
+    // Benchmarking (RFC 2544)
+    if (normalizedIP.startsWith('198.') && (() => {
+        const second = parseInt(normalizedIP.split('.')[1], 10);
+        return second === 18 || second === 19;
+    })()) return true;
+
+    // IPv6 unique local/link-local addresses
     if (normalizedIP.startsWith('fe80:') || normalizedIP.startsWith('fc00:') || normalizedIP.startsWith('fd00:') || normalizedIP === '::' || normalizedIP === '0.0.0.0') return true;
 
     return false;
@@ -283,18 +299,35 @@ router.post('/html-to-image', async (req, res) => {
         // Mitigate DNS rebinding: Fetch using the resolved IP and a Host header
         const targetUrl = `${parsed.protocol}//${resolvedIP}${parsed.pathname}${parsed.search}`;
         const response = await fetch(targetUrl, {
-            redirect: 'follow',
+            redirect: 'manual', // Prevent SSRF bypass via redirects
+            signal: AbortSignal.timeout(5000), // 5 second timeout
             headers: {
                 'User-Agent': 'AnyFileForge-Server/1.0 (+html-to-image)',
                 'Host': parsed.hostname
             }
         });
 
+        // Manual redirect handling: redirects are forbidden in SSRF-sensitive context
+        if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+            return res.status(403).json({ error: 'Redirects are forbidden for security reasons.' });
+        }
+
         if (!response.ok) {
             return res.status(502).json({ error: `Unable to fetch URL (${response.status}).` });
         }
 
+        // DoS protection: Check content-length header if present
+        const contentLength = response.headers.get('content-length');
+        if (contentLength && parseInt(contentLength, 10) > 524288) { // 512KB
+            return res.status(413).json({ error: 'Content too large. Maximum allowed size is 512KB.' });
+        }
+
         const html = await response.text();
+
+        // Final size check after reading text
+        if (html.length > 524288) {
+            return res.status(413).json({ error: 'Content too large. Maximum allowed size is 512KB.' });
+        }
         const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
         const title = titleMatch ? titleMatch[1].trim() : parsed.hostname;
         const snippet = toPlainText(html).slice(0, 380);
