@@ -25,3 +25,7 @@
 ## 2026-03-26 - Optimized Line Number Rendering in TextToolRunner
 **Learning:** Rendering line numbers by mapping over an array of indices to create individual `div` elements (e.g., `{lines.map((_, i) => <div key={i}>{i+1}</div>)}`) creates O(N) DOM nodes. This becomes a significant performance bottleneck for large text files, increasing memory usage and React reconciliation time. Using a single `div` with `white-space: pre` and a newline-separated string reduces DOM nodes to O(1) per editor.
 **Action:** Always prefer a single pre-formatted string for line numbers or similar repeating indicators instead of individual DOM nodes per line to ensure consistent performance with large inputs.
+
+## 2026-03-28 - Parallelized and Blob-Optimized PDF to JPG Conversion
+**Learning:** Sequential page rendering in `pdfToJpg` creates a linear bottleneck for large PDFs. Furthermore, using `canvas.toDataURL()` incurs significant overhead due to Base64 encoding/decoding, which is unnecessary since `JSZip` can handle Blobs directly.
+**Action:** Implement chunked parallel rendering (concurrency of 4) for PDF pages and switch from `toDataURL()` to `toBlob()` to minimize CPU and memory usage during batch image extraction.
