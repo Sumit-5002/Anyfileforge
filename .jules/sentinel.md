@@ -27,3 +27,8 @@
 **Vulnerability:** The `/api/image/html-to-image` endpoint was vulnerable to Server-Side Request Forgery (SSRF). Initial mitigation was bypassable via DNS rebinding and non-standard loopback addresses (e.g., 127.0.0.2).
 **Learning:** Checking a resolved IP before fetching is insufficient due to TOCTOU (Time-of-Check Time-of-Use) vulnerabilities where the DNS record changes between check and fetch.
 **Prevention:** Use the resolved and validated IP directly in the `fetch` call and provide the original hostname in the `Host` header. Ensure IP validation covers the entire `127.0.0.0/8` range and IPv4-mapped IPv6 addresses.
+
+## 2026-03-27 - [Multi-layered SSRF and DoS Hardening in URL Capture]
+**Vulnerability:** The `/api/image/html-to-image` endpoint was vulnerable to SSRF bypasses via redirects (`redirect: 'follow'`) and lacked resource limits (timeouts/size limits), leading to potential DoS. Additionally, the internal IP blacklist was incomplete, missing ranges like CGNAT (100.64.0.0/10).
+**Learning:** Security controls for fetch-based utilities must be multi-layered: validating the initial IP is insufficient if redirects are followed or if the response size/time is unbounded.
+**Prevention:** Always use `redirect: 'manual'` for SSRF-sensitive fetches. Enforce strict `AbortSignal` timeouts and content size limits (e.g., 512KB). Expand internal IP checks to include all restricted ranges (RFC 1918, RFC 6598, RFC 3927, RFC 2544).

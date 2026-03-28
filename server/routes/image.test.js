@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 import express from 'express';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { PassThrough, Readable } from 'node:stream';
+import dns from 'dns';
 
 // ---------------------------------------------------------------------------
 // Build the app once at module level
@@ -99,7 +100,12 @@ async function mockRequest(method, path, body = null) {
 const MOCK_HTML = '<html><head><title>Test Page</title></head><body><p>Hello world</p></body></html>';
 
 function makeFetchMock({ ok = true, status = 200, text = MOCK_HTML } = {}) {
-    return async () => ({ ok, status, text: async () => text });
+    return async () => ({
+        ok,
+        status,
+        headers: new Map(),
+        text: async () => text
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -161,9 +167,25 @@ describe('/api/image/html-to-image – URL validation', () => {
 
 describe('/api/image/html-to-image – fetch behaviour', () => {
     let originalFetch;
+    let originalDnsLookup;
 
-    beforeEach(() => { originalFetch = globalThis.fetch; });
-    afterEach(() => { globalThis.fetch = originalFetch; });
+    beforeEach(() => {
+        originalFetch = globalThis.fetch;
+        originalDnsLookup = dns.promises.lookup;
+
+        // Default DNS mock: resolve everything to a "safe" public IP
+        dns.promises.lookup = async (hostname) => {
+            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '127.0.0.2') {
+                return { address: '127.0.0.1' };
+            }
+            return { address: '93.184.216.34' }; // example.com
+        };
+    });
+
+    afterEach(() => {
+        globalThis.fetch = originalFetch;
+        dns.promises.lookup = originalDnsLookup;
+    });
 
     it('returns 502 when the remote server responds with a non-OK status', async () => {
         globalThis.fetch = makeFetchMock({ ok: false, status: 404 });
@@ -243,36 +265,28 @@ describe('/api/image/html-to-image – fetch behaviour', () => {
     });
 
     // -----------------------------------------------------------------------
-    // Behaviour changes introduced by this PR: SSRF protection was removed.
-    // The endpoint now accepts requests targeting internal/localhost addresses.
+    // SSRF protection tests
     // -----------------------------------------------------------------------
-    it('no longer blocks requests to localhost (SSRF protection removed)', async () => {
-        // Before this PR the endpoint returned 403 for internal addresses.
-        // After this PR it proceeds to fetch; we mock fetch to simulate success.
-        globalThis.fetch = makeFetchMock({ text: '<html><head><title>Local</title></head></html>' });
-
+    it('blocks requests to localhost (SSRF protection)', async () => {
         const res = await mockRequest('POST', '/api/image/html-to-image', {
             url: 'http://localhost:9999/api/health',
             format: 'svg'
         });
 
-        assert.notEqual(res.status, 403, 'SSRF protection removed — 403 must not be returned');
-        assert.equal(res.status, 200);
+        assert.equal(res.status, 403, 'SSRF protection should return 403 for localhost');
+        assert.match(res.body.error, /internal network is forbidden/i);
     });
 
-    it('no longer blocks requests to 127.x.x.x addresses', async () => {
-        globalThis.fetch = makeFetchMock();
-
+    it('blocks requests to 127.x.x.x addresses', async () => {
         const res = await mockRequest('POST', '/api/image/html-to-image', {
             url: 'http://127.0.0.2/secret',
             format: 'svg'
         });
 
-        assert.notEqual(res.status, 403);
-        assert.equal(res.status, 200);
+        assert.equal(res.status, 403, 'SSRF protection should return 403 for 127.0.0.2');
     });
 
-    it('does not inject a Host header (DNS rebinding mitigation removed)', async () => {
+    it('injects a Host header for DNS rebinding mitigation', async () => {
         let capturedHeaders;
         globalThis.fetch = async (_url, opts) => {
             capturedHeaders = opts?.headers ?? {};
@@ -281,11 +295,10 @@ describe('/api/image/html-to-image – fetch behaviour', () => {
 
         await mockRequest('POST', '/api/image/html-to-image', { url: 'http://example.com/page', format: 'svg' });
 
-        assert.ok(!capturedHeaders['Host'], 'Host header should not be set after PR change');
-        assert.equal(capturedHeaders['User-Agent'], 'AnyFileForge-Server/1.0 (+html-to-image)');
+        assert.equal(capturedHeaders['Host'], 'example.com', 'Host header must be set to original hostname');
     });
 
-    it('fetches the original URL string directly, not a resolved-IP URL', async () => {
+    it('fetches using a resolved IP URL to mitigate DNS rebinding', async () => {
         let capturedUrl;
         globalThis.fetch = async (url, _opts) => {
             capturedUrl = url;
@@ -297,9 +310,7 @@ describe('/api/image/html-to-image – fetch behaviour', () => {
             format: 'svg'
         });
 
-        // Before the PR, capturedUrl would be an IP-based URL.
-        // After the PR, it should contain the original hostname.
-        assert.ok(capturedUrl.includes('example.com'), 'Should fetch using the original hostname, not a raw IP');
+        assert.ok(capturedUrl.includes('93.184.216.34'), 'Should fetch using the resolved IP address');
     });
 
     it('SVG body text snippet is stripped of HTML tags', async () => {
@@ -312,5 +323,66 @@ describe('/api/image/html-to-image – fetch behaviour', () => {
         assert.equal(res.status, 200);
         // The snippet in the SVG should contain readable text, not raw HTML tags
         assert.ok(res.text.includes('Plain text content'), 'Text snippet should be included in SVG');
+    });
+
+    // -----------------------------------------------------------------------
+    // New Security & DoS Protection Tests
+    // -----------------------------------------------------------------------
+    it('blocks redirects to prevent SSRF bypass (manual redirect handling)', async () => {
+        globalThis.fetch = async () => ({
+            status: 302,
+            headers: new Map([['location', 'http://localhost/admin']]),
+            type: 'opaqueredirect',
+            ok: false
+        });
+
+        const res = await mockRequest('POST', '/api/image/html-to-image', { url: 'http://example.com/redirect' });
+
+        assert.equal(res.status, 403, 'Should return 403 for redirects');
+        assert.match(res.body.error, /redirects are forbidden/i);
+    });
+
+    it('enforces a 5-second timeout on fetch', async () => {
+        let signal;
+        globalThis.fetch = async (_url, opts) => {
+            signal = opts.signal;
+            // Simulate a timeout error
+            const err = new Error('The operation was aborted');
+            err.name = 'TimeoutError';
+            throw err;
+        };
+
+        const res = await mockRequest('POST', '/api/image/html-to-image', { url: 'http://example.com' });
+
+        assert.equal(res.status, 500);
+        assert.ok(signal, 'AbortSignal should be passed to fetch');
+    });
+
+    it('enforces 512KB size limit via content-length header', async () => {
+        globalThis.fetch = async () => ({
+            ok: true,
+            status: 200,
+            headers: new Map([['content-length', '600000']]),
+            text: async () => 'some large content'
+        });
+
+        const res = await mockRequest('POST', '/api/image/html-to-image', { url: 'http://example.com' });
+
+        assert.equal(res.status, 413, 'Should return 413 for oversized content (header check)');
+        assert.match(res.body.error, /content too large/i);
+    });
+
+    it('enforces 512KB size limit via body content length', async () => {
+        globalThis.fetch = async () => ({
+            ok: true,
+            status: 200,
+            headers: new Map(),
+            text: async () => 'a'.repeat(600000)
+        });
+
+        const res = await mockRequest('POST', '/api/image/html-to-image', { url: 'http://example.com' });
+
+        assert.equal(res.status, 413, 'Should return 413 for oversized content (body check)');
+        assert.match(res.body.error, /content too large/i);
     });
 });
