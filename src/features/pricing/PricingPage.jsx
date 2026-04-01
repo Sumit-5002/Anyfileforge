@@ -22,8 +22,6 @@ function PricingPage() {
             period: 'month',
             highlighted: false,
             icon: Zap,
-            iconBg: 'rgba(var(--primary-rgb), 0.15)',
-            iconColor: 'var(--primary-500)',
             cta: 'Start Free (Offline)',
             features: [
                 { text: 'Serverless tools (offline/local)', included: true },
@@ -42,8 +40,6 @@ function PricingPage() {
             period: 'month',
             highlighted: true,
             icon: Crown,
-            iconBg: 'linear-gradient(135deg, var(--primary-600), var(--primary-700))',
-            iconColor: 'white',
             cta: 'Upgrade for Online Mode',
             features: [
                 { text: 'Everything in Free (offline/local)', included: true },
@@ -61,8 +57,6 @@ function PricingPage() {
             period: 'custom',
             highlighted: false,
             icon: Rocket,
-            iconBg: 'rgba(var(--accent-rgb), 0.18)',
-            iconColor: 'var(--accent-yellow)',
             cta: 'Contact Sales',
             features: [
                 { text: 'Institution SSO & RBAC', included: true },
@@ -171,11 +165,13 @@ function PricingPage() {
 
                                     <div className="plan-header">
                                         <div className="plan-icon" style={{
-                                            background: plan.iconBg || 'rgba(255, 255, 255, 0.05)'
+                                            background: plan.highlighted
+                                                ? 'linear-gradient(135deg, var(--primary-600), var(--primary-700))'
+                                                : 'var(--gray-200)'
                                         }}>
                                             <plan.icon
                                                 size={32}
-                                                color={plan.iconColor || 'var(--text-primary)'}
+                                                color={plan.highlighted ? 'white' : 'var(--gray-700)'}
                                             />
                                         </div>
                                         <h3 className="plan-name">{plan.name}</h3>
