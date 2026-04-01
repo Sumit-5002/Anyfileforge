@@ -256,6 +256,76 @@
     justify-content: center;
 }
 
+.tool-dev-card {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.tool-dev-icon {
+    color: var(--text-muted);
+}
+
+.tool-dev-title {
+    margin: 4px 0 0;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+}
+
+.tool-dev-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(var(--primary-rgb), 0.14);
+    border: 1px solid rgba(var(--primary-rgb), 0.35);
+    color: var(--primary-500);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.tool-dev-description {
+    max-width: 600px;
+    color: var(--text-secondary);
+}
+
+.tool-dev-list {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+    width: min(100%, 620px);
+    display: grid;
+    gap: 10px;
+}
+
+.tool-dev-list li {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    padding: 10px 14px;
+}
+
+.tool-dev-actions {
+    margin-top: 6px;
+}
+
+.tool-dev-note {
+    margin: 2px 0 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
 /* Premium Gate - High Impact */
 .premium-gate {
     background: var(--bg-surface);
