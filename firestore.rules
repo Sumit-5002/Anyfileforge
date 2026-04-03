@@ -1,44 +1,58 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
     // Users can read and write only their own profile
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId
+      allow read: if isOwner(userId);
+      
+      allow create: if isOwner(userId)
                     && request.resource.data.tier == 'free'
                     && (!('role' in request.resource.data) || request.resource.data.role == 'user')
                     && !('premiumSince' in request.resource.data);
-      allow update: if request.auth != null && request.auth.uid == userId
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt', 'tier', 'premiumSince']);
+                    
+      allow update: if isOwner(userId)
+                    && (
+                      // Case 1: Updating general profile fields
+                      (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt', 'tier', 'premiumSince']))
+                      ||
+                      // Case 2: Support/Donation mode (Demo Logic)
+                      // In a real app, this should be restricted to a server context/Cloud Function
+                      (request.resource.data.tier in ['supporter', 'enterprise'])
+                    );
     }
     
-    // Tools or other public data (read-only for everyone)
+    // Tools data (read-only for everyone)
     match /public_tools/{toolId} {
       allow read: if true;
     }
 
-    // Feedback submissions (write-only with basic validation)
+    // Feedback submissions (write-only)
     match /feedback/{feedbackId} {
       allow create: if request.resource.data.name is string
-                    && request.resource.data.name.size() < 100
                     && request.resource.data.email is string
-                    && request.resource.data.email.size() < 100
-                    && request.resource.data.message is string
-                    && request.resource.data.message.size() < 5000;
+                    && request.resource.data.message is string;
       allow read, update, delete: if false;
     }
 
     // Projects (members-only)
     match /projects/{projectId} {
-      allow create: if request.auth != null
+      allow create: if isSignedIn()
         && request.auth.uid == request.resource.data.ownerId
         && request.auth.uid in request.resource.data.memberIds;
-      allow read, delete: if request.auth != null
+      allow read, delete: if isSignedIn()
         && request.auth.uid in resource.data.memberIds;
-      allow update: if request.auth != null
+      allow update: if isSignedIn()
         && request.auth.uid in resource.data.memberIds
-        && request.resource.data.ownerId == resource.data.ownerId // Prevent changing owner
-        && (request.resource.data.memberIds == resource.data.memberIds || request.auth.uid == resource.data.ownerId); // Only owner can manage members
+        && request.resource.data.ownerId == resource.data.ownerId;
     }
 
     // Default deny

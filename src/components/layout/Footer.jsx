@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Github, Twitter, Mail, Heart, Send, LoaderCircle, CircleCheck, Globe, Linkedin } from 'lucide-react';
 import feedbackService from '../../services/feedbackService';
+import ROUTES from '../../config/routes';
 import './Footer.css';
 
 function Footer() {
@@ -123,21 +124,22 @@ function Footer() {
                     <div className="footer-section">
                         <h3 className="footer-heading">Solutions</h3>
                         <ul className="footer-links">
-                            <li><Link to="/tools">PDF Suite</Link></li>
-                            <li><Link to="/tools">Image Engine</Link></li>
-                            <li><Link to="/tools">Data Converter</Link></li>
-                            <li><Link to="/about">About AnyFileForge</Link></li>
-                            <li><Link to="/developer">About the Developer</Link></li>
+                            <li><Link to={ROUTES.TOOLS}>PDF Suite</Link></li>
+                            <li><Link to={ROUTES.TOOLS}>Image Engine</Link></li>
+                            <li><Link to={ROUTES.TOOLS}>Data Converter</Link></li>
+                            <li><Link to={ROUTES.ABOUT}>About AnyFileForge</Link></li>
+                            <li><Link to={ROUTES.DEVELOPER}>About the Developer</Link></li>
+                            <li><Link to={ROUTES.SUPPORT} style={{ color: 'var(--primary-400)', fontWeight: 'bold' }}>Support the Forge</Link></li>
                         </ul>
                     </div>
 
                     <div className="footer-section">
                         <h3 className="footer-heading">Legal</h3>
                         <ul className="footer-links">
-                            <li><Link to="/privacy">Privacy Policy</Link></li>
-                            <li><Link to="/terms">Terms of Use</Link></li>
-                            <li><Link to="/license">License</Link></li>
-                            <li><Link to="/about">Security</Link></li>
+                            <li><Link to={ROUTES.PRIVACY}>Privacy Policy</Link></li>
+                            <li><Link to={ROUTES.TERMS}>Terms of Use</Link></li>
+                            <li><Link to={ROUTES.LICENSE}>License</Link></li>
+                            <li><Link to={ROUTES.SECURITY}>Security</Link></li>
                         </ul>
                     </div>
 

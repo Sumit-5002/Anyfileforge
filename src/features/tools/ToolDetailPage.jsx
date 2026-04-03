@@ -3,6 +3,7 @@ import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ShieldCheck, Info, Crown, Building, Lock, Code, Activity, Terminal, Zap, Globe, Cpu } from 'lucide-react';
 import { TOOLS } from '../../data/toolsData';
+import ROUTES from '../../config/routes';
 import GoogleAd from '../../components/ui/GoogleAd';
 import TOOL_RUNNERS from './runners';
 import { useAuth } from '../../contexts/AuthContext';
@@ -96,7 +97,7 @@ function ToolDetailPage() {
                                     Switch to **Offline Mode** or sign in to continue.
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                                    <Link to="/login" className="btn-primary-gradient px-8 py-3 rounded-2xl w-full sm:w-auto font-black italic uppercase text-xs">Login</Link>
+                                    <Link to={ROUTES.LOGIN} className="btn-primary-gradient px-8 py-3 rounded-2xl w-full sm:w-auto font-black italic uppercase text-xs">Login</Link>
                                     <Link to="/signup" className="btn-secondary px-8 py-3 rounded-2xl w-full sm:w-auto font-bold text-xs">Create Account</Link>
                                 </div>
                             </div>
@@ -121,7 +122,7 @@ function ToolDetailPage() {
                                 </p>
                                 <div className="server-mode-premium flex items-center justify-center gap-2 mb-8 p-3 bg-yellow-500/10 rounded-2xl border border-yellow-500/20 w-fit mx-auto">
                                     < Crown size={18} className="text-yellow-500" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500">Premium Subscription Active</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500">Supporter Access Active</span>
                                 </div>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                                     {!forceOnlineMode ? (
@@ -135,7 +136,7 @@ function ToolDetailPage() {
                                             Activate Online Mode
                                         </button>
                                     ) : !canAccessOnline ? (
-                                        <Link to="/login" className="btn-primary-gradient px-8 py-3 rounded-2xl w-full sm:w-auto font-black italic uppercase text-xs">
+                                        <Link to={ROUTES.LOGIN} className="btn-primary-gradient px-8 py-3 rounded-2xl w-full sm:w-auto font-black italic uppercase text-xs">
                                             Establish Connection
                                         </Link>
                                     ) : (
@@ -143,7 +144,7 @@ function ToolDetailPage() {
                                             Engine_Safe
                                         </div>
                                     )}
-                                    <Link to="/pricing" className="btn-secondary px-8 py-3 rounded-2xl w-full sm:w-auto font-bold text-xs uppercase">
+                                    <Link to={ROUTES.SUPPORT} className="btn-secondary px-8 py-3 rounded-2xl w-full sm:w-auto font-bold text-xs uppercase">
                                         Support Plan
                                     </Link>
                                 </div>

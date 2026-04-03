@@ -93,6 +93,9 @@ const FastqViewerTool = ({ tool }) => {
                 content += `>${r.id.substring(1)}\n${r.seq}\n`;
             });
             fileName = `${currentFile.split('.')[0]}.fasta`;
+        } else if (format === 'json') {
+            content = JSON.stringify(activeStats, null, 2);
+            fileName = `${currentFile.split('.')[0]}_analysis.json`;
         } else {
             content = "=== FASTQ GENOMIC REPORT ===\n\n";
             content += `Sequences: ${activeStats.totalSequences.toLocaleString()}\n`;
@@ -162,11 +165,14 @@ const FastqViewerTool = ({ tool }) => {
                             <div className="fq-section-title">Pipeline_Export</div>
                             <button className="fq-btn-commit" onClick={() => handleExport('raw_csv')}>
                                 <Database size={15} />
-                                COMMIT_BULK_DATASET
+                                COMMIT_BULK_DATASET (CSV)
                             </button>
                             <div className="fq-export-grid">
                                 <button className="fq-btn-fasta" onClick={() => handleExport('fasta')}>
                                     To_FASTA
+                                </button>
+                                <button className="fq-btn-fasta" onClick={() => handleExport('json')}>
+                                    Full_JSON
                                 </button>
                                 <button className="fq-btn-qcreport" onClick={() => handleExport('csv')}>
                                     QC_Report

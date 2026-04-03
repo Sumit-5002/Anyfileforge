@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, X, Zap, Crown, Rocket, LoaderCircle, CreditCard, BadgePercent } from 'lucide-react';
+import { Check, X, Zap, Crown, Rocket, LoaderCircle, CreditCard, Heart, Coffee, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import userService from '../../services/userService';
 import SeoHead from '../../components/meta/SeoHead';
@@ -8,175 +8,139 @@ import './PricingPage.css';
 function PricingPage() {
     const { user, userData } = useAuth();
     const [checkoutPlan, setCheckoutPlan] = useState(null);
-    const [couponCode, setCouponCode] = useState('');
-    const [discountPercent, setDiscountPercent] = useState(0);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
     const [paymentMessage, setPaymentMessage] = useState('');
 
     const plans = [
         {
             id: 'free',
-            name: 'Free',
-            description: 'Offline/local tools are free and serverless.',
+            name: 'Pioneer',
+            description: 'Free forever. Supported by minimal ads.',
             price: '$0',
-            period: 'month',
+            period: 'forever',
             highlighted: false,
             icon: Zap,
-            iconBg: 'rgba(var(--primary-rgb), 0.15)',
-            iconColor: 'var(--primary-500)',
-            cta: 'Start Free (Offline)',
+            btnText: 'Current Status',
             features: [
-                { text: 'Serverless tools (offline/local)', included: true },
-                { text: 'Basic PDF and Image tools', included: true },
-                { text: 'Community support', included: true },
-                { text: 'Cloud uploads (Drive/Dropbox/OneDrive)', included: false },
-                { text: 'Server-side processing for large files', included: false }
+                { text: 'All 50+ Serverless tools', included: true },
+                { text: 'Privacy-focused processing', included: true },
+                { text: 'Ad-supported experience', included: true },
+                { text: 'Large file cloud processing', included: false },
+                { text: 'Ad-free environment', included: false }
             ]
         },
         {
-            id: 'premium',
-            name: 'Premium',
-            description: 'Online/server features for heavy & cloud-based work.',
-            price: '$9',
-            priceValue: 9,
-            period: 'month',
+            id: 'supporter',
+            name: 'Supporter',
+            description: 'Unlock everything and remove ads with a small donation.',
+            price: '$5',
+            priceValue: 5,
+            period: 'contribution',
             highlighted: true,
-            icon: Crown,
-            iconBg: 'linear-gradient(135deg, var(--primary-600), var(--primary-700))',
-            iconColor: 'white',
-            cta: 'Upgrade for Online Mode',
+            icon: Coffee,
+            btnText: 'Support the Dev',
             features: [
-                { text: 'Everything in Free (offline/local)', included: true },
-                { text: 'Cloud uploads (Drive/Dropbox/OneDrive)', included: true },
-                { text: 'Server-side processing for large files', included: true },
-                { text: 'Optional paid server storage for future reuse', included: true },
-                { text: 'Batch/priority processing', included: true }
+                { text: 'Everything in Pioneer', included: true },
+                { text: '100% Ad-Free Experience', included: true },
+                { text: 'Premium Cloud processing', included: true },
+                { text: 'Large file (>1GB) support', included: true },
+                { text: 'Priority Feature Requests', included: true }
             ]
         },
         {
             id: 'enterprise',
-            name: 'Enterprise',
-            description: 'SSO, audit logs, and dedicated support.',
-            price: 'Let’s talk',
-            period: 'custom',
+            name: 'Guardian',
+            description: 'For research labs and engineering teams.',
+            price: '$20',
+            priceValue: 20,
+            period: 'contribution+',
             highlighted: false,
-            icon: Rocket,
-            iconBg: 'rgba(var(--accent-rgb), 0.18)',
-            iconColor: 'var(--accent-yellow)',
-            cta: 'Contact Sales',
+            icon: Crown,
+            btnText: 'Become a Guardian',
             features: [
-                { text: 'Institution SSO & RBAC', included: true },
-                { text: 'Custom storage & compliance', included: true },
-                { text: 'Dedicated support', included: true },
-                { text: 'Custom SLAs', included: true },
-                { text: 'On-prem deployment options', included: true }
+                { text: 'Everything in Supporter', included: true },
+                { text: 'Team usage license', included: true },
+                { text: 'Branded exports', included: true },
+                { text: 'Dedicated support channel', included: true },
+                { text: 'Early access to new labs', included: true }
             ]
         }
     ];
 
-    const handlePlanSelect = async (planId) => {
-        // ... (keep existing handlePlanSelect logic) ...
-        if (planId === 'enterprise') {
-            window.location.href = 'mailto:enterprise@anyfileforge.com';
-            return;
-        }
-
-        if (planId === 'premium') {
-            setCheckoutPlan(plans.find((plan) => plan.id === 'premium'));
+    const handlePlanSelect = (planId) => {
+        if (planId === 'free') return;
+        
+        if (planId === 'supporter' || planId === 'enterprise') {
+            setCheckoutPlan(plans.find((p) => p.id === planId));
             setPaymentMessage('');
         }
     };
 
-    const applyCoupon = () => {
-        const code = couponCode.trim().toUpperCase();
-        if (code === 'DEMO100') {
-            setDiscountPercent(100);
-            setPaymentMessage('Coupon applied: 100% demo discount.');
-        } else if (code === 'FORGE50') {
-            setDiscountPercent(50);
-            setPaymentMessage('Coupon applied: 50% off.');
-        } else {
-            setDiscountPercent(0);
-            setPaymentMessage('Invalid coupon code.');
-        }
-    };
-
-    const handleDemoPayment = async () => {
+    const handleDonationSimulation = async () => {
         if (!user) {
-            setPaymentMessage('Please login to complete checkout.');
+            setPaymentMessage('Please login to link your support to your account.');
             return;
         }
 
         setPaymentProcessing(true);
         setPaymentMessage('');
         try {
-            /**
-             * ⚠️ SECURITY NOTE: The following call is for demo purposes only.
-             * Updating sensitive user state (like 'tier') from the client is a security risk.
-             * Our Firestore rules now block this update to prevent unauthorized upgrades.
-             * In production, this should trigger a backend function.
-             */
-            await userService.upgradeToPremium(user.uid);
-            setPaymentMessage('Demo payment complete. Premium activated.');
-            window.location.reload();
+            // Simulated donation -> Supporter activation
+            await userService.upgradeToSupporter(user.uid);
+            setPaymentMessage('Thank you for your generous support! Supporter features activated.');
+            setTimeout(() => window.location.reload(), 2000);
         } catch (error) {
-            console.error('Upgrade error:', error);
-            setPaymentMessage('Payment failed. Try again.');
+            console.error('Donation error:', error);
+            setPaymentMessage('Processing failed. Please try again later.');
         } finally {
             setPaymentProcessing(false);
         }
     };
 
-    const checkoutTotal = checkoutPlan
-        ? Math.max(0, (checkoutPlan.priceValue || 0) * (1 - discountPercent / 100))
-        : 0;
-
-    const formatTotal = (value) => (value === 0 ? '$0' : `$${value.toFixed(2)}`);
-
     return (
         <>
             <SeoHead
-                title="Pricing - AnyFileForge"
-                description="Simple, transparent pricing for premium file processing tools. Local-first, secure, and unlimited for professionals."
+                title="Support & Premium - AnyFileForge"
+                description="Support open-source development and unlock premium features. No ads, cloud processing, and prioritized support."
             />
-            <div className="pricing-page">
+            <div className="pricing-page donation-mode">
                 <div className="container">
                     <div className="page-header">
-                        <h1 className="page-title">Simple, Transparent Pricing</h1>
+                        <div className="heart-badge float">
+                            <Heart size={14} fill="currentColor" />
+                            <span>Fuel the Forge</span>
+                        </div>
+                        <h1 className="page-title">Support One-Man Development</h1>
                         <p className="page-subtitle">
-                            Offline/local processing is free and serverless. Online/server processing (cloud uploads, large files, background jobs) is paid. Current: <strong>{userData?.tier?.toUpperCase() || 'FREE'}</strong>
+                           AnyFileForge is a labor of love. Your donations help pay for server costs, keep the tools free for all, and unlock an ad-free premium environment for you.
                         </p>
-                        <ul className="page-highlights">
-                            <li>Offline Mode (Local): Free forever. Files stay on your device; no server used.</li>
-                            <li>Online Mode (Server): Paid. Required for cloud-source uploads (Drive, Dropbox, OneDrive), very large files, and advanced server-side processing.</li>
-                            <li>Optional Server Storage: If you want us to retain processed data for future work, storage is billed; otherwise, we don't keep your files.</li>
-                        </ul>
+                        
+                        <div className="donation-stats">
+                            <div className="stat-item">
+                                <span className="stat-label">Current Tier</span>
+                                <span className="stat-value">{userData?.tier?.toUpperCase() || 'PIONEER'}</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-label">Ad Status</span>
+                                <span className={`stat-value ${userData?.tier === 'supporter' ? 'safe' : 'active'}`}>
+                                    {userData?.tier === 'supporter' ? 'Disabled 🛡️' : 'Enabled 📢'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-
 
                     <div className="pricing-grid">
                         {plans.map((plan, index) => {
-                            const isCurrentPlan = userData?.tier === plan.id || (!userData && plan.id === 'free');
-
+                            const isCurrent = (userData?.tier === plan.id) || (!userData?.tier && plan.id === 'free');
+                            
                             return (
                                 <div
                                     key={index}
-                                    className={`pricing-card card ${plan.highlighted ? 'highlighted' : ''} ${isCurrentPlan ? 'current' : ''}`}
+                                    className={`pricing-card card ${plan.highlighted ? 'highlighted' : ''} ${isCurrent ? 'current' : ''}`}
                                 >
-                                    {plan.highlighted && !isCurrentPlan && (
-                                        <div className="popular-badge">
-                                            <span>Most Popular</span>
-                                        </div>
-                                    )}
-
                                     <div className="plan-header">
-                                        <div className="plan-icon" style={{
-                                            background: plan.iconBg || 'rgba(255, 255, 255, 0.05)'
-                                        }}>
-                                            <plan.icon
-                                                size={32}
-                                                color={plan.iconColor || 'var(--text-primary)'}
-                                            />
+                                        <div className="plan-icon">
+                                            <plan.icon size={32} />
                                         </div>
                                         <h3 className="plan-name">{plan.name}</h3>
                                         <p className="plan-description">{plan.description}</p>
@@ -184,17 +148,13 @@ function PricingPage() {
 
                                     <div className="plan-price">
                                         <span className="price">{plan.price}</span>
-                                        <span className="period">/{plan.period}</span>
+                                        <span className="period">/ {plan.period}</span>
                                     </div>
 
                                     <ul className="features-list">
                                         {plan.features.map((feature, idx) => (
                                             <li key={idx} className={`feature-item ${feature.included ? 'included' : 'excluded'}`}>
-                                                {feature.included ? (
-                                                    <Check size={18} className="feature-icon" />
-                                                ) : (
-                                                    <X size={18} className="feature-icon" />
-                                                )}
+                                                {feature.included ? <Check size={18} /> : <X size={18} />}
                                                 <span>{feature.text}</span>
                                             </li>
                                         ))}
@@ -202,10 +162,10 @@ function PricingPage() {
 
                                     <button
                                         className={`btn ${plan.highlighted ? 'btn-primary' : 'btn-secondary'} btn-full`}
-                                        disabled={isCurrentPlan}
+                                        disabled={isCurrent}
                                         onClick={() => handlePlanSelect(plan.id)}
                                     >
-                                        {isCurrentPlan ? 'Current Plan' : plan.cta}
+                                        {isCurrent ? 'Current Status' : plan.btnText}
                                     </button>
                                 </div>
                             );
@@ -216,8 +176,8 @@ function PricingPage() {
                         <div className="checkout-panel">
                             <div className="checkout-header">
                                 <div>
-                                    <h2>Secure Checkout</h2>
-                                    <p>Finalizing your {checkoutPlan.name} membership.</p>
+                                    <h2>Complete Your Donation</h2>
+                                    <p>Your support directly funds the AnyFileForge project.</p>
                                 </div>
                                 <button className="btn-close-panel" onClick={() => setCheckoutPlan(null)}>
                                     <X size={24} />
@@ -226,76 +186,58 @@ function PricingPage() {
 
                             <div className="checkout-grid">
                                 <div className="checkout-box">
-                                    <h3>Order Summary</h3>
+                                    <h3>Contribution Summary</h3>
                                     <div className="order-summary-card">
                                         <div className="summary-row">
-                                            <span>Selected Plan</span>
+                                            <span>Tier Selection</span>
                                             <span>{checkoutPlan.name}</span>
                                         </div>
-                                        <div className="summary-row">
-                                            <span>Price</span>
-                                            <span>{checkoutPlan.price} / {checkoutPlan.period}</span>
-                                        </div>
-                                        <div className="summary-row">
-                                            <span>Applied Discount</span>
-                                            <span style={{ color: 'var(--primary-500)' }}>-{discountPercent}%</span>
-                                        </div>
                                         <div className="summary-total">
-                                            <span>Total Amount</span>
-                                            <span>{formatTotal(checkoutTotal)}</span>
+                                            <span>One-time Donation</span>
+                                            <span>{checkoutPlan.price}</span>
                                         </div>
                                     </div>
-
-                                    <div className="coupon-section">
-                                        <h3>Coupon Code</h3>
-                                        <div className="coupon-row">
-                                            <input
-                                                type="text"
-                                                value={couponCode}
-                                                onChange={(e) => setCouponCode(e.target.value)}
-                                                placeholder="Enter code (e.g. DEMO100)"
-                                            />
-                                            <button className="btn btn-secondary" onClick={applyCoupon}>
-                                                Apply
-                                            </button>
-                                        </div>
-                                        <p className="hint">Try <b>DEMO100</b> for a free trial checkout.</p>
+                                    
+                                    <div className="premium-perks-box">
+                                        <h4>Unlocking Perks:</h4>
+                                        <ul>
+                                            <li><Shield size={14} /> 100% Ad-Free UI</li>
+                                            <li><Zap size={14} /> Cloud Processing Enabled</li>
+                                            <li><Heart size={14} /> Dev Gratitude</li>
+                                        </ul>
                                     </div>
                                 </div>
 
                                 <div className="checkout-box">
-                                    <h3>Payment Details</h3>
+                                    <h3>Method of Support</h3>
                                     <div className="payment-gateway-card">
                                         <div className="gateway-info">
-                                            <CreditCard size={24} color="var(--primary-500)" />
+                                            <Coffee size={24} color="var(--primary-500)" />
                                             <div>
-                                                <strong>Secure Payment via DemoPay</strong>
-                                                <p>This is a sandbox environment. No real funds are moved.</p>
+                                                <strong>Buy Me a Coffee</strong>
+                                                <p>Secure contribution via processing partner.</p>
                                             </div>
                                         </div>
 
                                         <div className="payment-fields">
-                                            <input type="text" placeholder="Card number: 4242 4242 4242 4242" />
-                                            <div className="payment-row">
-                                                <input type="text" placeholder="MM / YY" />
-                                                <input type="text" placeholder="CVC" />
-                                            </div>
+                                            <input type="text" placeholder="Your Name (Optional)" />
+                                            <textarea placeholder="Message for the dev... (Optional)" rows="2"></textarea>
                                         </div>
 
                                         <button
                                             className="btn btn-primary btn-full btn-large"
-                                            onClick={handleDemoPayment}
+                                            onClick={handleDonationSimulation}
                                             disabled={paymentProcessing}
                                         >
                                             {paymentProcessing ? (
-                                                <><LoaderCircle size={18} className="spin" /> Processing...</>
+                                                <><LoaderCircle size={18} className="spin" /> Sending...</>
                                             ) : (
-                                                <>Authorize {formatTotal(checkoutTotal)} Payment</>
+                                                <>Contribute {checkoutPlan.price}</>
                                             )}
                                         </button>
 
                                         {paymentMessage && (
-                                            <div className="payment-message animated fadeIn">
+                                            <div className={`payment-message ${paymentMessage.includes('failed') ? 'error' : 'success'}`}>
                                                 {paymentMessage}
                                             </div>
                                         )}
@@ -306,27 +248,23 @@ function PricingPage() {
                     )}
 
                     <div className="pricing-faq container">
-                        <h2 className="faq-title">Privacy, Modes & Technical FAQ</h2>
+                        <h2 className="faq-title">Supporter FAQ</h2>
                         <div className="faq-grid">
                             <div className="faq-item">
-                                <h3>Offline vs Online — what’s the difference?</h3>
-                                <p><strong>Offline (Local): Free.</strong> Files never leave your device and are processed in your browser. <strong>Online (Server): Paid.</strong> Required for cloud-source uploads (Drive/Dropbox/OneDrive), very large files, or advanced server compute.</p>
+                                <h3>Where does my money go?</h3>
+                                <p>100% of donations go towards covering the costs of hosting servers, API fees for cloud processing, and maintaining the open-source codebase of AnyFileForge.</p>
                             </div>
                             <div className="faq-item">
-                                <h3>Do you keep a copy of my processed files?</h3>
-                                <p>By default, <strong>no</strong>. We do not keep server-side copies unless you opt in to <strong>paid server storage</strong> for future reuse. If you don’t opt in, transient server data is discarded after processing.</p>
+                                <h3>Is the "Premium" permanent?</h3>
+                                <p>Currently, any donation of $5 or more unlocks Premium features for 30 days. Donations of $20 or more unlock them for a full year.</p>
                             </div>
                             <div className="faq-item">
-                                <h3>Is it safe for HIPAA or GDPR compliance?</h3>
-                                <p>Offline mode is local-only and maximizes data residency. Online mode follows our server security practices; opt-in storage is configurable per project.</p>
+                                <h3>I can't donate right now, can I still use the tools?</h3>
+                                <p>Absolutely. All tools are free and offline-capable. You only see minimal ads to help us keep the lights on.</p>
                             </div>
                             <div className="faq-item">
-                                <h3>Why is there a file size limit on Free?</h3>
-                                <p>Large files can exceed typical browser memory. Free (offline) tools are tuned for stability; Online mode unlocks server resources for heavy workloads.</p>
-                            </div>
-                            <div className="faq-item">
-                                <h3>Can I work offline?</h3>
-                                <p>Yes. Once the site is loaded, most tools work offline. Online-only features require an active connection.</p>
+                                <h3>How do I remove ads?</h3>
+                                <p>Once you donate and your account is upgraded to Supporter status, all ads are automatically removed from your dashboard and tools.</p>
                             </div>
                         </div>
                     </div>

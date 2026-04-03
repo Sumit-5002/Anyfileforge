@@ -6,6 +6,7 @@ import { useDeviceType } from '../../hooks/useDeviceType';
 import { TOOLS } from '../../data/toolsData';
 import InstallPwa from '../pwa/InstallPwa';
 import { useAuth } from '../../contexts/AuthContext';
+import UserAvatar from '../ui/UserAvatar';
 import './Header.css';
 
 const Logo = ({ onClick }) => (
@@ -186,7 +187,7 @@ function Header() {
                         )}
                     </div>
 
-                    <Link to="/pricing" className="nav-link bold">PRICING</Link>
+                    <Link to="/support" className="nav-link bold">SUPPORT</Link>
                 </nav>
 
                 <div className="header-actions">
@@ -286,9 +287,9 @@ function Header() {
                                         <InstallPwa />
                                     </div>
 
-                                    <Link to="/pricing" className="navbar__item navbar__item--xs" onClick={() => setIsMenuOpen(false)}>
-                                        <div className="navbar__item__icon"><CreditCard size={18} /></div>
-                                        <div className="navbar__item__title">Pricing</div>
+                                    <Link to="/support" className="navbar__item navbar__item--xs" onClick={() => setIsMenuOpen(false)}>
+                                        <div className="navbar__item__icon"><Heart size={18} /></div>
+                                        <div className="navbar__item__title">Support</div>
                                     </Link>
                                     <Link to="/privacy" className="navbar__item navbar__item--xs" onClick={() => setIsMenuOpen(false)}>
                                         <div className="navbar__item__icon"><ShieldCheck size={18} /></div>
@@ -324,7 +325,7 @@ function Header() {
                                                 <div className="navbar__item__icon"><Info size={18} /></div>
                                                 <div className="navbar__item__title">About</div>
                                             </Link>
-                                            <Link to="/developer" className="navbar__item navbar__item--xs mobile-submenu__item" onClick={() => { setIsMenuOpen(false); setIsHelpOpen(false); }}>
+                                            <Link to="/dev" className="navbar__item navbar__item--xs mobile-submenu__item" onClick={() => { setIsMenuOpen(false); setIsHelpOpen(false); }}>
                                                 <div className="navbar__item__icon"><User size={18} /></div>
                                                 <div className="navbar__item__title">Developer</div>
                                             </Link>
@@ -380,7 +381,7 @@ function Header() {
                                     {user ? (
                                         <div className="mobile-auth-buttons">
                                             <Link to="/profile" className="navbar__item" onClick={() => setIsMenuOpen(false)}>
-                                                <div className="navbar__item__icon"><User size={20} /></div>
+                                                <div className="navbar__item__icon"><UserAvatar user={user} userData={userData} size={20} /></div>
                                                 <div className="navbar__item__title">Profile Settings</div>
                                             </Link>
                                             <button className="btn btn-secondary btn-full logout-btn mt-8 flex items-center justify-center gap-2" onClick={() => { logout(); setIsMenuOpen(false); }}>

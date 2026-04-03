@@ -7,6 +7,7 @@ import Footer from '../components/layout/Footer';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ScrollToTop from './ScrollToTop';
 import HomePage from '../features/home/HomePage';
+import ROUTES from '../config/routes';
 import './App.css';
 
 // Lazy load components for performance optimization (Bolt ⚡)
@@ -19,12 +20,15 @@ const AuthPage = lazy(() => import('../features/auth/AuthPage'));
 const ProfilePage = lazy(() => import('../features/profile/ProfilePage'));
 const ProjectsPage = lazy(() => import('../features/projects/ProjectsPage'));
 const ProjectDetailPage = lazy(() => import('../features/projects/ProjectDetailPage'));
+const NotFoundPage = lazy(() => import('../features/error/NotFoundPage'));
 
 
 // Lazy load named exports
 const PrivacyPage = lazy(() => import('../features/legal/LegalPages').then(m => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import('../features/legal/LegalPages').then(m => ({ default: m.TermsPage })));
 const LicensePage = lazy(() => import('../features/legal/LegalPages').then(m => ({ default: m.LicensePage })));
+const SecurityPage = lazy(() => import('../features/legal/LegalPages').then(m => ({ default: m.SecurityPage })));
+
 
 const PREMIUM_KEEP_ALIVE_MS = Number(import.meta.env.VITE_PREMIUM_KEEP_ALIVE_MS) || 8 * 60 * 1000;
 
@@ -34,7 +38,7 @@ function App() {
   const isToolView = location.pathname.startsWith('/tools/') && location.pathname !== '/tools';
 
   useEffect(() => {
-    if (userData?.tier !== 'premium') return undefined;
+    if (userData?.tier !== 'supporter' && userData?.tier !== 'enterprise') return undefined;
 
     const pingServer = async () => {
       try {
@@ -79,21 +83,23 @@ function App() {
         <main className="main-content">
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/tools" element={<ToolsPage />} />
-              <Route path="/tools/:toolId" element={<ToolDetailPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/developer" element={<DeveloperPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/license" element={<LicensePage />} />
-              <Route path="/login" element={<AuthPage initialMode="login" />} />
-              <Route path="/signup" element={<AuthPage initialMode="signup" />} />
-              <Route path="/forgot-password" element={<AuthPage initialMode="forgot-password" />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/projects" element={<ProjectsPage />} />
-              <Route path="/projects/:id" element={<ProjectDetailPage />} />
+              <Route path={ROUTES.HOME}           element={<HomePage />} />
+              <Route path={ROUTES.TOOLS}          element={<ToolsPage />} />
+              <Route path={ROUTES.TOOL_DETAIL}    element={<ToolDetailPage />} />
+              <Route path={ROUTES.SUPPORT}        element={<PricingPage />} />
+              <Route path={ROUTES.ABOUT}          element={<AboutPage />} />
+              <Route path={ROUTES.DEVELOPER}      element={<DeveloperPage />} />
+              <Route path={ROUTES.PRIVACY}        element={<PrivacyPage />} />
+              <Route path={ROUTES.SECURITY}       element={<SecurityPage />} />
+              <Route path={ROUTES.TERMS}          element={<TermsPage />} />
+              <Route path={ROUTES.LICENSE}        element={<LicensePage />} />
+              <Route path={ROUTES.LOGIN}          element={<AuthPage initialMode="login" />} />
+              <Route path={ROUTES.SIGNUP}         element={<AuthPage initialMode="signup" />} />
+              <Route path={ROUTES.RESET}          element={<AuthPage initialMode="forgot-password" />} />
+              <Route path={ROUTES.PROFILE}        element={<ProfilePage />} />
+              <Route path={ROUTES.PROJECTS}       element={<ProjectsPage />} />
+              <Route path={ROUTES.PROJECT_DETAIL} element={<ProjectDetailPage />} />
+              <Route path="*"                     element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </main>

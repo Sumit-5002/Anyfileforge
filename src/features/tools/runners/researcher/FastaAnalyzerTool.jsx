@@ -72,6 +72,8 @@ const FastaAnalyzerTool = ({ tool, onFilesAdded }) => {
             content += `GC Content:      ${stats.gcContent.toFixed(4)}%\n`;
             content += `N50 Assembly:    ${stats.n50.toLocaleString()} bp\n`;
             content += `L50 Contigs:     ${stats.l50.toLocaleString()}\n`;
+        } else if (format === 'json') {
+            content = JSON.stringify(stats, null, 2);
         }
 
         const blob = new Blob([content], { type: 'text/plain' });
@@ -128,9 +130,12 @@ const FastaAnalyzerTool = ({ tool, onFilesAdded }) => {
                             </div>
 
                             <div className="section-title text-[10px] uppercase font-black tracking-widest text-slate-500 mt-10 mb-4">Export_Signal</div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button className="btn-primary w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase" onClick={() => handleExportData('csv')}><Download size={14}/> CSV_REPORT</button>
-                                <button className="btn-secondary w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase" onClick={() => handleExportData('txt')}><Download size={14}/> TXT_REPORT</button>
+                            <div className="flex flex-col gap-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button className="btn-primary w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase" onClick={() => handleExportData('csv')}><Download size={14}/> CSV_Metrics</button>
+                                    <button className="btn-secondary w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase" onClick={() => handleExportData('txt')}><Download size={14}/> TXT_Report</button>
+                                </div>
+                                <button className="btn-secondary w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase" onClick={() => handleExportData('json')}><Download size={14}/> Full_Data_JSON</button>
                             </div>
                         </div>
                     )}

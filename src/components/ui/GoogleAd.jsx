@@ -13,8 +13,8 @@ const GoogleAd = ({ slot, format = 'auto', responsive = 'true' }) => {
   const { userData } = useAuth();
 
   useEffect(() => {
-    // Only push if not on premium and browser environment
-    if (userData?.tier !== 'premium' && typeof window !== 'undefined') {
+    // Only push if not on supporter/enterprise and browser environment
+    if (userData?.tier !== 'supporter' && userData?.tier !== 'enterprise' && typeof window !== 'undefined') {
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
       } catch (e) {
@@ -23,8 +23,8 @@ const GoogleAd = ({ slot, format = 'auto', responsive = 'true' }) => {
     }
   }, [userData?.tier]);
 
-  // Don't show ads for premium users
-  if (userData?.tier === 'premium') {
+  // Don't show ads for supporters or enterprise users
+  if (userData?.tier === 'supporter' || userData?.tier === 'enterprise') {
     return null;
   }
 

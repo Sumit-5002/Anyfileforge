@@ -13,6 +13,11 @@
             "**/.*",
             "**/node_modules/**"
         ],
+        "redirects": [
+            { "source": "/pricing", "destination": "/support", "type": 301 },
+            { "source": "/developer", "destination": "/dev", "type": 301 },
+            { "source": "/forgot-password", "destination": "/reset", "type": 301 }
+        ],
         "headers": [
             {
                 "source": "/assets/**",

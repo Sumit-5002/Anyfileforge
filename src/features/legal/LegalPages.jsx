@@ -91,3 +91,48 @@ export function LicensePage() {
         </>
     );
 }
+
+export function SecurityPage() {
+    const content = [
+        {
+            heading: 'Local-First by Design',
+            text: 'AnyFileForge is built on a privacy-by-architecture model. In Offline mode, all file processing happens inside a WebAssembly (WASM) sandbox in your browser. Your files never travel over a network — they are processed entirely on your device.',
+            list: [
+                'No file uploads to any server in Offline mode.',
+                'WebAssembly isolates processing from the rest of the browser.',
+                'Output files exist only in browser memory until you download them.',
+            ]
+        },
+        {
+            heading: 'HTTPS & Transport Security',
+            text: 'All connections to AnyFileForge are served exclusively over HTTPS with modern TLS. HTTP connections are automatically redirected. HSTS headers prevent downgrade attacks.',
+        },
+        {
+            heading: 'Zero File Logging',
+            text: 'We do not log, cache, or inspect the content of any file you process. In Online mode (paid plans), files are processed transiently and deleted immediately after your session. We never store file content unless you explicitly opt into paid server storage.',
+        },
+        {
+            heading: 'Browser Storage Policy',
+            text: 'AnyFileForge uses localStorage only for user preferences (theme, processing mode) and session tokens. File data is never written to localStorage, sessionStorage, or IndexedDB. Output files live in memory only.',
+        },
+        {
+            heading: 'Authentication Security',
+            text: "User accounts are powered by Firebase Authentication, which provides industry-standard OAuth 2.0 flows for Google and GitHub login. Passwords are never stored by AnyFileForge — authentication is fully delegated to Firebase's secure infrastructure.",
+        },
+        {
+            heading: 'Responsible Disclosure',
+            text: 'Found a security vulnerability? Please email sumitboy2005@gmail.com with the subject "Security Disclosure". We will acknowledge your report within 48 hours and work to resolve confirmed issues promptly.',
+        },
+    ];
+
+    return (
+        <>
+            <SeoHead
+                title="Security - AnyFileForge"
+                description="How AnyFileForge protects your files with local-first WASM processing, HTTPS, and zero file logging."
+            />
+            <SimplePage title="Security" lastUpdated="April 2026" content={content} />
+        </>
+    );
+}
+

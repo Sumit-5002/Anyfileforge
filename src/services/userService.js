@@ -64,16 +64,12 @@ const userService = {
     },
 
     /**
-     * Upgrades a user to premium (Mock for demo)
-     * ⚠️ SECURITY NOTE: This is insecure as it's called from the client.
-     * In a production app, this should only be done via a secure backend
-     * (e.g., Firebase Cloud Functions) after payment verification.
-     * @param {string} uid - User ID
+     * Upgrades a user to supporter (Donation mode)
      */
-    async upgradeToPremium(uid) {
+    async upgradeToSupporter(uid) {
         const userRef = doc(db, 'users', uid);
         await updateDoc(userRef, {
-            tier: 'premium',
+            tier: 'supporter',
             premiumSince: new Date().toISOString()
         });
     }

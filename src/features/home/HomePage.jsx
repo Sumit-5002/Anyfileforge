@@ -10,6 +10,7 @@ import ToolCard from '../../components/ui/ToolCard';
 import GoogleAd from '../../components/ui/GoogleAd';
 import { TOOLS } from '../../data/toolsData';
 import SeoHead from '../../components/meta/SeoHead';
+import ROUTES from '../../config/routes';
 import './HomePage.css';
 function HomePage() {
     const { t } = useTranslation();
@@ -142,12 +143,12 @@ function HomePage() {
                             <div className="workflow-content">
                                 <Layers size={32} color="var(--primary-500)" />
                                 <div className="workflow-text">
-                                    <h3>Automated Workflows (Premium)</h3>
+                                    <h3>Automated Workflows (Supporter)</h3>
                                     <p>Chain multiple tools in a server-side pipeline. Industry-grade speed for large datasets.</p>
                                 </div>
                             </div>
-                            <button className="btn btn-primary" onClick={() => navigate('/pricing')}>
-                                Upgrade to Premium
+                            <button className="btn btn-primary" onClick={() => navigate(ROUTES.SUPPORT)}>
+                                Support the Forge
                                 <Play size={16} />
                             </button>
                         </div>
