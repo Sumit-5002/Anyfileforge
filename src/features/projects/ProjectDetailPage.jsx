@@ -7,7 +7,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import projectService from '../../services/projectService';
+import userService from '../../services/userService';
 import { TOOLS } from '../../data/toolsData';
+import UserAvatar from '../../components/ui/UserAvatar';
 import './ProjectDetailPage.css';
 
 /* ── flat list of all tools from toolsData ── */
@@ -113,6 +115,10 @@ export default function ProjectDetailPage() {
     const [wfName, setWfName] = useState('My Workflow');
     const [editingName, setEditingName] = useState(false);
     const [savedWfs, setSavedWfs] = useState([]);
+    const [members, setMembers] = useState([]);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviting, setInviting] = useState(false);
+    const [inviteMsg, setInviteMsg] = useState({ text: '', type: '' });
 
     /* load project */
     useEffect(() => {
@@ -122,13 +128,43 @@ export default function ProjectDetailPage() {
             const found = all.find((p) => p.id === id);
             if (!found) { navigate('/projects'); return; }
             setProject(found);
-            /* load saved workflows from Firestore via projectService */
-            const wfs = found.workflows || [];
-            setSavedWfs(wfs);
+            setSavedWfs(found.workflows || []);
+            
+            // Load member details
+            if (found.memberIds && found.memberIds.length > 0) {
+                const details = await userService.getUsersByIds(found.memberIds);
+                setMembers(details);
+            }
+            
             setLoading(false);
         };
         load();
     }, [id, user, navigate]);
+
+    const handleInvite = async (e) => {
+        e.preventDefault();
+        if (!inviteEmail.trim() || inviting) return;
+        
+        setInviting(true);
+        setInviteMsg({ text: '', type: '' });
+        try {
+            const addedName = await projectService.addMemberToProjectByEmail(id, inviteEmail);
+            setInviteMsg({ text: `Successfully added ${addedName}!`, type: 'success' });
+            setInviteEmail('');
+            
+            // Refresh member list
+            const updatedProject = await projectService.listProjectsForUser(user.uid).then(all => all.find(p => p.id === id));
+            if (updatedProject) {
+                setProject(updatedProject);
+                const details = await userService.getUsersByIds(updatedProject.memberIds);
+                setMembers(details);
+            }
+        } catch (err) {
+            setInviteMsg({ text: err.message || 'Error adding member.', type: 'error' });
+        } finally {
+            setInviting(false);
+        }
+    };
 
     /* add step */
     const addStep = useCallback((tool) => {
@@ -346,6 +382,45 @@ export default function ProjectDetailPage() {
                                         </li>
                                     ))}
                                 </ul>
+                            )}
+                        </div>
+
+                        {/* Team management */}
+                        <div className="pd-card">
+                            <div className="sidebar-card-header">
+                                <h3>👥 Manage Team</h3>
+                                <span className="member-count-badge">{members.length}</span>
+                            </div>
+                            
+                            <div className="member-list">
+                                {members.map(m => (
+                                    <div key={m.uid} className="member-item">
+                                        <UserAvatar user={{ uid: m.uid, photoURL: m.photoURL }} userData={m} size={24} className="member-avatar" />
+                                        <div className="member-info">
+                                            <span className="member-name">{m.displayName || 'Member'}</span>
+                                            {m.uid === project.ownerId && <span className="owner-label">Owner</span>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {user?.uid === project.ownerId && (
+                                <form className="invite-form" onSubmit={handleInvite}>
+                                    <input 
+                                        type="email" 
+                                        placeholder="Invite by email..." 
+                                        value={inviteEmail}
+                                        onChange={(e) => setInviteEmail(e.target.value)}
+                                        required
+                                        disabled={inviting}
+                                    />
+                                    <button type="submit" className="btn btn-secondary btn-full" disabled={inviting}>
+                                        {inviting ? 'Inviting...' : 'Add Member'}
+                                    </button>
+                                    {inviteMsg.text && (
+                                        <p className={`invite-msg ${inviteMsg.type}`}>{inviteMsg.text}</p>
+                                    )}
+                                </form>
                             )}
                         </div>
 

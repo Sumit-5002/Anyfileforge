@@ -1,5 +1,5 @@
 import { db } from '../config/firebase';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
 /**
  * Service to handle user profile and premium status
@@ -84,6 +84,19 @@ const userService = {
     async updateUserProfile(uid, data) {
         const userRef = doc(db, 'users', uid);
         await updateDoc(userRef, data);
+    },
+
+    /**
+     * Gets multiple user profiles by ID
+     */
+    async getUsersByIds(uids) {
+        if (!uids || (Array.isArray(uids) && uids.length === 0)) return [];
+        
+        // Firestore 'in' query supports up to 30 IDs
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('__name__', 'in', uids.slice(0, 30)));
+        const snap = await getDocs(q);
+        return snap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
     }
 };
 

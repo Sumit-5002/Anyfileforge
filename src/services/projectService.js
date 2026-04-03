@@ -7,7 +7,8 @@ import {
     getDocs,
     serverTimestamp,
     updateDoc,
-    doc
+    doc,
+    arrayUnion
 } from 'firebase/firestore';
 
 const projectsRef = collection(db, 'projects');
@@ -45,6 +46,34 @@ const projectService = {
     async updateProject(projectId, updates) {
         const ref = doc(db, 'projects', projectId);
         await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+    },
+
+    /**
+     * Adds a member to a project by searching for their email
+     * Requires the user to already exist in our 'users' collection
+     */
+    async addMemberToProjectByEmail(projectId, email) {
+        if (!email) throw new Error('Email is required');
+        
+        // 1. Find user by email
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', email.toLowerCase().trim()));
+        const snap = await getDocs(q);
+        
+        if (snap.empty) {
+            throw new Error('User not found. They must sign up for AnyFileForge first.');
+        }
+        
+        const newUserUid = snap.docs[0].id;
+        const projectRef = doc(db, 'projects', projectId);
+        
+        // 2. Add to project's member list (using Firestore arrayUnion for safety)
+        await updateDoc(projectRef, {
+            memberIds: arrayUnion(newUserUid),
+            updatedAt: serverTimestamp()
+        });
+        
+        return snap.docs[0].data().displayName || email;
     }
 };
 

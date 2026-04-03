@@ -21,11 +21,6 @@ service cloud.firestore {
                     
       allow update: if isOwner(userId)
                     && (
-                      /**
-                       * SECURITY ENFORCEMENT:
-                       * Users CANNOT update their own tier or role. 
-                       * These fields must be handled by a secure backend (Cloud Functions/Admin SDK).
-                       */
                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt', 'tier', 'premiumSince'])
                     );
     }
@@ -48,11 +43,18 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.auth.uid == request.resource.data.ownerId
         && request.auth.uid in request.resource.data.memberIds;
+      
       allow read, delete: if isSignedIn()
         && request.auth.uid in resource.data.memberIds;
+      
       allow update: if isSignedIn()
         && request.auth.uid in resource.data.memberIds
-        && request.resource.data.ownerId == resource.data.ownerId;
+        && request.resource.data.ownerId == resource.data.ownerId
+        && (
+           // Only the Owner can modify the member list
+           request.auth.uid == resource.data.ownerId || 
+           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['memberIds'])
+        );
     }
 
     // Default deny
