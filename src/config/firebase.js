@@ -3,6 +3,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth'; // Authentication
 import { getFirestore } from 'firebase/firestore'; // Database
 import { getStorage } from 'firebase/storage'; // File Storage
+import { getAnalytics } from 'firebase/analytics'; // Analytics
 
 /**
  * ------------------------------------------------------------------
@@ -17,7 +18,8 @@ const firebaseConfig = {
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
     storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 /**
@@ -38,6 +40,9 @@ export const db = getFirestore(app);
 
 // Storage Service (File Uploads for Premium users - though we stick to client-side mostly)
 export const storage = getStorage(app);
+
+// Initialize Analytics
+export const analytics = getAnalytics(app);
 
 // Export the app instance by default for any edge cases
 export default app;
