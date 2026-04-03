@@ -4,6 +4,7 @@ import { Mail, ShieldCheck, LogOut, Crown, Edit2, Check, X, Building, FlaskConic
 import { useAuth } from '../../contexts/AuthContext';
 import ROUTES from '../../config/routes';
 import SeoHead from '../../components/meta/SeoHead';
+import userService from '../../services/userService';
 import UserAvatar from '../../components/ui/UserAvatar';
 import './ProfilePage.css';
 
@@ -30,8 +31,25 @@ function ProfilePage() {
     const { user, userData, logout, loading } = useAuth();
     const [editingName, setEditingName] = useState(false);
     const [nameInput, setNameInput] = useState('');
+    const [updating, setUpdating] = useState(false);
 
-    if (loading) return null;
+    const handleUpdateName = async () => {
+        if (!nameInput.trim() || nameInput === displayName) {
+            setEditingName(false);
+            return;
+        }
+
+        setUpdating(true);
+        try {
+            await userService.updateUserProfile(user.uid, { displayName: nameInput.trim() });
+            setEditingName(false);
+        } catch (error) {
+            console.error('Update name error:', error);
+            alert('Failed to update name. Please try again.');
+        } finally {
+            setUpdating(false);
+        }
+    };
 
     if (!user) {
         return (
@@ -88,10 +106,16 @@ function ProfilePage() {
                                             value={nameInput}
                                             onChange={e => setNameInput(e.target.value)}
                                             autoFocus
+                                            disabled={updating}
                                             placeholder="Your display name"
+                                            onKeyDown={e => e.key === 'Enter' && handleUpdateName()}
                                         />
-                                        <button className="icon-btn success" onClick={() => setEditingName(false)}><Check size={16} /></button>
-                                        <button className="icon-btn danger"  onClick={() => setEditingName(false)}><X size={16} /></button>
+                                        <button className="icon-btn success" onClick={handleUpdateName} disabled={updating}>
+                                            <Check size={16} />
+                                        </button>
+                                        <button className="icon-btn danger"  onClick={() => setEditingName(false)} disabled={updating}>
+                                            <X size={16} />
+                                        </button>
                                     </div>
                                 ) : (
                                     <>
@@ -168,7 +192,7 @@ function ProfilePage() {
 
                         {/* Actions */}
                         <div className="profile-actions-card card">
-                            <h3 className="info-card-title">Manage</h3>
+                            <h3 className="info-card-title">Manage <span className="beta-tag-mini">BETA</span></h3>
                             {userData?.tier !== 'supporter' && userData?.tier !== 'enterprise' ? (
                                 <div className="upgrade-cta">
                                     <p>☕ Support the project and go <strong>Ad-Free</strong> with cloud processing.</p>
@@ -176,7 +200,7 @@ function ProfilePage() {
                                 </div>
                             ) : (
                                 <div className="supporter-cta">
-                                    <p>Thank you for supporting AnyFileForge! You have unlocked all premium features.</p>
+                                    <p>Thank you for supporting AnyFileForge! You have unlocked all supporter features.</p>
                                     <Link to={ROUTES.SUPPORT} className="btn btn-secondary btn-full">View Supporter Perks</Link>
                                 </div>
                             )}

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '../config/firebase';
+import { auth, db } from '../config/firebase';
 import {
     onAuthStateChanged,
     signInAnonymously,
@@ -11,6 +11,7 @@ import {
     signInWithPopup,
     sendPasswordResetEmail,
 } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 import userService from '../services/userService';
 
 const AuthContext = createContext();
@@ -22,25 +23,40 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         let isMounted = true;
+        let unsubscribeSnapshot = null;
 
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
             if (!isMounted) return;
+
+            // Clean up previous snapshot listener
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
 
             if (firebaseUser) {
                 setUser(firebaseUser);
-                setUserData(null);
-                setLoading(false);
 
-                // Do profile sync in background so first paint is not blocked by network calls.
+                // Listen for Firestore profile changes in real-time
+                const userRef = doc(db, 'users', firebaseUser.uid);
+                unsubscribeSnapshot = onSnapshot(userRef, (docSnap) => {
+                    if (isMounted && docSnap.exists()) {
+                        setUserData(docSnap.data());
+                    }
+                }, (error) => {
+                    console.error('Firestore snapshot error:', error);
+                });
+
+                // Periodic check for profile presence (sync once)
                 (async () => {
                     try {
                         await userService.syncUserProfile(firebaseUser);
-                        const data = await userService.getUserData(firebaseUser.uid);
-                        if (isMounted) setUserData(data);
                     } catch (error) {
                         console.error('Auth profile sync error:', error);
                     }
                 })();
+                
+                setLoading(false);
             } else {
                 setUser(null);
                 setUserData(null);
@@ -50,7 +66,8 @@ export function AuthProvider({ children }) {
 
         return () => {
             isMounted = false;
-            unsubscribe();
+            unsubscribeAuth();
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
         };
     }, []);
 
@@ -60,8 +77,6 @@ export function AuthProvider({ children }) {
 
     const signupWithEmail = async (email, password, additionalData = {}) => {
         const result = await createUserWithEmailAndPassword(auth, email, password);
-        // We'll sync the role/etc via userService in the effect or directly here
-        // Ideally userService handles profile creation.
         await userService.createUserProfile(result.user, additionalData);
         return result;
     };
@@ -110,5 +125,4 @@ export function AuthProvider({ children }) {
     );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

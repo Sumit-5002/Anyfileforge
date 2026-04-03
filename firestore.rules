@@ -21,12 +21,12 @@ service cloud.firestore {
                     
       allow update: if isOwner(userId)
                     && (
-                      // Case 1: Updating general profile fields
-                      (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt', 'tier', 'premiumSince']))
-                      ||
-                      // Case 2: Support/Donation mode (Demo Logic)
-                      // In a real app, this should be restricted to a server context/Cloud Function
-                      (request.resource.data.tier in ['supporter', 'enterprise'])
+                      /**
+                       * SECURITY ENFORCEMENT:
+                       * Users CANNOT update their own tier or role. 
+                       * These fields must be handled by a secure backend (Cloud Functions/Admin SDK).
+                       */
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt', 'tier', 'premiumSince'])
                     );
     }
     

@@ -10,6 +10,8 @@ function PricingPage() {
     const [checkoutPlan, setCheckoutPlan] = useState(null);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
     const [paymentMessage, setPaymentMessage] = useState('');
+    const [verificationSent, setVerificationSent] = useState(false);
+    const [txnId, setTxnId] = useState('');
 
     const plans = [
         {
@@ -82,16 +84,29 @@ function PricingPage() {
             return;
         }
 
+        if (!txnId.trim()) {
+            setPaymentMessage('Please enter a Transaction ID or reference for verification.');
+            return;
+        }
+
         setPaymentProcessing(true);
         setPaymentMessage('');
         try {
-            // Simulated donation -> Supporter activation
-            await userService.upgradeToSupporter(user.uid);
-            setPaymentMessage('Thank you for your generous support! Supporter features activated.');
-            setTimeout(() => window.location.reload(), 2000);
+            /** 
+             * ARCHITECTURE NOTE: In production, the database update MUST happen via a 
+             * server-side webhook (e.g., Stripe) only AFTER real payment verification.
+             * 
+             * For this Beta, we simulate the submission of a verification request.
+             */
+            
+            // Simulating a 1.5s network delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            setVerificationSent(true);
+            setPaymentMessage('Verification Request Sent! In a live environment, the developer would now verify your transaction. (Beta simulation complete)');
         } catch (error) {
-            console.error('Donation error:', error);
-            setPaymentMessage('Processing failed. Please try again later.');
+            console.error('Submission error:', error);
+            setPaymentMessage('Submission failed. Please try again later.');
         } finally {
             setPaymentProcessing(false);
         }
@@ -110,9 +125,13 @@ function PricingPage() {
                             <Heart size={14} fill="currentColor" />
                             <span>Fuel the Forge</span>
                         </div>
+                        <div className="beta-banner">
+                            <span className="beta-badge">BETA TEST MODE</span>
+                            <p>Real payment processing is currently disabled for security. Support tiers can be tested freely by clicking "Contribute" during this beta phase.</p>
+                        </div>
                         <h1 className="page-title">Support One-Man Development</h1>
                         <p className="page-subtitle">
-                           AnyFileForge is a labor of love. Your donations help pay for server costs, keep the tools free for all, and unlock an ad-free premium environment for you.
+                           AnyFileForge is a labor of love. Your donations help pay for server costs, keep the tools free for all, and unlock an ad-free experience for you.
                         </p>
                         
                         <div className="donation-stats">
@@ -214,25 +233,33 @@ function PricingPage() {
                                         <div className="gateway-info">
                                             <Coffee size={24} color="var(--primary-500)" />
                                             <div>
-                                                <strong>Buy Me a Coffee</strong>
-                                                <p>Secure contribution via processing partner.</p>
+                                                <strong>Beta Contribution Mode</strong>
+                                                <p>Secure contribution via processing partner (SIMULATED).</p>
                                             </div>
                                         </div>
 
                                         <div className="payment-fields">
-                                            <input type="text" placeholder="Your Name (Optional)" />
+                                            <input 
+                                                type="text" 
+                                                placeholder="Transaction ID / Receipt Reference" 
+                                                required 
+                                                value={txnId}
+                                                onChange={(e) => setTxnId(e.target.value)}
+                                            />
                                             <textarea placeholder="Message for the dev... (Optional)" rows="2"></textarea>
                                         </div>
 
                                         <button
                                             className="btn btn-primary btn-full btn-large"
                                             onClick={handleDonationSimulation}
-                                            disabled={paymentProcessing}
+                                            disabled={paymentProcessing || verificationSent}
                                         >
                                             {paymentProcessing ? (
-                                                <><LoaderCircle size={18} className="spin" /> Sending...</>
+                                                <><LoaderCircle size={18} className="spin" /> Submitting...</>
+                                            ) : verificationSent ? (
+                                                <>Request Pending ⏳</>
                                             ) : (
-                                                <>Contribute {checkoutPlan.price}</>
+                                                <>Submit for Verification ({checkoutPlan.price})</>
                                             )}
                                         </button>
 
@@ -255,8 +282,8 @@ function PricingPage() {
                                 <p>100% of donations go towards covering the costs of hosting servers, API fees for cloud processing, and maintaining the open-source codebase of AnyFileForge.</p>
                             </div>
                             <div className="faq-item">
-                                <h3>Is the "Premium" permanent?</h3>
-                                <p>Currently, any donation of $5 or more unlocks Premium features for 30 days. Donations of $20 or more unlock them for a full year.</p>
+                                <h3>Is the "Supporter" status permanent?</h3>
+                                <p>Currently, any donation of $5 or more unlocks Supporter features for a full year. This helps us maintain our servers and continue development.</p>
                             </div>
                             <div className="faq-item">
                                 <h3>I can't donate right now, can I still use the tools?</h3>

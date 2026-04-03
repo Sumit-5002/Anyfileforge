@@ -64,14 +64,26 @@ const userService = {
     },
 
     /**
-     * Upgrades a user to supporter (Donation mode)
+     * Upgrades a user tier
+     * @param {string} uid - User ID
+     * @param {string} tier - 'supporter', 'enterprise', etc.
      */
-    async upgradeToSupporter(uid) {
+    async upgradeUserTier(uid, tier) {
         const userRef = doc(db, 'users', uid);
         await updateDoc(userRef, {
-            tier: 'supporter',
+            tier: tier,
             premiumSince: new Date().toISOString()
         });
+    },
+
+    /**
+     * Updates arbitrary user profile fields
+     * @param {string} uid - User ID
+     * @param {Object} data - Fields to update
+     */
+    async updateUserProfile(uid, data) {
+        const userRef = doc(db, 'users', uid);
+        await updateDoc(userRef, data);
     }
 };
 
