@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download } from 'lucide-react';
+import { Download, X } from 'lucide-react';
+import { useDeviceType } from '../../hooks/useDeviceType';
 import './InstallPwa.css';
 
 const DEFERRED_PROMPT_KEY = '__anyfileforgeDeferredInstallPrompt';
@@ -8,28 +9,13 @@ const DEFERRED_PROMPT_KEY = '__anyfileforgeDeferredInstallPrompt';
 const isStandalone = () =>
     window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-const detectIosSafari = () => {
-    const ua = window.navigator.userAgent || '';
-    const isiOS = /iPhone|iPad|iPod/i.test(ua);
-    const isWebKit = /WebKit/i.test(ua);
-    const isCriOS = /CriOS/i.test(ua);
-    const isFxiOS = /FxiOS/i.test(ua);
-    return isiOS && isWebKit && !isCriOS && !isFxiOS;
-};
-
 const InstallPwa = () => {
+    const { isMobile } = useDeviceType();
     const [promptInstall, setPromptInstall] = useState(() => window[DEFERRED_PROMPT_KEY] || null);
     const [isInstalled, setIsInstalled] = useState(() => (typeof window !== 'undefined' ? isStandalone() : false));
-    const [isBannerVisible, setIsBannerVisible] = useState(() => {
-        if (typeof window === 'undefined') return false;
-        const dismissed = window.localStorage.getItem('pwa_banner_dismissed');
-        return !isStandalone() && !dismissed;
-    });
+    const [isBannerVisible, setIsBannerVisible] = useState(false);
     const [notification, setNotification] = useState(null);
     
-    const isIosInstallable = detectIosSafari() && !isStandalone();
-    const shouldShowManualInstall = !isStandalone();
-
     const showNotification = (msg) => {
         setNotification(msg);
         setTimeout(() => setNotification(null), 5000);
@@ -41,7 +27,7 @@ const InstallPwa = () => {
             window[DEFERRED_PROMPT_KEY] = e;
             setPromptInstall(e);
             
-            // Auto-show banner if not installed and not dismissed
+            // Only auto-show the banner on MOBILE to avoid "sucking" on laptops
             const dismissed = localStorage.getItem('pwa_banner_dismissed');
             if (!dismissed && !isStandalone()) {
                 setIsBannerVisible(true);
@@ -63,7 +49,7 @@ const InstallPwa = () => {
             window.removeEventListener('beforeinstallprompt', handler);
             window.removeEventListener('appinstalled', onInstalled);
         };
-    }, []);
+    }, [isMobile]);
 
     const onDismiss = () => {
         setIsBannerVisible(false);
@@ -72,14 +58,8 @@ const InstallPwa = () => {
 
     const onClick = async (evt) => {
         evt?.preventDefault();
-
-        if (isIosInstallable && !promptInstall) {
-            showNotification('Tap Share and then "Add to Home Screen" to install.');
-            return;
-        }
-
         if (!promptInstall) {
-            showNotification('Install prompt is preparing...');
+            showNotification('Install prompt is currently unavailable.');
             return;
         }
 
@@ -93,36 +73,29 @@ const InstallPwa = () => {
         }
     };
 
-    const shouldRenderButton = !isInstalled && shouldShowManualInstall;
+    if (isInstalled) return null;
 
     return (
-        <>
-            {shouldRenderButton && (
-                <button
-                    className="install-pwa-btn"
-                    id="setup_button"
-                    aria-label="Install app"
-                    title="Install App"
-                    onClick={onClick}
-                >
-                    <Download size={20} />
-                    Install App
-                </button>
-            )}
+        <div className="pwa-install-wrapper">
+            <button
+                className="install-pwa-btn"
+                aria-label="Install for offline use"
+                onClick={onClick}
+            >
+                <Download size={16} />
+                <span className="desktop-only text-xs">Install</span>
+            </button>
 
             {isBannerVisible && createPortal(
-                <div className="pwa-auto-banner fade-in-up">
+                <div className="pwa-auto-banner">
                     <div className="banner-content">
-                        <div className="banner-icon">
-                            <img src="/logo.png" alt="" />
-                        </div>
                         <div className="banner-text">
                             <h3>Install AnyFileForge</h3>
-                            <p>Get a faster, more secure desktop experience with offline access.</p>
+                            <p>Fast, offline, and secure.</p>
                         </div>
                         <div className="banner-actions">
                             <button className="banner-btn-secondary" onClick={onDismiss}>Later</button>
-                            <button className="banner-btn-primary" onClick={onClick}>Install Now</button>
+                            <button className="banner-btn-primary" onClick={onClick}>Install</button>
                         </div>
                     </div>
                 </div>,
@@ -130,12 +103,12 @@ const InstallPwa = () => {
             )}
 
             {notification && createPortal(
-                <div className="pwa-notification-toast fade-in-up">
+                <div className="pwa-notification-toast">
                     {notification}
                 </div>,
                 document.body
             )}
-        </>
+        </div>
     );
 };
 
