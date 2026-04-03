@@ -330,6 +330,9 @@
 .page-item-card:hover .page-rotate-btn,
 .page-item-card:hover .page-remove-btn,
 .page-item-card:hover .page-view-btn,
+.page-item-card:focus-within .page-rotate-btn,
+.page-item-card:focus-within .page-remove-btn,
+.page-item-card:focus-within .page-view-btn,
 .page-rotate-btn:focus-visible,
 .page-remove-btn:focus-visible,
 .page-view-btn:focus-visible {
@@ -1317,6 +1320,11 @@
     cursor: pointer;
     transition: all 0.2s;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.artifact-btn:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
 }
 
 .artifact-btn-view {

@@ -149,23 +149,15 @@ function ToolDetailPage() {
                             </div>
                         </div>
                     ) : (
-                        <div className="server-mode-card tool-dev-card">
+                        <div className="server-mode-card bg-slate-900 border border-white/5 p-24 text-center">
                             <div className="server-mode-content">
-                                <Terminal size={56} className="tool-dev-icon" />
-                                <span className="tool-dev-status">Status: In Development</span>
-                                <h2 className="tool-dev-title">Under Development</h2>
-                                <p className="tool-dev-description">
-                                    <strong>{effectiveTool.name}</strong> is in active development.
-                                    We are polishing the final workflow and UI before release.
+                                <Terminal size={64} className="text-slate-700 mx-auto mb-6" />
+                                <h2 className="text-2xl font-black italic tracking-tight text-slate-500 mb-4 uppercase">Status_Pending</h2>
+                                <p className="text-slate-600 max-w-sm mx-auto mb-8">
+                                    This module is currently in the development pipeline. Your interest helps us prioritize!
                                 </p>
-                                <ul className="tool-dev-list">
-                                    <li>Dedicated input and output flow for this tool</li>
-                                    <li>Stable offline processing with clear progress UX</li>
-                                    <li>Final export actions and error-safe handling</li>
-                                </ul>
-                                <p className="tool-dev-note">This placeholder is intentional so the app stays stable while this module is being built.</p>
-                                <div className="tool-dev-actions">
-                                    <Link to="/tools" className="btn btn-primary btn-large">
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                    <Link to="/tools" className="btn-primary-gradient px-8 py-3 rounded-2xl w-full sm:w-auto font-black italic uppercase text-xs">
                                         Back to Tools
                                     </Link>
                                 </div>

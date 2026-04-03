@@ -3,15 +3,13 @@ import * as mammoth from 'mammoth';
 import { safeText, downloadBlob } from './pdfUtils';
 import pptxgen from 'pptxgenjs';
 import * as pdfjs from 'pdfjs-dist';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
 if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {
     pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 }
 
-const legacyWordToPDF = async (filesInput, onProgress) => {
+export const wordToPDF = async (filesInput, onProgress) => {
     const files = Array.isArray(filesInput) ? filesInput : [filesInput];
     const pdf = await PDFDocument.create();
     const fontN = await pdf.embedFont(StandardFonts.Helvetica);
@@ -91,126 +89,6 @@ const legacyWordToPDF = async (filesInput, onProgress) => {
     }
     if (onProgress) onProgress(100);
     return pdf.save();
-};
-
-const waitForImagesToLoad = async (root) => {
-    const images = Array.from(root.querySelectorAll('img'));
-    await Promise.all(
-        images.map((img) => {
-            if (img.complete) return Promise.resolve();
-            return new Promise((resolve) => {
-                img.onload = resolve;
-                img.onerror = resolve;
-            });
-        })
-    );
-};
-
-const createWordRenderContainer = (fileName, html) => {
-    const root = document.createElement('div');
-    root.style.position = 'fixed';
-    root.style.left = '-99999px';
-    root.style.top = '0';
-    root.style.width = '794px'; // ~A4 width at 96dpi
-    root.style.background = '#ffffff';
-    root.style.color = '#111827';
-    root.style.padding = '32px';
-    root.style.boxSizing = 'border-box';
-    root.style.fontFamily = 'Arial, Helvetica, sans-serif';
-    root.style.lineHeight = '1.45';
-
-    root.innerHTML = `
-      <style>
-        .docx-export-root h1,.docx-export-root h2,.docx-export-root h3 { margin: 0 0 10px; line-height: 1.25; }
-        .docx-export-root p { margin: 0 0 10px; }
-        .docx-export-root table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        .docx-export-root th, .docx-export-root td { border: 1px solid #d1d5db; padding: 6px 8px; }
-        .docx-export-root img { max-width: 100%; height: auto; }
-        .docx-export-title { font-size: 14px; color: #6b7280; margin-bottom: 14px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
-      </style>
-      <div class="docx-export-root">
-        <div class="docx-export-title">${safeText(fileName)}</div>
-        ${html}
-      </div>
-    `;
-    document.body.appendChild(root);
-    return root;
-};
-
-export const wordToPDF = async (filesInput, onProgress) => {
-    const files = Array.isArray(filesInput) ? filesInput : [filesInput];
-
-    try {
-        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
-        const pageWidth = 210;
-        const pageHeight = 297;
-        const margin = 10;
-        const printableHeight = pageHeight - margin * 2;
-
-        let hasRenderedPages = false;
-
-        for (let fIdx = 0; fIdx < files.length; fIdx++) {
-            const file = files[fIdx];
-            if (onProgress) onProgress((fIdx / files.length) * 100);
-
-            const options = {
-                convertImage: mammoth.images.imgElement((element) =>
-                    element.read('base64').then((b64) => ({
-                        src: `data:${element.contentType};base64,${b64}`
-                    }))
-                )
-            };
-
-            const { value: html } = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() }, options);
-            const renderRoot = createWordRenderContainer(file.name, html);
-
-            try {
-                await waitForImagesToLoad(renderRoot);
-
-                const canvas = await html2canvas(renderRoot, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                    windowWidth: renderRoot.scrollWidth
-                });
-
-                const imageData = canvas.toDataURL('image/jpeg', 0.96);
-                const imageWidth = pageWidth - margin * 2;
-                const imageHeight = (canvas.height * imageWidth) / canvas.width;
-
-                if (hasRenderedPages) {
-                    doc.addPage();
-                }
-
-                let remainingHeight = imageHeight;
-                let yOffset = margin;
-
-                doc.addImage(imageData, 'JPEG', margin, yOffset, imageWidth, imageHeight, undefined, 'FAST');
-                remainingHeight -= printableHeight;
-
-                while (remainingHeight > 0.1) {
-                    doc.addPage();
-                    yOffset = margin - (imageHeight - remainingHeight);
-                    doc.addImage(imageData, 'JPEG', margin, yOffset, imageWidth, imageHeight, undefined, 'FAST');
-                    remainingHeight -= printableHeight;
-                }
-
-                hasRenderedPages = true;
-                if (onProgress) onProgress(((fIdx + 1) / files.length) * 100);
-            } finally {
-                if (renderRoot?.parentNode) {
-                    renderRoot.parentNode.removeChild(renderRoot);
-                }
-            }
-        }
-
-        if (onProgress) onProgress(100);
-        return doc.output('arraybuffer');
-    } catch (error) {
-        console.warn('High-fidelity DOCX conversion failed; falling back to legacy parser.', error);
-        return legacyWordToPDF(files, onProgress);
-    }
 };
 
 import JSZip from 'jszip';
