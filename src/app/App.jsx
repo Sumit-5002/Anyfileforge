@@ -37,6 +37,9 @@ function App() {
   const location = useLocation();
   const isToolView = location.pathname.startsWith('/tools/') && location.pathname !== '/tools';
 
+  // Ignore Firebase internal auth paths to avoid 404
+  if (location.pathname.startsWith('/__/')) return null;
+
   useEffect(() => {
     if (userData?.tier !== 'supporter' && userData?.tier !== 'enterprise') return undefined;
 
@@ -99,6 +102,7 @@ function App() {
               <Route path={ROUTES.PROFILE}        element={<ProfilePage />} />
               <Route path={ROUTES.PROJECTS}       element={<ProjectsPage />} />
               <Route path={ROUTES.PROJECT_DETAIL} element={<ProjectDetailPage />} />
+              <Route path="/__/auth/*"             element={null} />
               <Route path="*"                     element={<NotFoundPage />} />
             </Routes>
           </Suspense>

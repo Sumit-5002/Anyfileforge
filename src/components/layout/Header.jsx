@@ -27,7 +27,7 @@ const Logo = ({ onClick }) => (
 
 function Header() {
     const { isMobile } = useDeviceType();
-    const { user, logout } = useAuth();
+    const { user, userData, logout } = useAuth();
     const { i18n } = useTranslation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isGridOpen, setIsGridOpen] = useState(false);
