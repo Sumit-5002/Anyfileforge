@@ -7,7 +7,9 @@ import {
     createUserWithEmailAndPassword,
     signOut,
     GoogleAuthProvider,
-    signInWithPopup
+    GithubAuthProvider,
+    signInWithPopup,
+    sendPasswordResetEmail,
 } from 'firebase/auth';
 import userService from '../services/userService';
 
@@ -69,12 +71,21 @@ export function AuthProvider({ children }) {
         return signInWithPopup(auth, provider);
     };
 
+    const loginWithGitHub = () => {
+        const provider = new GithubAuthProvider();
+        return signInWithPopup(auth, provider);
+    };
+
     const loginAnonymously = async () => {
         try {
             await signInAnonymously(auth);
         } catch (error) {
             console.error('Auth error:', error);
         }
+    };
+
+    const resetPassword = (email) => {
+        return sendPasswordResetEmail(auth, email);
     };
 
     const logout = () => signOut(auth);
@@ -86,7 +97,9 @@ export function AuthProvider({ children }) {
         loginWithEmail,
         signupWithEmail,
         loginWithGoogle,
+        loginWithGitHub,
         loginAnonymously,
+        resetPassword,
         logout
     };
 

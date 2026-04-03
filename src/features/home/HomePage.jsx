@@ -7,6 +7,7 @@ import {
     Code, FlaskConical, Linkedin, FileSpreadsheet, Music, Boxes, FileCode
 } from 'lucide-react';
 import ToolCard from '../../components/ui/ToolCard';
+import GoogleAd from '../../components/ui/GoogleAd';
 import { TOOLS } from '../../data/toolsData';
 import SeoHead from '../../components/meta/SeoHead';
 import './HomePage.css';
@@ -152,6 +153,11 @@ function HomePage() {
                         </div>
                     </div>
                 </section>
+
+                {/* Google Ad Slot */}
+                <div className="container" style={{ margin: '2rem auto' }}>
+                    <GoogleAd slot="YOUR_AD_SLOT_ID_HERE" />
+                </div>
 
                 {/* Features Section */}
                 <section className="features-section">

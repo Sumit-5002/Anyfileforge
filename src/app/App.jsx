@@ -90,6 +90,7 @@ function App() {
               <Route path="/license" element={<LicensePage />} />
               <Route path="/login" element={<AuthPage initialMode="login" />} />
               <Route path="/signup" element={<AuthPage initialMode="signup" />} />
+              <Route path="/forgot-password" element={<AuthPage initialMode="forgot-password" />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:id" element={<ProjectDetailPage />} />

@@ -3,6 +3,7 @@ import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ShieldCheck, Info, Crown, Building, Lock, Code, Activity, Terminal, Zap, Globe, Cpu } from 'lucide-react';
 import { TOOLS } from '../../data/toolsData';
+import GoogleAd from '../../components/ui/GoogleAd';
 import TOOL_RUNNERS from './runners';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -172,6 +173,10 @@ function ToolDetailPage() {
                             </div>
                         </div>
                     )}
+                </div>
+
+                <div style={{ margin: '2rem 0' }}>
+                    <GoogleAd slot="YOUR_AD_SLOT_ID_HERE" />
                 </div>
 
                 {!hasFiles && (
