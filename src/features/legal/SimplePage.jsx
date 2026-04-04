@@ -37,7 +37,7 @@ function SimplePage({ title, lastUpdated, content }) {
                             <Shield size={20} />
                             <span>100% Client-Side Processing</span>
                         </div>
-                        <p>Questions? Contact us at <a href="mailto:privacy@anyfileforge.com">privacy@anyfileforge.com</a></p>
+                        <p>Questions? Contact us at <a href="mailto:anyfileforge@gmail.com">anyfileforge@gmail.com</a></p>
                     </div>
                 </div>
             </div>
