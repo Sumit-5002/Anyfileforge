@@ -5,6 +5,8 @@ import dns from 'dns';
 
 const router = express.Router();
 
+const ALLOWED_IMAGE_FORMATS = new Set(['jpeg', 'jpg', 'png', 'webp', 'gif', 'avif', 'tiff']);
+
 const isInternalIP = (ip) => {
     if (!ip) return false;
     // Normalize IPv4-mapped IPv6 addresses (e.g., ::ffff:127.0.0.1)
@@ -57,14 +59,21 @@ router.post('/resize', async (req, res) => {
                 return res.status(400).json({ error: 'Image file is required' });
             }
 
-            const { width, height, format = 'jpeg' } = req.body;
+            let { width, height, format = 'jpeg' } = req.body;
+
+            if (!ALLOWED_IMAGE_FORMATS.has(format)) {
+                await fs.unlink(req.file.path).catch(() => {});
+                return res.status(400).json({ error: 'Unsupported image format' });
+            }
+
+            if (format === 'jpg') format = 'jpeg';
 
             const w = width ? parseInt(width) : null;
             const h = height ? parseInt(height) : null;
 
             if ((w !== null && (isNaN(w) || w <= 0 || w > 10000)) ||
                 (h !== null && (isNaN(h) || h <= 0 || h > 10000))) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Invalid dimensions. Width and height must be between 1 and 10000.' });
             }
 
@@ -85,7 +94,7 @@ router.post('/resize', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image resize error:', error);
-                res.status(500).json({ error: 'Failed to resize image', message: error.message });
+                res.status(500).json({ error: 'Failed to resize image' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -113,11 +122,19 @@ router.post('/compress', async (req, res) => {
                 return res.status(400).json({ error: 'Image file is required' });
             }
 
-            const { quality = 80, format = 'jpeg' } = req.body;
+            let { quality = 80, format = 'jpeg' } = req.body;
+
+            if (!ALLOWED_IMAGE_FORMATS.has(format)) {
+                await fs.unlink(req.file.path).catch(() => {});
+                return res.status(400).json({ error: 'Unsupported image format' });
+            }
+
+            if (format === 'jpg') format = 'jpeg';
+
             const q = parseInt(quality);
 
             if (isNaN(q) || q < 1 || q > 100) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Invalid quality. Must be between 1 and 100.' });
             }
 
@@ -131,7 +148,7 @@ router.post('/compress', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image compress error:', error);
-                res.status(500).json({ error: 'Failed to compress image', message: error.message });
+                res.status(500).json({ error: 'Failed to compress image' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -159,11 +176,19 @@ router.post('/convert', async (req, res) => {
                 return res.status(400).json({ error: 'Image file is required' });
             }
 
-            const { format = 'png', quality } = req.body;
+            let { format = 'png', quality } = req.body;
+
+            if (!ALLOWED_IMAGE_FORMATS.has(format)) {
+                await fs.unlink(req.file.path).catch(() => {});
+                return res.status(400).json({ error: 'Unsupported image format' });
+            }
+
+            if (format === 'jpg') format = 'jpeg';
+
             const q = quality ? parseInt(quality) : null;
 
             if (q !== null && (isNaN(q) || q < 1 || q > 100)) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Invalid quality. Must be between 1 and 100.' });
             }
 
@@ -178,7 +203,7 @@ router.post('/convert', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image convert error:', error);
-                res.status(500).json({ error: 'Failed to convert image', message: error.message });
+                res.status(500).json({ error: 'Failed to convert image' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -206,7 +231,14 @@ router.post('/crop', async (req, res) => {
                 return res.status(400).json({ error: 'Image file is required' });
             }
 
-            const { left, top, width, height, format = 'jpeg' } = req.body;
+            let { left, top, width, height, format = 'jpeg' } = req.body;
+
+            if (!ALLOWED_IMAGE_FORMATS.has(format)) {
+                await fs.unlink(req.file.path).catch(() => {});
+                return res.status(400).json({ error: 'Unsupported image format' });
+            }
+
+            if (format === 'jpg') format = 'jpeg';
 
             const l = parseInt(left);
             const t = parseInt(top);
@@ -214,7 +246,7 @@ router.post('/crop', async (req, res) => {
             const h = parseInt(height);
 
             if (isNaN(l) || isNaN(t) || isNaN(w) || isNaN(h) || l < 0 || t < 0 || w <= 0 || h <= 0 || w > 10000 || h > 10000) {
-                await fs.unlink(req.file.path);
+                await fs.unlink(req.file.path).catch(() => {});
                 return res.status(400).json({ error: 'Invalid crop parameters.' });
             }
 
@@ -234,7 +266,7 @@ router.post('/crop', async (req, res) => {
                 res.send(buffer);
             } catch (error) {
                 console.error('Image crop error:', error);
-                res.status(500).json({ error: 'Failed to crop image', message: error.message });
+                res.status(500).json({ error: 'Failed to crop image' });
             } finally {
                 await fs.unlink(req.file.path).catch(err => {
                     if (err.code !== 'ENOENT') console.error('Failed to unlink file:', err.message);
@@ -281,14 +313,22 @@ router.post('/html-to-image', async (req, res) => {
         }
 
         // Mitigate DNS rebinding: Fetch using the resolved IP and a Host header
-        const targetUrl = `${parsed.protocol}//${resolvedIP}${parsed.pathname}${parsed.search}`;
+        // Wrap IPv6 addresses in square brackets
+        const ipPart = resolvedIP.includes(':') ? `[${resolvedIP}]` : resolvedIP;
+        const portPart = parsed.port ? `:${parsed.port}` : '';
+        const targetUrl = `${parsed.protocol}//${ipPart}${portPart}${parsed.pathname}${parsed.search}`;
+
         const response = await fetch(targetUrl, {
-            redirect: 'follow',
+            redirect: 'manual',
             headers: {
                 'User-Agent': 'AnyFileForge-Server/1.0 (+html-to-image)',
-                'Host': parsed.hostname
+                'Host': parsed.host
             }
         });
+
+        if (response.status >= 300 && response.status < 400) {
+            return res.status(403).json({ error: 'Redirects are forbidden for security reasons.' });
+        }
 
         if (!response.ok) {
             return res.status(502).json({ error: `Unable to fetch URL (${response.status}).` });
