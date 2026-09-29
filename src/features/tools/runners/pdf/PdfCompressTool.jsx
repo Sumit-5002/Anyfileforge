@@ -65,6 +65,7 @@ function PdfCompressTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             files={files}
             onFilesSelected={handleFilesSelected}
             onReset={() => { setFiles([]); setCompletedCount(0); }}
+            onReorderFiles={setFiles}
             processing={processing}
             onProcess={handleProcess}
             actionLabel="Compress Now"

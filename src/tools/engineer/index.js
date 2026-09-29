@@ -41,8 +41,8 @@ const ENGINEER_TOOLS = [
             },
             { 
                 id: 'markdown-preview', 
-                name: 'Markdown Preview', 
-                description: 'Visualize Markdown as HTML.', 
+                name: 'Markdown Viewer', 
+                description: 'Edit & preview Markdown with GFM, syntax highlighting, tables, and export.', 
                 icon: FileText, color: '#facc15' 
             },
             { 

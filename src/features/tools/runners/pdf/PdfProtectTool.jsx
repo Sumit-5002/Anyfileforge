@@ -61,6 +61,7 @@ function PdfProtectTool({ tool, onFilesAdded }) {
             files={files}
             onFilesSelected={handleFilesSelected}
             onReset={() => { setFiles([]); setDone(false); }}
+            onReorderFiles={setFiles}
             processing={processing}
             onProcess={handleProcess}
             actionLabel={files.length > 1 ? `Protect All (${files.length})` : "Protect PDF Now"}

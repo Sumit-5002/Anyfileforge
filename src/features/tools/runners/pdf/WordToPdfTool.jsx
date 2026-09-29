@@ -43,6 +43,7 @@ function WordToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             files={files}
             onFilesSelected={handleFilesSelected}
             onReset={() => setFiles([])}
+            onReorderFiles={setFiles}
             processing={processing}
             progress={progress}
             onProcess={handleProcess}

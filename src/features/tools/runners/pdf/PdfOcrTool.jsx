@@ -191,6 +191,7 @@ function PdfOcrTool({ tool, onFilesAdded }) {
                  setDone(false);
                  setProgress(0);
             }}
+            onReorderFiles={setFiles}
             processing={processing}
             progress={progress}
             onProcess={handleProcess}

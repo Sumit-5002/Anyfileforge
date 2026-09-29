@@ -3,7 +3,7 @@ import pdfService from '../../../../services/pdfService';
 import FileUploader from '../../../../components/ui/FileUploader';
 import ToolWorkspace from '../common/ToolWorkspace';
 import PageGrid from '../common/PageGrid';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, ArrowDown10, ArrowDown01 } from 'lucide-react';
 
 function PdfOrganizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
     const [file, setFile] = useState(null);
@@ -32,6 +32,10 @@ function PdfOrganizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             newOrder.splice(targetIdx, 0, draggedNum);
             return newOrder;
         });
+    };
+
+    const handleSortPages = (direction) => {
+        setOrder(prev => [...prev].sort((a, b) => direction === 'asc' ? a - b : b - a));
     };
 
     const handleProcess = async () => {
@@ -70,6 +74,29 @@ function PdfOrganizeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                     <div className="order-summary mt-3">
                         <LayoutGrid size={16} className="text-primary" />
                         <span><strong>{order.length}</strong> pages remaining</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-white/5">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Auto Sort Pages</div>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                                onClick={() => handleSortPages('asc')}
+                                title="Sort Pages 1 to N"
+                            >
+                                <ArrowDown10 size={14} className="text-primary-400" />
+                                <span>1 → {order.length}</span>
+                            </button>
+                            <button
+                                type="button"
+                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                                onClick={() => handleSortPages('desc')}
+                                title="Sort Pages N to 1 (Reverse)"
+                            >
+                                <ArrowDown01 size={14} className="text-primary-400" />
+                                <span>{order.length} → 1</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             }

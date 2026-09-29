@@ -1,12 +1,18 @@
 import React from 'react';
 import { ArrowUp, ArrowDown, X } from 'lucide-react';
+import FileSortBar from './FileSortBar';
 import './FileList.css';
 
-function FileList({ files, onRemove, onMoveUp, onMoveDown, allowReorder = false }) {
+function FileList({ files, onRemove, onMoveUp, onMoveDown, onSort, allowReorder = false }) {
     if (files.length === 0) return null;
 
     return (
         <div className="file-list">
+            {onSort && files.length > 1 && (
+                <div className="mb-3">
+                    <FileSortBar files={files} onSort={onSort} />
+                </div>
+            )}
             {files.map((file, index) => (
                 <div key={file.id} className="file-row">
                     <div className="file-meta">

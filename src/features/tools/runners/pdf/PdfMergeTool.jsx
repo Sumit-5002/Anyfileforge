@@ -73,6 +73,7 @@ function PdfMergeTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             files={files}
             onFilesSelected={handleFilesSelected}
             onReset={() => setFiles([])}
+            onReorderFiles={setFiles}
             processing={processing}
             onProcess={handleMerge}
             actionLabel="Merge PDF"

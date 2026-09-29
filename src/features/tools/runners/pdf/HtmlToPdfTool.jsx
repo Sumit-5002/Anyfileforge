@@ -80,6 +80,7 @@ function HtmlToPdfTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 setFiles([]);
                 setUrlInput('');
             }}
+            onReorderFiles={setFiles}
             processing={processing}
             progress={progress}
             onProcess={handleProcess}

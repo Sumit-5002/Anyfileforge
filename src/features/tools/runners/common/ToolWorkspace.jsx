@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { X, FileText, Download, Loader2, Upload, Info, Eye, Zap, FileImage, Trash2 } from 'lucide-react';
 import FileUploader from '../../../../components/ui/FileUploader';
+import FileSortBar from '../../../../components/tools/shared/FileSortBar';
 import './ToolWorkspace.css';
 
 /**
@@ -87,6 +88,7 @@ function ToolWorkspace({
     onFilesSelected,
     onRemoveFile,
     onReset,
+    onReorderFiles,
     processing,
     progress = 0,
     onProcess,
@@ -160,7 +162,14 @@ function ToolWorkspace({
                         <strong className="text-white">{files.length}</strong> {isResearch ? 'Resource' : 'file'}{files.length !== 1 ? 's' : ''}
                     </span>
                 </div>
-                <div className="workspace-header-actions flex gap-2">
+                <div className="workspace-header-actions flex gap-2 items-center flex-wrap">
+                    {onReorderFiles && files.length > 1 && (
+                        <FileSortBar
+                            files={files}
+                            onSort={onReorderFiles}
+                            variant="compact"
+                        />
+                    )}
                     {showHeaderActions && onFilesSelected && (
                         <>
                             <button className="btn-add-more bg-primary-500 hover:bg-primary-600 text-white rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95" onClick={() => addMoreInputRef.current?.click()}>+ Add Files</button>

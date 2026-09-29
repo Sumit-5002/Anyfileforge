@@ -1,0 +1,171 @@
+/* ==========================================================================
+   FileSortBar - Small Circular Icon Button (Match User Design)
+   ========================================================================== */
+
+.file-sort-icon-btn-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    z-index: 40;
+}
+
+/* Small circular button matching screenshot */
+.file-sort-circle-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 9999px;
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+    padding: 0;
+}
+
+.file-sort-circle-btn:hover {
+    transform: translateY(-1px) scale(1.05);
+    background: #f8fafc;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), 0 0 12px rgba(255, 255, 255, 0.3);
+    color: #000000;
+}
+
+.file-sort-circle-btn:active {
+    transform: translateY(0) scale(0.97);
+}
+
+.file-sort-circle-btn.open {
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5), 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.file-sort-circle-btn.just-sorted {
+    animation: circleSortSuccess 0.6s ease-out;
+}
+
+@keyframes circleSortSuccess {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.8);
+        transform: scale(0.95);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+        transform: scale(1.08);
+    }
+    100% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        transform: scale(1);
+    }
+}
+
+/* Floating dropdown menu */
+.file-sort-floating-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 250px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    z-index: 100;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    animation: sortPopupIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sortPopupIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.file-sort-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px 8px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 6px;
+}
+
+.file-sort-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: #e2e8f0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+}
+
+.file-sort-menu-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.file-sort-menu-item.active {
+    background: rgba(59, 130, 246, 0.22);
+    color: #93c5fd;
+    font-weight: 700;
+}
+
+.file-sort-menu-item-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-sort-item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.file-sort-menu-item.active .file-sort-item-icon {
+    background: rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+}
+
+.file-sort-item-title {
+    display: block;
+    line-height: 1.2;
+}
+
+.file-sort-item-desc {
+    font-size: 0.65rem;
+    color: #64748b;
+    display: block;
+    margin-top: 2px;
+    font-weight: 400;
+}

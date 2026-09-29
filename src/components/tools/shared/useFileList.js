@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { formatFileSize } from '../../../utils/fileUtils';
+import { sortFiles as sortFilesUtil } from '../../../utils/fileSortUtils';
 
 export const useFileList = () => {
     const [files, setFiles] = useState([]);
@@ -31,5 +32,9 @@ export const useFileList = () => {
         });
     }, []);
 
-    return { files, addFiles, removeFile, clearFiles, moveFile, setFiles };
+    const sortFiles = useCallback((criterion) => {
+        setFiles((prev) => sortFilesUtil(prev, criterion));
+    }, []);
+
+    return { files, addFiles, removeFile, clearFiles, moveFile, setFiles, sortFiles };
 };

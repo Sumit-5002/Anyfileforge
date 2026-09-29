@@ -63,6 +63,7 @@ function PdfSignTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             files={files}
             onFilesSelected={handleFilesSelected}
             onReset={() => setFiles([])}
+            onReorderFiles={setFiles}
             processing={processing}
             onProcess={handleProcess}
             actionLabel="Sign PDF"

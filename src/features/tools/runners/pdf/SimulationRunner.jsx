@@ -180,6 +180,7 @@ function SimulationRunner({ tool, onFilesAdded }) {
                 setProgress(0);
                 setUrlInput('');
             }}
+            onReorderFiles={setFiles}
             processing={processing}
             progress={progress}
             results={results}

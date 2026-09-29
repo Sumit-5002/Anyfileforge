@@ -62,6 +62,7 @@ function PdfUnlockTool({ tool, onFilesAdded }) {
                 setFiles([]);
                 setDone(false);
             }}
+            onReorderFiles={setFiles}
             processing={processing}
             onProcess={handleProcess}
             actionLabel={files.length > 1 ? `Unlock Batch (${files.length})` : "Unlock PDF Now"}

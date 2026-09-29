@@ -135,6 +135,7 @@ function GenericFileTool({
             results={results}
             onFilesSelected={handleFiles}
             onReset={() => { setFiles([]); setResults([]); setError(''); }}
+            onReorderFiles={setFiles}
             processing={processing}
             onProcess={handleProcess}
             actionLabel={actionLabel}

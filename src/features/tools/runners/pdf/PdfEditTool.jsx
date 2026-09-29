@@ -177,6 +177,7 @@ function PdfEditTool({ tool, onFilesAdded }) {
                 setFiles([]);
                 setDone(false);
             }}
+            onReorderFiles={setFiles}
             processing={processing}
             onProcess={handleProcess}
             actionLabel={files.length > 1 ? `Batch Edit (${files.length})` : "Apply Edit Now"}

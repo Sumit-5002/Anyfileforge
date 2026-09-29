@@ -53,6 +53,7 @@ function PdfRepairTool({ tool, onFilesAdded: parentOnFilesAdded }) {
             files={files}
             onFilesSelected={handleFilesSelected}
             onReset={() => { setFiles([]); setCompleted(false); }}
+            onReorderFiles={setFiles}
             processing={processing}
             onProcess={handleProcess}
             actionLabel={files.length > 1 ? `Repair All (${files.length})` : "Repair PDF"}

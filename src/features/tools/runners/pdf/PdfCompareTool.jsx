@@ -101,6 +101,7 @@ function PdfCompareTool({ tool, onFilesAdded: parentOnFilesAdded }) {
                 files={files}
                 onFilesSelected={handleFilesSelected}
                 onReset={() => { setFiles([]); setReport(null); setSearchTerm(''); }}
+                onReorderFiles={setFiles}
                 processing={processing}
                 progress={progress}
                 onProcess={handleProcess}
