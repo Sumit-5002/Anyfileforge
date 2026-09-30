@@ -59,6 +59,7 @@ export const TOOL_RUNNERS = {
     'code-minifier': lazy(() => import('./text/CodeMinifierTool')),
     'regex-tester': lazy(() => import('./text/RegexTesterTool')),
     'markdown-preview': lazy(() => import('./text/MarkdownViewerTool')),
+    'markup-render': lazy(() => import('./text/MarkdownViewerTool')),
     'csv-plotter': lazy(() => import('./text/CsvPlotterTool')),
     'latex-editor': lazy(() => import('./text/LatexEditorTool')),
     'bibtex-manager': lazy(() => import('./text/BibtexManagerTool')),

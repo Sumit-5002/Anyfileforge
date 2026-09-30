@@ -12,19 +12,21 @@ import { useAuth } from '../../contexts/AuthContext';
 const GoogleAd = ({ slot, format = 'auto', responsive = 'true' }) => {
   const { userData } = useAuth();
 
+  // Don't show ads for supporters, enterprise users, or placeholder slots
+  const isInvalidSlot = !slot || slot === 'YOUR_AD_SLOT_ID_HERE';
+
   useEffect(() => {
-    // Only push if not on supporter/enterprise and browser environment
-    if (userData?.tier !== 'supporter' && userData?.tier !== 'enterprise' && typeof window !== 'undefined') {
+    if (isInvalidSlot || userData?.tier === 'supporter' || userData?.tier === 'enterprise') return;
+    if (typeof window !== 'undefined') {
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
       } catch (e) {
         console.error('AdSense injection failed:', e);
       }
     }
-  }, [userData?.tier]);
+  }, [userData?.tier, isInvalidSlot]);
 
-  // Don't show ads for supporters or enterprise users
-  if (userData?.tier === 'supporter' || userData?.tier === 'enterprise') {
+  if (isInvalidSlot || userData?.tier === 'supporter' || userData?.tier === 'enterprise') {
     return null;
   }
 

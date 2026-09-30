@@ -16,7 +16,9 @@ import './MarkdownViewerTool.css';
 const renderer = new marked.Renderer();
 
 // Custom code block renderer with language badge
-renderer.code = function({ text, lang }) {
+renderer.code = function(arg1, arg2) {
+    const text = (typeof arg1 === 'object' && arg1 !== null) ? (arg1.text || '') : (arg1 || '');
+    const lang = (typeof arg1 === 'object' && arg1 !== null) ? (arg1.lang || '') : (arg2 || '');
     const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext';
     let highlighted;
     try {
@@ -35,9 +37,9 @@ renderer.code = function({ text, lang }) {
 
 // Checkbox list items
 renderer.listitem = function(item) {
-    const text = typeof item === 'string' ? item : item.text || '';
-    const task = typeof item === 'object' ? item.task : false;
-    const checked = typeof item === 'object' ? item.checked : false;
+    const text = typeof item === 'string' ? item : (item?.text || '');
+    const task = typeof item === 'object' && item !== null ? Boolean(item.task) : false;
+    const checked = typeof item === 'object' && item !== null ? Boolean(item.checked) : false;
     if (task) {
         return `<li style="list-style:none;margin-left:-1.5em"><input type="checkbox" ${checked ? 'checked' : ''} disabled style="margin-right:6px">${text}</li>`;
     }
@@ -128,24 +130,37 @@ LineNums.displayName = 'LineNums';
    Main Component
    ════════════════════════════════════════════ */
 export default function MarkdownViewerTool({ tool }) {
-    const [content, setContent] = useState('');
+    const [content, setContent] = useState(STARTER_TEMPLATE);
     const [view, setView] = useState('split'); // 'editor' | 'split' | 'preview'
-    const [filename, setFilename] = useState('');
+    const [filename, setFilename] = useState('welcome.md');
     const [isDragging, setIsDragging] = useState(false);
     const [copied, setCopied] = useState(false);
+    // Debounced content for preview — only re-renders after 150ms pause in typing
+    const [debouncedContent, setDebouncedContent] = useState(STARTER_TEMPLATE);
+    const [isRendering, setIsRendering] = useState(false);
 
     const fileInputRef = useRef(null);
     const textareaRef = useRef(null);
 
-    // Render markdown → HTML
+    // Debounce: update preview 150ms after the user stops typing
+    useEffect(() => {
+        setIsRendering(true);
+        const timer = setTimeout(() => {
+            setDebouncedContent(content);
+            setIsRendering(false);
+        }, 150);
+        return () => clearTimeout(timer);
+    }, [content]);
+
+    // Render markdown → HTML (only recalculates when debounced content changes)
     const renderedHtml = useMemo(() => {
-        if (!content) return '';
+        if (!debouncedContent) return '';
         try {
-            return marked.parse(content);
+            return marked.parse(debouncedContent);
         } catch {
             return '<p style="color:#f87171">Render error</p>';
         }
-    }, [content]);
+    }, [debouncedContent]);
 
     const stats = useMemo(() => computeStats(content), [content]);
 
@@ -496,8 +511,8 @@ ${renderedHtml}
                                 <Eye size={12} />
                                 Preview
                             </div>
-                            <span style={{ fontSize: 10, color: '#1e293b', fontWeight: 700 }}>
-                                GFM RENDER
+                            <span style={{ fontSize: 10, color: isRendering ? '#facc15' : '#1e293b', fontWeight: 700, transition: 'color 0.2s' }}>
+                                {isRendering ? 'Updating…' : 'GFM RENDER'}
                             </span>
                         </div>
                         <div className="mdv-preview-scroll">

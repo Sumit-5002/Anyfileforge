@@ -68,7 +68,7 @@ const serverProcessingService = {
      * Checks server health.
      */
     async health() {
-        const response = await fetch(buildUrl('/api/health'));
+        const response = await fetch(buildUrl('/api/health'), { signal: AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined });
         if (!response.ok) throw new Error('Server health check failed.');
         return response.json();
     },
@@ -80,7 +80,8 @@ const serverProcessingService = {
         const url = buildUrl(`/api/health?ts=${Date.now()}`);
         const response = await fetch(url, {
             method: 'GET',
-            cache: 'no-store'
+            cache: 'no-store',
+            signal: AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined
         });
         if (!response.ok) throw new Error('Server keep-alive failed.');
         return response.json();

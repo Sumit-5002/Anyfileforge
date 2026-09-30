@@ -162,7 +162,7 @@ function Header() {
                                 <div className="mega-menu-grid">
                                     <div className="mega-col">
                                         <h4 className="mega-title">ENGINEER TOOLS</h4>
-                                        {TOOLS.engineer?.[0]?.tools?.slice(0, 8).map(tool => (
+                                        {TOOLS.engineer?.flatMap(cat => cat.tools || []).map(tool => (
                                             <Link key={tool.id} to={`/tools/${tool.id}`} className="mega-item" onClick={() => setActiveDropdown(null)}>
                                                 <div className="mega-icon-wrapper" style={{ color: tool.color }}>
                                                     <tool.icon size={18} />
@@ -173,7 +173,7 @@ function Header() {
                                     </div>
                                     <div className="mega-col">
                                         <h4 className="mega-title">RESEARCHER TOOLS</h4>
-                                        {TOOLS.researcher?.[0]?.tools?.slice(0, 8).map(tool => (
+                                        {TOOLS.researcher?.flatMap(cat => cat.tools || []).map(tool => (
                                             <Link key={tool.id} to={`/tools/${tool.id}`} className="mega-item" onClick={() => setActiveDropdown(null)}>
                                                 <div className="mega-icon-wrapper" style={{ color: tool.color }}>
                                                     <tool.icon size={18} />
